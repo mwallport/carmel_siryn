@@ -2,9 +2,11 @@
 #define __COMMANDS__
 #include <inttypes.h>
 
-// temp controller read and write commands
-static const uint16_t   CTRLR_READ_FUNC   = 0x03;
-static const uint16_t   CTRLR_WRITE_FUNC  = 0x06;
+// temp controller read and write cmds
+static const uint16_t   CTRLR_READ_FUNC     = 0x03;
+static const uint16_t   CTRLR_WRITE_FUNC    = 0x06;
+static const size_t     WRITE_RESP_PKT_LEN  = 8;
+static const size_t     READ_RESP_PKT_LEN   = 8;
 
 
 class cmdResp
@@ -20,50 +22,32 @@ class cmdResp
 };
 
 
-class commandBase
+class cmd
 {
   public:
-  commandBase();
-  virtual ~commandBase();
-  virtual uint8_t buildCmd(uint8_t* buff, uint8_t bufflen, uint16_t dataCnt, uint8_t id) = 0;
-  virtual cmdResp buildResp(uint8_t*, uint8_t, uint16_t, uint8_t)  = 0;
+  cmd();
+  virtual ~cmd();
+  uint8_t buildReadCmd(uint8_t* buff, uint8_t bufflen, uint16_t dataCnt, uint8_t id, uint16_t param_addr);
+  uint8_t buildWriteCmd(uint8_t* buff, uint8_t bufflen, uint16_t dataCnt, uint8_t id, uint16_t param_addr);
+  cmdResp buildReadResp(uint8_t*, uint8_t, uint8_t);
+  cmdResp buildWriteResp(uint8_t*, uint8_t, uint8_t);
 
-  commandBase(const commandBase&) = delete;
-  commandBase& operator=(const commandBase&) = delete;
+  cmd(const cmd&) = delete;
+  cmd& operator=(const cmd&) = delete;
 
-  static bool validateCtrlrRxPkt(uint8_t* buff, uint8_t bufflen, uint16_t cmd, uint8_t id, bool=false, uint16_t=0);
+  bool validateCtrlrRxPkt(uint8_t* buff, uint8_t bufflen, uint8_t id, bool=false);
+  uint16_t  paramAddr() const;
+  uint8_t   cmdLength() const;
+  uint8_t   dataLength() const;
 
   protected:
+  uint16_t    m_paramAddr;
+  uint8_t     m_cmdLength;  // length of the cmd, should always be 8
+  uint8_t     m_data;       // for read cmds is the requested byte count
+                            // for write cmds is the data to be written
 
   private:
 };
-
-//
-// commands that can be sent
-// will be a struct for each command
-//
-class readPVPVOF : public commandBase
-{
-  public:
-  readPVPVOF();
-  virtual ~readPVPVOF();
-
-  uint8_t buildCmd(uint8_t* buff, uint8_t bufflen, uint16_t dataCnt, uint8_t id);
-  cmdResp buildResp(uint8_t*, uint8_t, uint16_t, uint8_t);
-};
-
-class writeSV : public commandBase
-{
-  public:
-  writeSV();
-  virtual ~writeSV();
-
-  uint8_t buildCmd(uint8_t* buff, uint8_t bufflen, uint16_t dataCnt, uint8_t id);
-  cmdResp buildResp(uint8_t*, uint8_t, uint16_t, uint8_t);
-};
-
-
-// and many more ..
 
 #endif
 

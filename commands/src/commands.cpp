@@ -10,12 +10,15 @@
 extern "C"
 {
 
-commandBase::commandBase() {}
-commandBase::~commandBase() {}
+cmd::cmd() : m_paramAddr(0), m_cmdLength(0), m_data(0) {}
+cmd::~cmd() {}
+uint16_t  cmd::paramAddr() const { return(m_paramAddr); }
+uint8_t   cmd::cmdLength() const { return(m_cmdLength); }
+uint8_t   cmd::dataLength() const { return(m_data); }
 
 
 // validate pkt Rx'ed from the temp controller
-bool commandBase::validateCtrlrRxPkt(uint8_t* buff, uint8_t bufflen, uint16_t cmd, uint8_t id, bool isWriteCmd, uint16_t data)
+bool cmd::validateCtrlrRxPkt(uint8_t* buff, uint8_t bufflen, uint8_t id, bool isWriteCmd)
 {
   uint16_t  crc;
 
@@ -53,10 +56,10 @@ bool commandBase::validateCtrlrRxPkt(uint8_t* buff, uint8_t bufflen, uint16_t cm
   } else // is a write command, verify the data echo'ed is what was sent
   {
     if( ((id != buff[CTRLR_ID_OFFSET]) || (CTRLR_WRITE_FUNC != buff[CTRLR_FUNC_OFFSET]) ||
-        (data != *(reinterpret_cast<uint16_t*>(&buff[CTRLR_WRITE_DATA_OFFSET])))) )
+        (m_data != *(reinterpret_cast<uint16_t*>(&buff[CTRLR_WRITE_DATA_OFFSET])))) )
     {
       fprintf(stderr, "unexpected write response expected id:func:data %" PRIx8 ":%" PRIx8 ":%" PRIx8 " got id:func:data %" PRIx8 ":%" PRIx8":%" PRIx8"\n",
-        id, CTRLR_WRITE_FUNC, data,
+        id, CTRLR_WRITE_FUNC, m_data,
         buff[CTRLR_ID_OFFSET], buff[CTRLR_FUNC_OFFSET], *(reinterpret_cast<uint16_t*>(&buff[CTRLR_WRITE_DATA_OFFSET])));
 
       return(false);
@@ -90,27 +93,26 @@ bool commandBase::validateCtrlrRxPkt(uint8_t* buff, uint8_t bufflen, uint16_t cm
 //-----------------------------------------------------------------------------
 // READ COMMANDS
 //
-readPVPVOF::readPVPVOF() {}
-
-readPVPVOF::~readPVPVOF() {}
-
-
-uint8_t readPVPVOF::buildCmd(uint8_t* buff, uint8_t bufflen, uint16_t dataCnt, uint8_t id)
+uint8_t cmd::buildReadCmd(uint8_t* buff, uint8_t bufflen, uint16_t dataLength, uint8_t id, uint16_t param_addr)
 {
   // initialize buff
   memset(buff, '\0', bufflen);
 
+
   // build the commnad in the buff as a read operation
   buff[CTRLR_ID_OFFSET]   = id;
   *(reinterpret_cast<uint16_t*>(&buff[CTRLR_FUNC_OFFSET])) = CTRLR_READ_FUNC;  // TODO: htons needed here on Due ?
-  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_PARAM_ADDR])) = PVPVOF;             // TODO: htons needed here on Due ?
-  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_READ_DATA_CNT_OFFSET])) = dataCnt; // TODO: same ..
+  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_PARAM_ADDR])) = param_addr;        // TODO: htons needed here on Due ?
+  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_READ_DATA_CNT_OFFSET])) = dataLength; // TODO: same ..
   *(reinterpret_cast<uint16_t*>(&buff[CTRLR_CRC_OFFSET])) = calcCRC16(buff, CTRLR_READ_DATA_CNT_OFFSET + 2);
 
   uint16_t crc = calcCRC16(buff, CTRLR_READ_DATA_CNT_OFFSET + 2);
   fprintf(stderr, "adding crc [%" PRIx16 "]\n", crc);
 
-  return(CTRLR_CRC_OFFSET + 2); // huh ?  this is always going to be 8
+  m_paramAddr   = param_addr;
+  m_data        = dataLength; // save the request data length ( byte count )
+  m_cmdLength   = CTRLR_CRC_OFFSET + 2;
+  return(m_cmdLength); // huh ?  this is always going to be 8
 }
 
 
@@ -118,10 +120,10 @@ uint8_t readPVPVOF::buildCmd(uint8_t* buff, uint8_t bufflen, uint16_t dataCnt, u
 // build the response for the PVPVOF command
 // the buff has the Rx'ed pkt from the temp controller
 //
-cmdResp readPVPVOF::buildResp(uint8_t* buff, uint8_t bufflen, uint16_t dataCnt, uint8_t id)
+cmdResp cmd::buildReadResp(uint8_t* buff, uint8_t bufflen, uint8_t id)
 {
   // validate the Rx'ed packet
-  if( (!validateCtrlrRxPkt(buff, bufflen, PVPVOF, id)) )
+  if( (!validateCtrlrRxPkt(buff, bufflen, id, false)) )
   {
     return(cmdResp(false, buff, bufflen));
   }
@@ -139,10 +141,7 @@ cmdResp readPVPVOF::buildResp(uint8_t* buff, uint8_t bufflen, uint16_t dataCnt, 
 //-----------------------------------------------------------------------------
 // WRITE COMMANDS
 //
-writeSV::writeSV() {}
-writeSV::~writeSV() {}
-
-uint8_t writeSV::buildCmd(uint8_t* buff, uint8_t bufflen, uint16_t data, uint8_t id)
+uint8_t cmd::buildWriteCmd(uint8_t* buff, uint8_t bufflen, uint16_t data, uint8_t id, uint16_t param_addr)
 {
   // initialize buff
   memset(buff, '\0', bufflen);
@@ -150,14 +149,17 @@ uint8_t writeSV::buildCmd(uint8_t* buff, uint8_t bufflen, uint16_t data, uint8_t
   // build the commnad in the buff as a read operation
   buff[CTRLR_ID_OFFSET]   = id;
   *(reinterpret_cast<uint16_t*>(&buff[CTRLR_FUNC_OFFSET])) = CTRLR_WRITE_FUNC;  // TODO: htons needed here on Due ?
-  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_PARAM_ADDR])) = SV;                // TODO: htons needed here on Due ?
-  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_WRITE_DATA_OFFSET])) = data;    // TODO: same ..
+  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_PARAM_ADDR])) = param_addr;         // TODO: htons needed here on Due ?
+  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_WRITE_DATA_OFFSET])) = data;        // TODO: same ..
   *(reinterpret_cast<uint16_t*>(&buff[CTRLR_CRC_OFFSET])) = calcCRC16(buff, CTRLR_WRITE_DATA_OFFSET + 2);
 
   uint16_t crc = calcCRC16(buff, CTRLR_WRITE_DATA_OFFSET + 2);
   fprintf(stderr, "adding crc [%" PRIx16 "]\n", crc);
 
-  return(CTRLR_CRC_OFFSET + 2); // huh ?  this is always going to be 8
+  m_paramAddr   = param_addr;
+  m_data        = data; // save the request data length ( byte count )
+  m_cmdLength   = CTRLR_CRC_OFFSET + 2;
+  return(m_cmdLength); // huh ?  this is always going to be 8
 }
 
 
@@ -165,19 +167,17 @@ uint8_t writeSV::buildCmd(uint8_t* buff, uint8_t bufflen, uint16_t data, uint8_t
 // build the response for the PVPVOF command
 // the buff has the Rx'ed pkt from the temp controller
 //
-cmdResp writeSV::buildResp(uint8_t* buff, uint8_t bufflen, uint16_t data, uint8_t id)
+cmdResp cmd::buildWriteResp(uint8_t* buff, uint8_t bufflen,uint8_t id)
 {
   // validate the Rx'ed packet
-  if( (!validateCtrlrRxPkt(buff, bufflen, SV, id, true, data)) )
+  if( (!validateCtrlrRxPkt(buff, bufflen, id, true)) )
   {
     return(cmdResp(false, buff, bufflen));
   }
 
   // return the address of the beginning of the returned data bytes . . 
   // or just return the whole packet . . ?
-  return(cmdResp(true, 0, 0));                                                // success
-         //&buff[CTRLR_READ_DATA_CNT_OFFSET],                            // the data
-         //*(reinterpret_cast<uint16_t*>&buff([CTRLR_READ_BYTE_CNT_OFFSET])))); // the length of the returned data
+  return(cmdResp(true, 0, 0));
 }
 
 } 

@@ -135,6 +135,9 @@ uint8_t Serial::readByte(void)
 
   if( (-1 == retVal) )
   {
+    fprintf(stderr, "error reading from [%s], errno [%d], errorstr [%s]\n",
+      m_port.c_str(), errno, strerror(errno));
+
     return(-1);
   }
 
@@ -166,7 +169,7 @@ uint8_t Serial::readByte(uint8_t* buff, const ssize_t len)
 
   if( (-1 == nread) )
   {
-    fprintf(stderr, "error writing to [%s], errno [%d], errorstr [%s]\n",
+    fprintf(stderr, "error reading from [%s], errno [%d], errorstr [%s]\n",
       m_port.c_str(), errno, strerror(errno));
 
     return(-1);
