@@ -14,7 +14,7 @@ handler::~handler() {};
 
 // build and send a read command - read the read command response
 cmdResp handler::readProcess(HardwareSerial& so, uint8_t id, uint16_t param_addr, uint16_t byte_cnt,
-                uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, uint8_t rx_buff_size)
+                uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, int8_t rx_buff_size)
 {
   cmd c;
   int  bytesWritten  = 0;
@@ -26,7 +26,7 @@ cmdResp handler::readProcess(HardwareSerial& so, uint8_t id, uint16_t param_addr
 
   #ifdef __DEBUG_MODBUS_CMDS__
   Serial.print("readProcess command is : ");
-  for(int i = 0; i < c.cmdLength(); i++) {  Serial.print(tx_buff[1], 16); Serial.print(" "); }
+  for(int i = 0; i < c.cmdLength(); i++) {  Serial.print(tx_buff[i], 16); Serial.print(" "); }
   Serial.println("");
   #endif
 
@@ -41,7 +41,7 @@ cmdResp handler::readProcess(HardwareSerial& so, uint8_t id, uint16_t param_addr
     if( (-1 != bytesRead) )
     {
       #ifdef __DEBUG_MODBUS_CMDS__
-      Serial.print("rvcReadResp got : ");
+      Serial.print("rvcReadResp got "); Serial.print(bytesRead); Serial.print(" bytes: ");
       for(int i = 0; i < bytesRead; i++) {  Serial.print(rx_buff[i], 16); Serial.print(" "); }
       Serial.println("");
       #endif
@@ -65,7 +65,7 @@ cmdResp handler::readProcess(HardwareSerial& so, uint8_t id, uint16_t param_addr
 
 // build and send a write command - read the write command response
 cmdResp handler::writeProcess(HardwareSerial& so, uint8_t id, uint16_t param_addr, uint16_t data,
-                  uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, uint8_t rx_buff_size)
+                  uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, int8_t rx_buff_size)
 {
   cmd c;
   int  bytesWritten  = 0;
@@ -94,8 +94,8 @@ cmdResp handler::writeProcess(HardwareSerial& so, uint8_t id, uint16_t param_add
     if( (-1 != bytesRead) )
     {
       #ifdef __DEBUG_MODBUS_CMDS__
-      Serial.print("rvcWriteResp got : ");
-      for(int i = 0; i < bytesRead; i++) {  Serial.print(rx_buff[1], 16); Serial.print(" "); }
+      Serial.print("rvcWriteResp got "); Serial.print(bytesRead); Serial.print(" bytes: ");
+      for(int i = 0; i < bytesRead; i++) {  Serial.print(rx_buff[i], 16); Serial.print(" "); }
       Serial.println("");
       #endif
       
@@ -103,7 +103,7 @@ cmdResp handler::writeProcess(HardwareSerial& so, uint8_t id, uint16_t param_add
     } else
     {
       #ifdef __DEBUG_MODBUS_CMDS__
-      Serial.println("rvcWriteResp faile");
+      Serial.println("rvcWriteResp failed");
       #endif
     }
   }
@@ -117,14 +117,17 @@ cmdResp handler::writeProcess(HardwareSerial& so, uint8_t id, uint16_t param_add
 
 
 // use the so object to send the packet
-int handler::sndCmd(HardwareSerial& so, uint8_t* tx_buff, uint8_t bufflen)
+int handler::sndCmd(HardwareSerial& so, uint8_t* tx_buff, int8_t bufflen)
 {
   int retVal;
 
   
   // write the bytes, handle the return code in the caller
+  Controllino_RS485TxEnable();
   retVal = so.write(tx_buff, bufflen);
-
+  so.flush();
+  Controllino_RS485RxEnable();
+  
   #ifdef __DEBUG_MODBUS_TXRX__
   Serial.print("sent "); Serial.print(retVal); Serial.println(" bytes...");
   #endif
@@ -136,16 +139,16 @@ int handler::sndCmd(HardwareSerial& so, uint8_t* tx_buff, uint8_t bufflen)
 
 // read a write response into the m_rx_buff
 // this is a write response, so expecting to get 8 bytes
-int handler::rcvWriteResp(HardwareSerial& so, size_t min_pkt_size, uint8_t* rx_buff, uint8_t rx_buff_size)
+int handler::rcvWriteResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_buff, int8_t rx_buff_size)
 {
-  int bytesReceived = 0;
   int bytes_read    = 0;
-  bool done         = false;
   bool timed_out    = false;
   unsigned long start_time = millis();
 
 
   memset(rx_buff, '\0', rx_buff_size);
+
+  Controllino_RS485RxEnable();
 
   // always going to try to read 8 bytes
   // TODO: generate fail return from unit and verify it is also 8 bytes
@@ -172,18 +175,18 @@ int handler::rcvWriteResp(HardwareSerial& so, size_t min_pkt_size, uint8_t* rx_b
     }
   }
 
-  return(bytesReceived);
+  Controllino_RS485TxEnable();
+
+  return(bytes_read);
 }
 
 
 // read a read response into the m_rx_buff
 // this is a read response, so expecting to get 8 bytes or more depending
 // on ByteCnt
-int handler::rcvReadResp(HardwareSerial& so, size_t min_pkt_size, uint8_t* rx_buff, uint8_t rx_buff_size)
+int handler::rcvReadResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_buff, int8_t rx_buff_size)
 {
-  int bytesReceived = 0;
   int bytes_read    = 0;
-  bool done         = false;
   bool timed_out    = false;
   int length        = min_pkt_size;  // this will change during reading due to byte count
   uint16_t byte_cnt = 0;
@@ -191,6 +194,8 @@ int handler::rcvReadResp(HardwareSerial& so, size_t min_pkt_size, uint8_t* rx_bu
 
 
   memset(rx_buff, '\0', rx_buff_size);
+
+  Controllino_RS485RxEnable();
 
   // always going to try to read 8 bytes
   // TODO: generate fail return from unit and verify it is also 8 bytes
@@ -208,7 +213,10 @@ int handler::rcvReadResp(HardwareSerial& so, size_t min_pkt_size, uint8_t* rx_bu
 
     if( (so.available()) )
     {
-      rx_buff[bytes_read++] = so.read();
+      rx_buff[bytes_read] = so.read();
+      #ifdef __DEBUG_MODBUS_TXRX__
+      Serial.print("bytes_read: "); Serial.print(bytes_read); Serial.print(" : " ); Serial.println(rx_buff[bytes_read], 16);
+      #endif
       
     } else
     {
@@ -221,28 +229,30 @@ int handler::rcvReadResp(HardwareSerial& so, size_t min_pkt_size, uint8_t* rx_bu
     // then there is the CRC word after those bytes
     if( (CTRLR_READ_BYTE_CNT_OFFSET + 1 == bytes_read) )
     {
-      byte_cnt = *(reinterpret_cast<uint16_t*>(&rx_buff[CTRLR_READ_BYTE_CNT_OFFSET]));
+      byte_cnt = ntohs(*(reinterpret_cast<uint16_t*>(&rx_buff[CTRLR_READ_BYTE_CNT_OFFSET])));
 
       if( (byte_cnt > 2) )
       {
-        // modify length if byte_cnt is > 2
-        length += length - 2;  // the min_pkt_size is calculate for byte_cnt
-                              // where byte_cnt must be 2 to keep the pkt length at 8 bytes
-                              // so this calculation is expected byte_cnt of 2 plus the length just read minus 'at least 2'
+        length = _PKT_BYTS_EXCEPT_BYTE_CNT_BYTES_ + byte_cnt;
 
         #ifdef __DEBUG_MODBUS_TXRX__
-        Serial.print("rcvReadResp found byte_cnt: "); Serial.print(byte_cnt); Serial.print(" modifying expected length to : "); Serial.println(length);
+        Serial.print("rcvReadResp found byte_cnt: "); Serial.print(byte_cnt, 16); Serial.print(" modifying expected length to : "); Serial.println(length);
         #endif
       } else
       {
+        // else expected length remains 8
         #ifdef __DEBUG_MODBUS_TXRX__
         Serial.println("rcvReadResp found byte_cnt of 2, not adjusting expected length");
         #endif
       }
     }
+
+    bytes_read++;
   }
 
-  return(bytesReceived);
+  Controllino_RS485TxEnable();
+
+  return(bytes_read);
 }
 
 } // end extern "C"

@@ -7,6 +7,8 @@
 // which most definitely is coped from the meerstetter implementation
 //
 
+extern "C"
+{
 
 //
 // given an array of uin8_t bytes, calculate the CRC16 for it
@@ -52,3 +54,4 @@ static uint16_t getCRC16(uint16_t n, uint8_t m);
 
 uint16_t calcCRC16(uint8_t* pBuff, uint16_t length); // interface
 
+}

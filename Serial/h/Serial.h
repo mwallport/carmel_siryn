@@ -10,6 +10,8 @@
 #include <termios.h>
 #include <string>
 
+extern "C"
+{
 
 class Serial
 {
@@ -39,3 +41,4 @@ class Serial
   const Serial& operator=(Serial&&);
 };
 
+}

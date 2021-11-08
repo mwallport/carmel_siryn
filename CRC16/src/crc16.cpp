@@ -2,6 +2,9 @@
 
 #include "crc16.h"
 
+//extern "C"
+//{
+
 uint16_t getCRC16(uint16_t CRC, uint8_t byte)
 {
     CRC = ( (CRC % 256) << 8 ) ^ ( CRC16_table_C[ (CRC >> 8) ^ byte ] );
@@ -23,3 +26,4 @@ uint16_t calcCRC16(uint8_t* pBuff, uint16_t length)
 }
 
 
+//}

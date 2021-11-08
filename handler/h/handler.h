@@ -4,6 +4,8 @@
 #include "Serial.h"
 #include "commands.h"
 
+extern "C"
+{
 
 class handler
 {
@@ -35,6 +37,8 @@ class handler
   uint8_t*  m_rx_buff;
   size_t    m_rx_buff_size;
 };
+
+}
 
 #endif
 

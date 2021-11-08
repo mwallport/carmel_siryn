@@ -23,13 +23,11 @@ int16_t calcCRC16(uint8_t* buff, uint8_t len)
         }
     }   
     // Reverse byte order.
-/*
     temp2 = temp >> 8;
     temp = (temp << 8) | temp2;
     temp &= 0xFFFF;
     // the returned value is already swapped
     // crcLo byte is first & crcHi byte is last
-*/
     return temp;
 }
 

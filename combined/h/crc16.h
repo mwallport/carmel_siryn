@@ -52,6 +52,7 @@ static const uint16_t CRC16_table_C[256] = {
 
 uint16_t getCRC16(uint16_t n, uint8_t m);
 
-uint16_t calcCRC16(uint8_t* pBuff, uint16_t length); // interface
+//uint16_t calcCRC16(uint8_t* pBuff, uint16_t length); // interface
+int16_t calcCRC16(uint8_t* pBuff, uint8_t length); // interface
 
 }

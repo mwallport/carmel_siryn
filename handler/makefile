@@ -2,6 +2,7 @@ SRCDIR:=./src
 HDRDIR:=./h
 BINDIR:=./bin
 OBJDIR:=./obj
+OBJSDIR:=../objs
 LIBDIR:=./lib
 LIBSDIR:=../libs
 DEPDIR:=./.d/
@@ -22,6 +23,7 @@ ${OBJDIR}/%.o : ${SRCDIR}/%.cpp
 all : ${OBJFILES}
 	${CXX} -shared -o ${LIBDIR}/${LIBNAME} ${LDFLAGS} ${OBJFILES}
 	@cp ${LIBDIR}/${LIBNAME} ${LIBSDIR}/${LIBNAME}
+	@cp ${OBJFILES} ${OBJSDIR}
 
 ${OBJFILES} : | SUBDIRS
 

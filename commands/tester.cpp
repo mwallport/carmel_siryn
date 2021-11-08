@@ -35,7 +35,7 @@ int main(int argc, char** argv)
   len = 8;
   rx_buff[0] = 0x01; rx_buff[1] = 0x06; rx_buff[2] = 0x00; rx_buff[3] = 0x00; rx_buff[4] = 0x26; rx_buff[5] = 0x02; rx_buff[6] = 0x27; rx_buff[7] = 0x04;
 
-  cmdResp resp = s.buildWriteResp(rx_buff, len, 0x0226, id);
+  cmdResp resp = s.buildWriteResp(rx_buff, len, id);
 
   printf("cmdResp.m_retCode is: %d\n", resp.m_retCode);
 
@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 
   len = 12;
 
-  cmdResp resp2 = r.buildReadResp(rx_buff, len, 6, id);
+  cmdResp resp2 = r.buildReadResp(rx_buff, len, id);
   printf("cmdResp2.m_retCode is: %d\n", resp2.m_retCode);
   printf("cmdResp2.m_bufflen is: %d\n", resp2.m_bufflen);
   printf("cmdResp2 buff contents : ");

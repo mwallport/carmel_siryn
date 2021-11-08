@@ -10,7 +10,7 @@ DEPFILES:=$(addprefix ${DEPDIR}/, $(addsuffix .d, $(basename $(notdir $(wildcard
 SRCS:=$(wildcard ${SRCDIR}/*.cpp)
 HDRS:=$(wildcard ${HDRDIR}/*.h)
 CXX:=g++
-CFLAGS+=-Wall -ggdb -I${HDRDIR}
+CFLAGS+=-Wall -ggdb -I${HDRDIR} -I../h
 LDFLAGS=-L../libs -lcommands -lcrc16
 EXEC=commandsTest
 

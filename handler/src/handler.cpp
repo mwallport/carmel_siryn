@@ -2,14 +2,15 @@
 #include "handler.h"
 
 
+extern "C"
+{
+
 handler::handler(uint8_t id, uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, uint8_t rx_buff_size)
   : m_id(id), m_tx_buff(tx_buff), m_tx_buff_size(tx_buff_size), m_rx_buff(rx_buff), m_rx_buff_size(rx_buff_size)
 {}
 
 handler::~handler() {};
 
-extern "C"
-{
 // build and send a read command - read the read command response
 cmdResp handler::readProcess(Serial& so, uint16_t param_addr, uint16_t byte_cnt)
 {
@@ -80,7 +81,6 @@ cmdResp handler::writeProcess(Serial& so, uint16_t param_addr, uint16_t byte_cnt
 
   return(cmdResp(false, 0, 0));
 }
-} // end extern "C"
 
 
 // use the so object to send the packet
@@ -115,6 +115,9 @@ ssize_t handler::rcvWriteResp(Serial& so, size_t min_pkt_size)
   //
   // if all good proceed to bulidWriteResp
   //
+  // only for testing - copy the m_tx_buff into m_rx_buff and return
+  memcpy(m_tx_buff, m_rx_buff, min_pkt_size);
+  bytesReceived = min_pkt_size;
   return(bytesReceived);
 }
 
@@ -141,7 +144,11 @@ ssize_t handler::rcvReadResp(Serial& so, size_t min_pkt_size)
   //
   // if all good proceed to bulidWriteResp
   //
+  // for testing only copy bytes in the m_rx_buff and return its length
+  memcpy(m_rx_buff, m_tx_buff, min_pkt_size);
+  bytesReceived = min_pkt_size;
   return(bytesReceived);
 }
 
+} // end extern "C"
 

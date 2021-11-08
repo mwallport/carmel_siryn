@@ -14,8 +14,8 @@ cmdResp handler::readProcess(Serial& so, uint8_t id, uint16_t param_addr, uint16
                 uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, uint8_t rx_buff_size)
 {
   cmd c;
-  ssize_t  bytesWritten  = 0;
-  ssize_t  bytesRead     = 0;
+  int bytesWritten  = 0;
+  int bytesRead     = 0;
 
 
   // bulid the command in the tx_buff
@@ -25,7 +25,7 @@ cmdResp handler::readProcess(Serial& so, uint8_t id, uint16_t param_addr, uint16
     tx_buff[0], tx_buff[1], tx_buff[2], tx_buff[3], tx_buff[4], tx_buff[5], tx_buff[6], tx_buff[7]);
 
   // the command that is in the tx_buff
-  bytesWritten = sndCmd(so, c);
+  bytesWritten = sndCmd(so, tx_buff, c.cmdLength());
 
   if( (c.cmdLength() == bytesWritten) )
   {
@@ -54,8 +54,8 @@ cmdResp handler::writeProcess(Serial& so, uint8_t id, uint16_t param_addr, uint1
                   uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, uint8_t rx_buff_size)
 {
   cmd c;
-  ssize_t  bytesWritten  = 0;
-  ssize_t  bytesRead     = 0;
+  int  bytesWritten  = 0;
+  int  bytesRead     = 0;
 
 
   // bulid the command in the tx_buff
@@ -65,7 +65,7 @@ cmdResp handler::writeProcess(Serial& so, uint8_t id, uint16_t param_addr, uint1
     tx_buff[0], tx_buff[1], tx_buff[2], tx_buff[3], tx_buff[4], tx_buff[5], tx_buff[6], tx_buff[7]);
 
   // the command that is in the tx_buff
-  bytesWritten = sndCmd(so, c);
+  bytesWritten = sndCmd(so, tx_buff, c.cmdLength());
 
   if( (c.cmdLength() == bytesWritten) )
   {
@@ -77,7 +77,7 @@ cmdResp handler::writeProcess(Serial& so, uint8_t id, uint16_t param_addr, uint1
       return(c.buildWriteResp(rx_buff, bytesRead, id));
     } else
     {
-      fprintf(stdout, "rcvWriteResp failed for id [%" PRIu8 "], returns [%" PRIu64 "] bytes read\n",
+      fprintf(stdout, "rcvWriteResp failed for id [%" PRIu8 "], returns [%" PRId64 "] bytes read\n",
         id, bytesRead);
     }
   }
@@ -90,23 +90,24 @@ cmdResp handler::writeProcess(Serial& so, uint8_t id, uint16_t param_addr, uint1
 
 
 // use the so object to send the packet
-ssize_t handler::sndCmd(Serial& so, cmd& c)
+int handler::sndCmd(Serial& so, uint8_t* tx_buff, uint8_t bufflen)
 {
   // discard rx and tx queue
   // TODO: undo this debug BS
-  // so.flush();
+  so.flush();
 
   // write the bytes, handle the return code in the caller
-  //return(so.writeByte(tx_buff, c.cmdLength()));
+  return(so.writeByte(tx_buff, bufflen));
+
   //
   // TODO: undo this debug BS
-  return(c.cmdLength());
+  //return(c.cmdLength());
 }
 
 
 // read a write response into the m_rx_buff
 // this is a write response, so expecting to get 8 bytes
-ssize_t handler::rcvWriteResp(Serial& so, size_t min_pkt_size, uint8_t* rx_buff, uint8_t rx_buff_size)
+int handler::rcvWriteResp(Serial& so, size_t min_pkt_size, uint8_t* rx_buff, uint8_t rx_buff_size)
 {
   uint8_t bytesReceived = 0;
 
@@ -132,15 +133,28 @@ ssize_t handler::rcvWriteResp(Serial& so, size_t min_pkt_size, uint8_t* rx_buff,
   // TODO: fudge this better
   //
   //memcpy(tx_buff, m_rx_buff, min_pkt_size);
-  bytesReceived = min_pkt_size;
-  return(bytesReceived);
+  //bytesReceived = min_pkt_size;
+  //return(bytesReceived);
+  int count = 0;
+  while( ((0 == so.available())) && (count++ < 4))
+  {
+    fprintf(stderr, "no bytes avialable...\n");
+    sleep(1);
+  }
+
+  if( (count < 4) )
+  {
+    fprintf(stderr, "bytes are avialable...\n");
+  }
+
+  return(-1);
 }
 
 
 // read a read response into the m_rx_buff
 // this is a read response, so expecting to get 8 bytes or more depending
 // on ByteCnt
-ssize_t handler::rcvReadResp(Serial& so, size_t min_pkt_size, uint8_t* rx_buff, uint8_t rx_buff_size)
+int handler::rcvReadResp(Serial& so, size_t min_pkt_size, uint8_t* rx_buff, uint8_t rx_buff_size)
 {
   uint8_t bytesReceived = 0;
 
@@ -164,8 +178,21 @@ ssize_t handler::rcvReadResp(Serial& so, size_t min_pkt_size, uint8_t* rx_buff, 
   // TODO: implement the read
   //
   //memcpy(rx_buff, tx_buff, min_pkt_size);  // TODO: fudge this better
-  bytesReceived = min_pkt_size;
-  return(bytesReceived);
+  //bytesReceived = min_pkt_size;
+  //return(bytesReceived);
+  int count = 0;
+  while( ((0 == so.available())) && (count++ < 4))
+  {
+    fprintf(stderr, "no bytes avialable...\n");
+    sleep(1);
+  }
+
+  if( (count < 4) )
+  {
+    fprintf(stderr, "bytes are avialable...\n");
+  }
+
+  return(-1);
 }
 
 } // end extern "C"

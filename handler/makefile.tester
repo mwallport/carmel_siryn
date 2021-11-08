@@ -10,9 +10,9 @@ DEPFILES:=$(addprefix ${DEPDIR}/, $(addsuffix .d, $(basename $(notdir $(wildcard
 SRCS:=$(wildcard ${SRCDIR}/*.cpp)
 HDRS:=$(wildcard ${HDRDIR}/*.h)
 CXX:=g++
-CFLAGS+=-Wall -ggdb -I${HDRDIR}
-LDFLAGS=-L../libs -lcommands -lcrc16
-EXEC=commandsTest
+CFLAGS+=-Wall -ggdb -I${HDRDIR} -I./h -I../Serial/h -I../commands/h
+LDFLAGS=-L../objs
+EXEC=handlerTest
 
 ${OBJDIR}/%.o : ${SRCDIR}/%.cpp
 	${CXX} -c $< -o $@ ${CFLAGS} -MT $@ -MMD -MP -MF ${DEPDIR}/$*.D

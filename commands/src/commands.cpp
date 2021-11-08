@@ -167,7 +167,7 @@ uint8_t cmd::buildWriteCmd(uint8_t* buff, uint8_t bufflen, uint16_t data, uint8_
 // build the response for the PVPVOF command
 // the buff has the Rx'ed pkt from the temp controller
 //
-cmdResp cmd::buildWriteResp(uint8_t* buff, uint8_t bufflen,uint8_t id)
+cmdResp cmd::buildWriteResp(uint8_t* buff, uint8_t bufflen, uint8_t id)
 {
   // validate the Rx'ed packet
   if( (!validateCtrlrRxPkt(buff, bufflen, id, true)) )

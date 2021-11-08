@@ -6,8 +6,8 @@
 // temp controller read and write cmds
 static const uint16_t   CTRLR_READ_FUNC     = 0x03;
 static const uint16_t   CTRLR_WRITE_FUNC    = 0x06;
-static const size_t     WRITE_RESP_PKT_LEN  = 8;
-static const size_t     READ_RESP_PKT_LEN   = 8;
+static const int8_t     WRITE_RESP_PKT_LEN  = 8;
+static const int8_t     READ_RESP_PKT_LEN   = 8;
 
 
 class cmdResp
@@ -16,9 +16,15 @@ class cmdResp
   cmdResp(bool retCode, uint8_t* buff, uint8_t bufflen)
     : m_retCode(retCode), m_buff(buff), m_bufflen(bufflen) {}
 
+  virtual ~cmdResp() {};
+
+  bool retCode() { return m_retCode; };
+  uint8_t* buff() { return m_buff; };
+  uint16_t bufflen() { return (m_bufflen); };
+
+  protected:
   bool      m_retCode;  // true is success, false is failed
-  uint8_t*  m_buff;     // for read cmd, this is the data that came back
-                        // or , should this just be the whole packet . . ?
+  uint8_t*  m_buff;     // for read cmd, this is the data that came back, there are m_byteCnt bytes present
   uint16_t  m_bufflen;  // the lenght of the data in the buff
 };
 
@@ -39,12 +45,12 @@ class cmd
   bool validateCtrlrRxPkt(uint8_t* buff, uint8_t bufflen, uint8_t id, bool=false);
   uint16_t  paramAddr() const;
   uint8_t   cmdLength() const;
-  uint8_t   dataLength() const;
+  uint16_t  dataLength() const;
 
   protected:
   uint16_t    m_paramAddr;
   uint8_t     m_cmdLength;  // length of the cmd, should always be 8
-  uint8_t     m_data;       // for read cmds is the requested byte count
+  uint16_t    m_data;       // for read cmds is the requested byte count
                             // for write cmds is the data to be written
 
   private:

@@ -23,15 +23,15 @@ class handler
 
   protected:
   // send a command return the count of bytes written
-  ssize_t sndCmd(Serial& so, cmd& command);
+  int sndCmd(Serial& so, uint8_t*, uint8_t);
   
   // handle reading a response to a write command
   // read into the m_rx_buff and return bytes read
-  ssize_t rcvWriteResp(Serial& so, size_t min_pkt_size, uint8_t* rx_buff, uint8_t rx_buff_size);
+  int rcvWriteResp(Serial& so, size_t min_pkt_size, uint8_t* rx_buff, uint8_t rx_buff_size);
   
   // handle reading a response to a read command - handle the ByteCount in the Rx'ed packet
   // read into the m_rx_buff and return bytes read
-  ssize_t rcvReadResp(Serial& so, size_t min_pkt_size, uint8_t* rx_buff, uint8_t rx_buff_size);
+  int rcvReadResp(Serial& so, size_t min_pkt_size, uint8_t* rx_buff, uint8_t rx_buff_size);
 };
 
 }
