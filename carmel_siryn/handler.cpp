@@ -214,9 +214,6 @@ int handler::rcvReadResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_bu
     if( (so.available()) )
     {
       rx_buff[bytes_read] = so.read();
-      #ifdef __DEBUG_MODBUS_TXRX__
-      Serial.print("bytes_read: "); Serial.print(bytes_read); Serial.print(" : " ); Serial.println(rx_buff[bytes_read], 16);
-      #endif
       
     } else
     {
@@ -242,7 +239,7 @@ int handler::rcvReadResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_bu
       {
         // else expected length remains 8
         #ifdef __DEBUG_MODBUS_TXRX__
-        Serial.println("rcvReadResp found byte_cnt of 2, not adjusting expected length");
+        Serial.print("rcvReadResp found byte_cnt of: "); Serial.print(byte_cnt, 16); Serial.println(" not adjusting expected length");
         #endif
       }
     }

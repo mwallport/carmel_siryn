@@ -111,9 +111,9 @@ uint8_t cmd::buildReadCmd(uint8_t* buff, uint8_t bufflen, uint16_t dataLength, u
 
   // build the commnad in the buff as a read operation
   buff[CTRLR_ID_OFFSET]   = id;
-  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_FUNC_OFFSET])) = CTRLR_READ_FUNC;  // TODO: htons needed here on Due ?
-  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_PARAM_ADDR])) = htons(param_addr);        // TODO: htons needed here on Due ?
-  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_READ_DATA_CNT_OFFSET])) = htons(dataLength); // TODO: same ..
+  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_FUNC_OFFSET])) = CTRLR_READ_FUNC;
+  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_PARAM_ADDR])) = htons(param_addr);
+  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_READ_DATA_CNT_OFFSET])) = htons(dataLength);
   *(reinterpret_cast<uint16_t*>(&buff[CTRLR_CRC_OFFSET])) = htons(calcCRC16(buff, CTRLR_READ_DATA_CNT_OFFSET + 2));
 
   m_paramAddr   = param_addr;
@@ -155,9 +155,9 @@ uint8_t cmd::buildWriteCmd(uint8_t* buff, uint8_t bufflen, uint16_t data, uint8_
 
   // build the commnad in the buff as a read operation
   buff[CTRLR_ID_OFFSET]   = id;
-  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_FUNC_OFFSET])) = CTRLR_WRITE_FUNC;  // TODO: htons needed here on Due ?
-  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_PARAM_ADDR])) = htons(param_addr);         // TODO: htons needed here on Due ?
-  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_WRITE_DATA_OFFSET])) = htons(data);        // TODO: same ..
+  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_FUNC_OFFSET])) = CTRLR_WRITE_FUNC;
+  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_PARAM_ADDR])) = htons(param_addr); 
+  *(reinterpret_cast<uint16_t*>(&buff[CTRLR_WRITE_DATA_OFFSET])) = htons(data);
   *(reinterpret_cast<uint16_t*>(&buff[CTRLR_CRC_OFFSET])) = htons(calcCRC16(buff, CTRLR_WRITE_DATA_OFFSET + 2));
 
   m_paramAddr   = param_addr;

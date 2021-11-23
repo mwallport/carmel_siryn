@@ -13,8 +13,14 @@ static const int8_t     READ_RESP_PKT_LEN   = 8;
 class cmdResp
 {
   public:
+  cmdResp() : m_retCode(false), m_buff(0), m_bufflen(0) {};
   cmdResp(bool retCode, uint8_t* buff, uint8_t bufflen)
     : m_retCode(retCode), m_buff(buff), m_bufflen(bufflen) {}
+  cmdResp& operator=(const cmdResp& _cmdResp)
+  {
+    m_retCode = _cmdResp.m_retCode; m_buff = _cmdResp.m_buff; m_bufflen = _cmdResp.m_bufflen;
+    return(*this);          
+  }
 
   virtual ~cmdResp() {};
 

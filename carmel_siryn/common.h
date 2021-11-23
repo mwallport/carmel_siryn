@@ -2,16 +2,19 @@
 #ifndef __COMMON_HEADER__
 #define __COMMON_HEADER__
 
-
+//
 // process defines
+//
 #define _READ_TIME_OUT_    3000
 
-// there are 6 bytes that must be in a Rx'ed read response packet
+
+// there are 6 bytes that must be in a Rx'ed response packet other than the id(1)
 // id(1) + r/w func(1) + byte count (2) + crc(2) = 6 bytes
 #define _PKT_BYTS_EXCEPT_BYTE_CNT_BYTES_  6 
 
-
-// need the htons, et al..
+//
+// need the htons, ntohs, etc..
+//
 #define htons(x) ( ((x)<< 8 & 0xFF00) | \
                 ((x)>> 8 & 0x00FF) )
 
@@ -25,23 +28,11 @@
 #define ntohl(x) htonl(x)
 
 
-
-
+//
 // debug defines
-// dump MODBUS packets Tx and Rx
+//
 #define __DEBUG_MODBUS_CMDS__
 #define __DEBUG_MODBUS_TXRX__
-
-// these need to match the actual physical assignments
-enum Rs485BusId
-{
-  ASIC  = 1,
-  DDR   = 2,
-  RTD   = 3,
-  MAX_RS485_ID
-};
-
-
 
 
 #endif
