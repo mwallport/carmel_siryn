@@ -19,11 +19,11 @@ class handler
 
   // send a command and do return rcvReadResp
   cmdResp readProcess(HardwareSerial& so, uint8_t id, uint16_t param_addr, uint16_t byte_cnt,
-                      uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, int8_t rx_buff_size);
+            uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, int8_t rx_buff_size);
 
   // send a command and do return rcvWriteResp
   cmdResp writeProcess(HardwareSerial& so, uint8_t id, uint16_t param_addr, uint16_t data,
-                      uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, int8_t rx_buff_size);
+            uint8_t* tx_buff, uint8_t tx_buff_size, uint8_t* rx_buff, int8_t rx_buff_size);
 
   protected:
   // send a command return the count of bytes written

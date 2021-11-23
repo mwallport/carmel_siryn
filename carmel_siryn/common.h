@@ -5,7 +5,7 @@
 //
 // process defines
 //
-#define _READ_TIME_OUT_    3000
+#define _READ_TIME_OUT_  3000
 
 
 // there are 6 bytes that must be in a Rx'ed response packet other than the id(1)
@@ -16,15 +16,15 @@
 // need the htons, ntohs, etc..
 //
 #define htons(x) ( ((x)<< 8 & 0xFF00) | \
-                ((x)>> 8 & 0x00FF) )
+        ((x)>> 8 & 0x00FF) )
 
 #define ntohs(x) htons(x)
 
 #define htonl(x) ( ((x)<<24 & 0xFF000000UL) | \
-                ((x)<< 8 & 0x00FF0000UL) | \
-                ((x)>> 8 & 0x0000FF00UL) | \
-                ((x)>>24 & 0x000000FFUL) )
-                
+        ((x)<< 8 & 0x00FF0000UL) | \
+        ((x)>> 8 & 0x0000FF00UL) | \
+        ((x)>>24 & 0x000000FFUL) )
+        
 #define ntohl(x) htonl(x)
 
 

@@ -4,10 +4,10 @@
 #include <stddef.h>
 
 // temp controller read and write cmds
-static const uint16_t   CTRLR_READ_FUNC     = 0x03;
-static const uint16_t   CTRLR_WRITE_FUNC    = 0x06;
-static const int8_t     WRITE_RESP_PKT_LEN  = 8;
-static const int8_t     READ_RESP_PKT_LEN   = 8;
+static const uint16_t   CTRLR_READ_FUNC   = 0x03;
+static const uint16_t   CTRLR_WRITE_FUNC  = 0x06;
+static const int8_t   WRITE_RESP_PKT_LEN  = 8;
+static const int8_t   READ_RESP_PKT_LEN   = 8;
 
 
 class cmdResp
@@ -15,11 +15,11 @@ class cmdResp
   public:
   cmdResp() : m_retCode(false), m_buff(0), m_bufflen(0) {};
   cmdResp(bool retCode, uint8_t* buff, uint8_t bufflen)
-    : m_retCode(retCode), m_buff(buff), m_bufflen(bufflen) {}
+  : m_retCode(retCode), m_buff(buff), m_bufflen(bufflen) {}
   cmdResp& operator=(const cmdResp& _cmdResp)
   {
-    m_retCode = _cmdResp.m_retCode; m_buff = _cmdResp.m_buff; m_bufflen = _cmdResp.m_bufflen;
-    return(*this);          
+  m_retCode = _cmdResp.m_retCode; m_buff = _cmdResp.m_buff; m_bufflen = _cmdResp.m_bufflen;
+  return(*this);      
   }
 
   virtual ~cmdResp() {};
@@ -29,8 +29,8 @@ class cmdResp
   uint16_t bufflen() { return (m_bufflen); };
 
   protected:
-  bool      m_retCode;  // true is success, false is failed
-  uint8_t*  m_buff;     // for read cmd, this is the data that came back, there are m_byteCnt bytes present
+  bool    m_retCode;  // true is success, false is failed
+  uint8_t*  m_buff;   // for read cmd, this is the data that came back, there are m_byteCnt bytes present
   uint16_t  m_bufflen;  // the lenght of the data in the buff
 };
 
@@ -54,10 +54,10 @@ class cmd
   uint16_t  dataLength() const;
 
   protected:
-  uint16_t    m_paramAddr;
-  uint8_t     m_cmdLength;  // length of the cmd, should always be 8
-  uint16_t    m_data;       // for read cmds is the requested byte count
-                            // for write cmds is the data to be written
+  uint16_t  m_paramAddr;
+  uint8_t   m_cmdLength;  // length of the cmd, should always be 8
+  uint16_t  m_data;     // for read cmds is the requested byte count
+              // for write cmds is the data to be written
 
   private:
 };

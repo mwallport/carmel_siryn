@@ -1,7 +1,7 @@
 #ifndef __DEVICE_HANDLER__
 #define __DEVICE_HANDLER__
 #include <inttypes.h>
-//#include "HardwareSerial.h"
+#include "HardwareSerial.h"
 #include "handler.h"
 #include "commands.h"
 

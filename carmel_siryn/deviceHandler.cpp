@@ -3,9 +3,9 @@
 
 
 deviceHandler::deviceHandler(HardwareSerial& so, uint8_t* tx_buff, uint8_t tx_buff_size,
-                              uint8_t* rx_buff, uint8_t rx_buff_size)
+                uint8_t* rx_buff, uint8_t rx_buff_size)
   : m_Serial(so), m_tx_buff(tx_buff), m_tx_buff_size(tx_buff_size), m_rx_buff(rx_buff),
-    m_rx_buff_size(rx_buff_size) {}
+  m_rx_buff_size(rx_buff_size) {}
 
 
 deviceHandler::~deviceHandler() {}
