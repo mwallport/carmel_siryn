@@ -1,6 +1,6 @@
 // file crc16.cpp
 
-#include "crc16.h"
+#include "crc16_modbus.h"
 
 extern "C"
 {

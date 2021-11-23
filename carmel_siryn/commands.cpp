@@ -6,7 +6,7 @@
 #include "common.h"
 #include "commands.h"
 #include "ctrlr_commands.h"
-#include "crc16.h"
+#include "crc16_modbus.h"
 
 
 extern "C"
