@@ -18,8 +18,8 @@ class cmdResp
   : m_retCode(retCode), m_buff(buff), m_bufflen(bufflen) {}
   cmdResp& operator=(const cmdResp& _cmdResp)
   {
-  m_retCode = _cmdResp.m_retCode; m_buff = _cmdResp.m_buff; m_bufflen = _cmdResp.m_bufflen;
-  return(*this);      
+    m_retCode = _cmdResp.m_retCode; m_buff = _cmdResp.m_buff; m_bufflen = _cmdResp.m_bufflen;
+    return(*this);      
   }
 
   virtual ~cmdResp() {};
@@ -30,7 +30,7 @@ class cmdResp
 
   protected:
   bool    m_retCode;  // true is success, false is failed
-  uint8_t*  m_buff;   // for read cmd, this is the data that came back, there are m_byteCnt bytes present
+  uint8_t*  m_buff;   // for read cmd, this is the data that came back, there are m_byACUnt bytes present
   uint16_t  m_bufflen;  // the lenght of the data in the buff
 };
 
@@ -48,7 +48,7 @@ class cmd
   cmd(const cmd&) = delete;
   cmd& operator=(const cmd&) = delete;
 
-  bool validateCtrlrRxPkt(uint8_t* buff, uint8_t bufflen, uint8_t id, bool=false);
+  bool validateRxPkt(uint8_t* buff, uint8_t bufflen, uint8_t id, bool=false);
   uint16_t  paramAddr() const;
   uint8_t   cmdLength() const;
   uint16_t  dataLength() const;

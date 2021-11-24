@@ -1,6 +1,6 @@
 #ifndef __CTRL_COMMANDS__
 #define __CTRL_COMMANDS__
-
+#include <inttypes.h>
 
 //
 // temp controller min Rx'ed packet size

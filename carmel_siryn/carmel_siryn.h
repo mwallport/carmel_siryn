@@ -16,18 +16,31 @@
 #include "deviceHandler.h"
 
 
+
+#define __DEBUG_MODBUS_CMDS__
+#define __DEBUG_MODBUS_TXRX__
+
+
 // this is for important, error condition debug output
 #define __DEBUG_VIA_SERIAL__
 
 // this is for frivilous debug output
 #define __DEBUG2_VIA_SERIAL__
 
+// initial PVOF value
+#define __INIT_PVOF__  0x01FA
 
+//
+// uncomment for the siryn project
+//
+//#define __USING_CHILLER__
 
-
-// these need to match the actual physical assignments
-uint8_t   ASIC_ID   = 1;
-uint8_t   DDR_ID    = 2;
+//
+// these are the RS485 bus Ids of the entities on the bus
+// need to match the actual physical assignments
+//
+uint8_t   ASIC_ID     = 1;
+uint8_t   DDR_ID      = 2;
 uint8_t   RTD_MUX_ID  = 3;
 uint32_t  val;
 
@@ -40,10 +53,13 @@ uint8_t tx_buff[MAX_BUFF_LENGTH_MODBUS];
 uint8_t rx_buff[MAX_BUFF_LENGTH_MODBUS];
 deviceHandler rs485Bus(Serial3, tx_buff, MAX_BUFF_LENGTH_MODBUS, rx_buff, MAX_BUFF_LENGTH_MODBUS);
 
+
 //
 // huber chiller communication
 //
+#if defined(__USING_CHILLER__)
 polySci chiller(9600);  // hard programmed to use Serial2 SERIAL_8N1
+#endif
 
 //
 // control PC communication
@@ -66,18 +82,22 @@ controlProtocol cp(1, 0, 57600);  // slave address (arduino) is 1, control addre
 #define PIN_HW_ENABLE_n     8
 #define SWITCH_PIN        9
 #define MAX_BUFF_LENGHT     10
-#define MAX_TEC_ADDRESS     3
-#define MIN_TEC_ADDRESS     1
+#define MAX_ACU_ADDRESS     1
+#define MIN_ACU_ADDRESS     1
 #define MAX_SHUTDOWN_ATTEMPTS   1
+
+
 #define SYSTEM_NRML_OFFSET    0   // 2 msgs, good and bad
 #define SYSTEM_FAIL_OFFSET    1   // 2 msgs, good and bad
-#define TEC_NRML_OFFSET     2   // 2 msgs, good and bad
-#define TEC_FAIL_OFFSET     3   // 2 msgs, good and bad
+#define ACU_NRML_OFFSET     2   // 2 msgs, good and bad
+#define ACU_FAIL_OFFSET     3   // 2 msgs, good and bad
+#if defined(__USING_CHILLER__)
 #define CHILLER_NRML_OFFSET   4   // 2 msgs, good and bad
 #define CHILLER_FAIL_OFFSET   5   // 2 msgs, good and bad
-#define HUMIDITY_NRML_OFFSET  6   // 2 msgs, good and bad
-#define HUMIDITY_FAIL_OFFSET  7   // 2 msgs, good and bad
-#define MAX_LCD_MSGS      (HUMIDITY_FAIL_OFFSET + 1)
+#define MAX_LCD_MSGS      (CHILLER_FAIL_OFFSET + 1)
+#else
+#define MAX_LCD_MSGS      (ACU_FAIL_OFFSET + 1)
+#endif
 #define MAX_MSG_DISPLAY_TIME  1500  // 1.5 minimum seconds per message
 
 
@@ -93,41 +113,35 @@ enum {
   // sys LCD status
   sys_Initializing, sys_Ready, sys_Running, sys_Shutdown, sys_StartFailed, sys_Failure,
 
-  // tec status
-  tec_Stopped, tec_Running, tec_ComFailure,
+  // ACU status
+  ACU_Stopped, ACU_Running, ACU_ComFailure,
 
+#if defined(__USING_CHILLER__)
   // chiller
   chiller_Running, chiller_Stopped, chiller_ComFailure,
-
-  // sensor
-  sensor_humidityAndThreshold,
-  sensor_HighHumidity, sensor_Failure,
-
+#endif
   MAX_LCD_FUNC
 };
 
 // sys
 void lcd_initializing();  // power-on, LCD splash screen
-void lcd_ready();     // system was started
-void lcd_running();     // system was started
-void lcd_shutdown();    // system was shutdown
+void lcd_ready();         // system was started
+void lcd_running();       // system was started
+void lcd_shutdown();      // system was shutdown
 void lcd_startFailed();   // not all devices present or something
-void lcd_systemFailure();   // some run-time fail, loss of comm w/ device, etc.
+void lcd_systemFailure(); // some run-time fail, loss of comm w/ device, etc.
 
-// tec
-void lcd_tecsStopped();     // set point and current temp
-void lcd_tecsRunning();     // set point and current temp
-void lcd_tecComFailure();     // set point and current temp
+// ACU
+void lcd_ACUsStopped();   // set point and current temp
+void lcd_ACUsRunning();   // set point and current temp
+void lcd_ACUComFailure(); // set point and current temp
 
+#if defined(__USING_CHILLER__)
 // chiller
 void lcd_chillerRunning();    //set point and current temp
 void lcd_chillerStopped();    // running or stopped or fail
 void lcd_chillerComFailure();   // can't communicate with the chiller
-
-// sensor
-void lcd_humidityAndThreshold();  // current humidity and threshold
-void lcd_highHumidity();  // humidity alert, or mechanical failure
-void lcd_sensorFailure();   // unable to communicate with the sensor
+#endif
 
 
 typedef void (*lcdFunc)(void);   
@@ -140,16 +154,15 @@ lcdFunc lcdFaces[MAX_LCD_FUNC] =
   lcd_running,    // system is running
   lcd_shutdown,     // shutdown has been done either implicitely or explicitely
   lcd_startFailed,  // not all devices present upon startup
-  lcd_systemFailure,  // some run-time failure - check tec, chiller, or humidity status
-  lcd_tecsStopped,  // stopped and 3 set points 
-  lcd_tecsRunning,  // running and 3 set points
-  lcd_tecComFailure,  // can't communicate with one of the TECs asterisks and which TEC
+  lcd_systemFailure,  // some run-time failure - check ACU, chiller, or humidity status
+  lcd_ACUsStopped,  // stopped and 3 set points 
+  lcd_ACUsRunning,  // running and 3 set points
+  lcd_ACUComFailure,  // can't communicate with one of the ACUs asterisks and which ACU
+#if defined(__USING_CHILLER__)
   lcd_chillerRunning, // running - pump is on, etc. and temps
   lcd_chillerStopped, // not running - pump is off and temps
   lcd_chillerComFailure,  // can't communicate with the chiller
-  lcd_humidityAndThreshold, // normal humidity
-  lcd_highHumidity,   // high humidity
-  lcd_sensorFailure
+#endif
 };
 
 
@@ -163,6 +176,7 @@ typedef enum { offline, online, running, stopped, shutdown } runningStates;
 //
 typedef enum { SHUTDOWN, READY, RUNNING, UNKNOWN } systemStatus;
 
+#if defined(__USING_CHILLER__)
 typedef struct _chillerState
 {
   runningStates   online;     // online or offline
@@ -170,29 +184,15 @@ typedef struct _chillerState
   float       setpoint;     // current set point temperature
   float       temperature;  // current temperature
 } chillerState;
+#endif
 
-const int MAX_HUMIDITY_SAMPLES  = 6;
-typedef struct _humiditySamples
-{
-  int  index;
-  float  sample[MAX_HUMIDITY_SAMPLES]; 
-} humiditySamples_t;
-
-typedef struct _humidityState
-{
-  runningStates     online;
-  float         humidity;
-  uint16_t      threshold;
-  humiditySamples_t   sampleData;
-} humidityState;
-
-typedef struct _tecState
+typedef struct _ACUState
 {
   runningStates   online;     // online or offline
   runningStates   state;      // running or stopped
-  float       setpoint;     // current set point temperature
-  float       temperature;  // current temperature
-} tecState;
+  float           setpoint;     // current set point temperature
+  float           temperature;  // current temperature
+} ACUState;
 
 typedef struct _LCDState
 {
@@ -203,23 +203,13 @@ typedef struct _LCDState
 
 typedef struct _systemState
 {
+#if defined (__USING_CHILLER__)
   chillerState  chiller;
-  humidityState   sensor;
-  tecState    tec[MAX_TEC_ADDRESS];
+#endif
+  ACUState    ACU[MAX_ACU_ADDRESS];
   LCDState    lcd;
   systemStatus  sysStatus;
 } systemState;
-
-
-//
-// digital encoder
-//
-// encoder
-const int pinB      = 5;  // 5 is PE3  -  Digital 3
-const int pinA      = 2;  // 2 is PE4  -  Digital 0
-const int pinSW       = 3;  // 3 is PE5  -  Digital 1
-int     lastCount     = HUMIDITY_THRESHOLD;
-volatile  int virtualPosition = HUMIDITY_THRESHOLD;
 
 
 //
@@ -235,22 +225,6 @@ const int FAULT_LED   = 4;
 const int NO_FAULT_LED  = 6;
 
 
-//=============== working on the following ===============
-/*
-
-//
-// LCD display
-//
-const int rs = 8, en = 10, d4 = 11, d5 = 12, d6 = 13, d7 = 42, rw=9;
-LiquidCrystal lcd(rs, rw, en, d4, d5, d6, d7);
-
-//
-// temperature himidity sensor
-//
-SHTSensor sht;
-
-
-
 //
 // configure the start/stop button
 //
@@ -262,11 +236,17 @@ volatile bool buttonOnOff = false;
 
 
 //
+// LCD display
+//
+const int rs = 8, en = 10, d4 = 11, d5 = 12, d6 = 13, d7 = 42, rw=9;
+LiquidCrystal lcd(rs, rw, en, d4, d5, d6, d7);
+
+
+
+//
 // splash screen conents - shown during boot while the system is coming on-line
 //
 const char deftDevise[16] = "deftDevise   ";
-const char buildInfo[16]  = "210402     ";
-
-*/
+const char buildInfo[16]  = "210103       ";
 
 #endif

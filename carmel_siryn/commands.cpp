@@ -20,7 +20,7 @@ uint16_t  cmd::dataLength() const { return(m_data); }
 
 
 // validate pkt Rx'ed from the temp controller
-bool cmd::validateCtrlrRxPkt(uint8_t* buff, uint8_t bufflen, uint8_t id, bool isWriteCmd)
+bool cmd::validateRxPkt(uint8_t* buff, uint8_t bufflen, uint8_t id, bool isWriteCmd)
 {
   uint16_t  crc;
 
@@ -130,9 +130,9 @@ uint8_t cmd::buildReadCmd(uint8_t* buff, uint8_t bufflen, uint16_t dataLength, u
 cmdResp cmd::buildReadResp(uint8_t* buff, uint8_t bufflen, uint8_t id)
 {
   // validate the Rx'ed packet
-  if( (!validateCtrlrRxPkt(buff, bufflen, id, false)) )
+  if( (!validateRxPkt(buff, bufflen, id, false)) )
   {
-  return(cmdResp(false, buff, bufflen));
+    return(cmdResp(false, buff, bufflen));
   }
 
   // return the address of the beginning of the returned data bytes . . 
@@ -174,7 +174,7 @@ uint8_t cmd::buildWriteCmd(uint8_t* buff, uint8_t bufflen, uint16_t data, uint8_
 cmdResp cmd::buildWriteResp(uint8_t* buff, uint8_t bufflen, uint8_t id)
 {
   // validate the Rx'ed packet
-  if( (!validateCtrlrRxPkt(buff, bufflen, id, true)) )
+  if( (!validateRxPkt(buff, bufflen, id, true)) )
   {
   return(cmdResp(false, buff, bufflen));
   }

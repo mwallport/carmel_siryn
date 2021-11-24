@@ -1,14 +1,15 @@
 #include <SPI.h>
 #include <Controllino.h>
+#include <LiquidCrystal.h>    // LCD interface library
 #include <HardwareSerial.h>
 #include <stdio.h>
 #include <inttypes.h>
 #include "carmel_siryn.h"
 
 
-
 void setup(void)
 {
+
   //
   // start the system components and Serial port if running debug
   //
@@ -25,7 +26,6 @@ void setup(void)
   Serial.println(" -----------------------------------------------------------"); Serial.flush();
   #endif
 
-/*
 
   //
   // always start the chiller
@@ -37,38 +37,22 @@ void setup(void)
   // normally gotten via getStatus() which runs on a period
   //
   handleChillerStatus();
-  handleTECStatus();
-  getHumidityLevel();
-*/
+  handleACUStatus();
 }
 
 
 void loop(void)
 {
+  //
+  // write the PVOF
+  //
+  uint16_t currPVOF = writePVOF(ASIC_ID, __INIT_PVOF__);
 
+  #ifdef __DEBUG_VIA_SERIAL__
+  Serial.print("PVOF read back : "); Serial.print(currPVOF, 16); Serial.println("");
+  #endif
 
-  cmdResp writeSV = rs485Bus.writeProcess(ASIC_ID, SV, 0x0220);
-  if( (false == writeSV.retCode()) )
-  {
-    Serial.println("writeProcess(ASIC_ID, SV, 0x0220) failed");
-  } else
-  {
-    Serial.println("writeProcess(ASIC_ID, SV, 0x0220) success");
-  }
   
-  cmdResp readSV = rs485Bus.readProcess(ASIC_ID, SV, 2);
-  if( (false == readSV.retCode()) )
-  {
-    Serial.print("readProcess(ASIC_ID, SV, 2) failed");
-  } else
-  {
-    val = htons((*(reinterpret_cast<uint16_t*>(readSV.buff()))));
-    Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
-    Serial.print(" read value is: "); Serial.println(val, 16);
-  }
-
-  delay(1000);
-/*
   //
   // getStatus will update LCD and sysStats data structure
   //
@@ -87,10 +71,13 @@ void loop(void)
   // update the LCD
   //
   manageLCD();
-*/
 }
 
 
+
+//-------------------------------------------------------------
+//
+//
 void initSystem(void)
 {
   int count = 0;
@@ -138,7 +125,7 @@ void initSystem(void)
   //
   // start the LCD and paint system initializing
   //
-//  startLCD();
+  //  startLCD();
 
   //
   // register the ISR for the digital encoder
@@ -148,13 +135,12 @@ void initSystem(void)
   //
   // initialize the start/stop button
   //
-//  configureButton();
+  configureButton();
 
   //
   // initialize the fault/no-fault LED(s)
   //
   configureFaultNoFault();
-  
 
   //
   // let the Serial port settle after initButton()
@@ -169,27 +155,22 @@ void initSystem(void)
 //
 void initSysStates(systemState& states)
 {
+#if defined(__USING_CHILLER__)
   // chiller starts offline until queried via getStatus()
   states.chiller.online    = offline;
   states.chiller.state     = stopped;
   states.chiller.temperature = 0;
   states.chiller.setpoint  = 0;
+#endif
 
-  // sensor starts offline until discovered to be online via getStatus()
-  states.sensor.humidity   = 0;
-  states.sensor.threshold  = HUMIDITY_THRESHOLD;
-  states.sensor.online     = offline;
-  states.sensor.sampleData.index = 0;
-  for(int i = 0; i < MAX_HUMIDITY_SAMPLES; i++)
-    states.sensor.sampleData.sample[i] = 0.0;
 
-  // tecs starts offline until discovered to be online via getStatus()
-  for(int i = MIN_TEC_ADDRESS; i <= MAX_TEC_ADDRESS; i++)
+  // ACUs starts offline until discovered to be online via getStatus()
+  for(int i = MIN_ACU_ADDRESS; i <= MAX_ACU_ADDRESS; i++)
   {
-    states.tec[(i - MIN_TEC_ADDRESS)].online      = offline;
-    states.tec[(i - MIN_TEC_ADDRESS)].state       = stopped;
-    states.tec[(i - MIN_TEC_ADDRESS)].setpoint    = 0;
-    states.tec[(i - MIN_TEC_ADDRESS)].temperature   = 0;
+    states.ACU[(i - MIN_ACU_ADDRESS)].online      = offline;
+    states.ACU[(i - MIN_ACU_ADDRESS)].state       = stopped;
+    states.ACU[(i - MIN_ACU_ADDRESS)].setpoint    = 0;
+    states.ACU[(i - MIN_ACU_ADDRESS)].temperature   = 0;
   }
 
   // lcd - initialize all messages
@@ -205,10 +186,10 @@ void initSysStates(systemState& states)
   // setup the 'good' lcd functions
   //
   sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Initializing;
-  sysStates.lcd.lcdFacesIndex[TEC_NRML_OFFSET]     = tec_Stopped;
+  sysStates.lcd.lcdFacesIndex[ACU_NRML_OFFSET]     = ACU_Stopped;
+#if defined(__USING_CHILLER__)
   sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]   = chiller_Stopped;
-  sysStates.lcd.lcdFacesIndex[HUMIDITY_NRML_OFFSET]  = sensor_humidityAndThreshold;
-
+#endif
   sysStates.lcd.index = 0;
   sysStates.sysStatus = UNKNOWN;
 }
@@ -223,7 +204,7 @@ void configureFaultNoFault(void)
 }
 
 
-/*
+
 //
 // use the global sysStates.lcd data structures to paint
 // messages on the LCD
@@ -269,26 +250,8 @@ void manageLCD(void)
       }
     }
 
-    //
-    // update the LCD screen
-    //
-    // special case the humidity sensor - show humidity status in case of:
-    // - humidity is too high
-    // - SHT sensor failure
-    // in either case the system will be in shutdown mode already or very soon
-    //
-    if( (humidityHigh()) )
-    {
-      // high or sensor failure
-      if( (offline == sysStates.sensor.online) )
-        lcdFaces[sensor_Failure]();
-      else
-        lcdFaces[sensor_HighHumidity]();
+    lcdFaces[sysStates.lcd.lcdFacesIndex[(sysStates.lcd.index)]]();
 
-    } else // paint the current LCD screen
-    {
-      lcdFaces[sysStates.lcd.lcdFacesIndex[(sysStates.lcd.index)]]();
-    }
 
     //
     // reload the count down timer
@@ -298,8 +261,7 @@ void manageLCD(void)
     //
     // and advance the index to the next message
     //
-    sysStates.lcd.index =
-      (((sysStates.lcd.index + 1) >= MAX_LCD_MSGS) ? 0 : (sysStates.lcd.index + 1));
+    sysStates.lcd.index = (((sysStates.lcd.index + 1) >= MAX_LCD_MSGS) ? 0 : (sysStates.lcd.index + 1));
   }
 }
 
@@ -328,49 +290,6 @@ bool startLCD(void)
 }
 
 
-bool startSHTSensor(void)
-{
-  bool retVal = false;
-
-  #ifdef __DEBUG2_VIA_SERIAL__
-  Serial.println("---------------------------------------");
-  Serial.println(__PRETTY_FUNCTION__);
-  #endif
-
-
-  if( (sht.init()) && (sht.setAccuracy(SHTSensor::SHT_ACCURACY_MEDIUM)) )
-  {
-    #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.print(__PRETTY_FUNCTION__);
-    Serial.println("started SHT sensor");
-    Serial.flush();
-    #endif
-
-    
-    sysStates.sensor.online = online;
-    sysStates.lcd.lcdFacesIndex[HUMIDITY_NRML_OFFSET]  = sensor_humidityAndThreshold;
-    retVal  = true;
-  } else
-  {
-    #ifdef __DEBUG_VIA_SERIAL__
-    Serial.print(__PRETTY_FUNCTION__);
-    Serial.println(" ERROR: unable to start sensor");
-    Serial.flush();
-    #endif
-
-    // update the sysStates
-    sysStates.sensor.online = offline;
-
-    // update the LCD status for the sensor
-    sysStates.lcd.lcdFacesIndex[HUMIDITY_FAIL_OFFSET]  = sensor_Failure;
-
-    retVal  = false;
-  }
-
-  return(retVal);
-}
-
-
 // ----------------------------------------------------------
 // return true only if
 // - LCD is up
@@ -388,14 +307,7 @@ bool startUp(void)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
- 
-  //
-  // if humidity is too high, or there is a humidity sensor failure,
-  // do not start the chiller - return failure
-  //
-  if( (humidityHigh()) )
-    return(false);  
-  
+
   //
   // paint 'Starting' on LCD
   //
@@ -403,13 +315,13 @@ bool startUp(void)
 
 
   //
-  // start the chiller and the TECs
+  // start the chiller and the ACUs
   //
   if( !(startChiller()) )
     retVal  = false;
 
-  // only start the TECs is the chiller is running
-  else if( !(startTECs()) )
+  // only start the ACUs is the chiller is running
+  else if( !(startACUs()) )
     retVal = false;
 
   if( (true == retVal) )
@@ -436,61 +348,21 @@ void getStatus(void)
 
 
   //
-  // get the chiller and TEC's status every GET_STATUS_INTERVAL seconds
+  // get the chiller and ACU's status every GET_STATUS_INTERVAL seconds
   //
   if( (GET_STATUS_INTERVAL < (currentGetStatusTime - lastGetStatusTime)) )
   {
     #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.println("- check TECs and chiller --------------");
+    Serial.println("- check ACUs and chiller --------------");
     Serial.println(__PRETTY_FUNCTION__);
     #endif
     
     lastGetStatusTime = currentGetStatusTime;
     handleChillerStatus();
-    handleTECStatus();
+    handleACUStatus();
   }
 
 
-  //
-  // get the chiller and TEC's status every GET_HUMIDITY_INTERVAL seconds
-  //
-  if( (GET_HUMIDITY_INTERVAL < (currentGetStatusTime - lastGetHumidityTime)) )
-  {
-    #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.println("- check humidity ----------------------");
-    Serial.println(__PRETTY_FUNCTION__);
-    #endif
-
-    lastGetHumidityTime = currentGetStatusTime;
-    getHumidityLevel();
-    
-    //
-    // if humidity too high, shutdown the chiller
-    //
-    // TODO: shutdown just the chiller or the TECs too ?
-    //
-    if( (humidityHigh()) )
-    { 
-      #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.println("- !!! humidity is high !!!! ----------------------");
-      Serial.print("sysStates.sysStatus is: "); Serial.println(sysStates.sysStatus);
-      Serial.println(__PRETTY_FUNCTION__);
-      #endif
-
-      // disable the button ISR, the uC queues up the
-      // interrupts, so if button is presssed while system is
-      // shutdown due to high humidity, that button press could
-      // cause the system to start up when the humidity failure clears
-      disableButtonISR();
-
-      // stop the chiller, stop the TECs
-      if( (SHUTDOWN != sysStates.sysStatus) )
-        shutDownSys(false);
-    } else
-    {
-      enableButtonISR();
-    }
-  }
 
   //
   // set the LCD state for the overall system based on the
@@ -523,7 +395,8 @@ bool shutDownSys(bool stopChillerCmd)
   //
   // turn off the chiller only if there is a humidity failure or stopChillerCmd is true
   //
-  if( (stopChillerCmd) || (humidityHigh()) )
+#if defined(__USING_CHILLER__)
+  if( (stopChillerCmd) )
   {
     for(uint8_t i = 0; i < MAX_SHUTDOWN_ATTEMPTS; i++)
     {
@@ -535,14 +408,15 @@ bool shutDownSys(bool stopChillerCmd)
         break;
       }
     }
-  } 
+  }
+#endif
       
   //
-  // turn off the TECs - not checking return value here as we are dying anyway ??
+  // turn off the ACUs - not checking return value here as we are dying anyway ??
   //
-  for(uint8_t Address = MIN_TEC_ADDRESS; (Address <= MAX_TEC_ADDRESS); Address++)
+  for(uint8_t Address = MIN_ACU_ADDRESS; (Address <= MAX_ACU_ADDRESS); Address++)
   {
-    if( !(ms.StopTEC(Address)) )
+    if( !(StopACU(Address)) )
       retVal  = false;
   }
 
@@ -563,6 +437,8 @@ bool shutDownSys(bool stopChillerCmd)
 //
 bool startChiller(void)
 {
+#if defined(__USING_CHILLER__)
+
   #ifdef __DEBUG2_VIA_SERIAL__
   Serial.println("---------------------------------------");
   Serial.println(__PRETTY_FUNCTION__);
@@ -571,53 +447,42 @@ bool startChiller(void)
   bool retVal = true;
 
 
-  //
-  // if humidity is too high, or there is a humidity sensor failure,
-  // do not start the chiller - return failure
-  //
-  if( (humidityHigh()) )
-  {
-    #ifdef __DEBUG_VIA_SERIAL__
-    Serial.print(__PRETTY_FUNCTION__);
-    Serial.println(" WARNING: not starting chiller, humidity too high or sensor failure");
-    #endif
 
+  if( !(chiller.StartChiller()) )
+  {
     retVal  = false;
-
-  } else
-  {
-    if( !(chiller.StartChiller()) )
-    {
-      retVal  = false;
-  
-      #ifdef __DEBUG_VIA_SERIAL__
-      Serial.print(__PRETTY_FUNCTION__); Serial.println(" unable to start chiller");
-      #endif
-    }
-
-    //
-    // let handleChillerStatus do all the house keeping
-    //
-    handleChillerStatus();
-
-    //
-    // update the system state
-    //
-    setSystemStatus();
+ 
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print(__PRETTY_FUNCTION__); Serial.println(" unable to start chiller");
+    #endif
   }
 
+  //
+  // let handleChillerStatus do all the house keeping
+  //
+  handleChillerStatus();
+
+
+  //
+  // update the system state
+  //
+  setSystemStatus();
+
   return(retVal);
+#else
+  return(true);
+#endif
 }
 
 
 // ---------------------------------------
-// find all TECs, there should be 3
+// find all ACUs, there should be 3
 // - verify their addresses by fetching hw version
 //      expecting ID s2, 3, and 4
 // - turn them 'on'
 // return true if all these things happen
 //
-bool startTECs(void)
+bool startACUs(void)
 {
   bool  retVal    = true;
 
@@ -629,24 +494,26 @@ bool startTECs(void)
 
 
   //
-  // only start the TECs if the chiller is running
+  // only start the ACUs if the chiller is running
   // only in the SHUTDOWN state is the chiller not running (fucking Yoda?)
   //
+#if defined (__USING_CHILLER__)
   if( (running == sysStates.chiller.state) )
   {
+#endif
     //
     // expecting the addresses to be 1, 2, and 3
     // the instance for these commands to be 1
     //
-    // initialize the TEC LCD state
-    for(uint8_t Address = MIN_TEC_ADDRESS; Address <= MAX_TEC_ADDRESS; Address++)
+    // initialize the ACU LCD state
+    for(uint8_t Address = MIN_ACU_ADDRESS; Address <= MAX_ACU_ADDRESS; Address++)
     {
-      if( !(ms.StartTEC(Address)) )
+      if( !(StartACU(Address)) )
       {
         retVal = false;
         
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.print(__PRETTY_FUNCTION__); Serial.print(" unable to start TEC: ");
+        Serial.print(__PRETTY_FUNCTION__); Serial.print(" unable to start ACU: ");
         Serial.println(Address, DEC);
         Serial.flush();
         #endif
@@ -654,31 +521,33 @@ bool startTECs(void)
     }
 
     //
-    // let handleTECStatus() derive the TEC's status
+    // let handleACUStatus() derive the ACU's status
     //
-    handleTECStatus();
+    handleACUStatus();
 
     //
     // update the system state
     //
     setSystemStatus();
-    
+
+#if defined (__USING_CHILLER__)
   } else
   {
     retVal = false;
     
     #ifdef __DEBUG2_VIA_SERIAL__
     Serial.print(__PRETTY_FUNCTION__);
-    Serial.println(": not starting TECs chiller is not running");
+    Serial.println(": not starting ACUs chiller is not running");
     Serial.flush();
     #endif
   }
+#endif
   
   return(retVal);
 }
 
 
-bool stopTECs(void)
+bool stopACUs(void)
 {
   bool  retVal    = true;
 
@@ -693,14 +562,14 @@ bool stopTECs(void)
   // expecting the addresses to be 2, 3, and 4
   // the instance for these commands to be 1
   //
-  sysStates.lcd.lcdFacesIndex[TEC_NRML_OFFSET]   = tec_Stopped;
-  sysStates.lcd.lcdFacesIndex[TEC_FAIL_OFFSET]   = no_Status;
-  for(uint8_t Address = MIN_TEC_ADDRESS; (Address <= MAX_TEC_ADDRESS); Address++)
+  sysStates.lcd.lcdFacesIndex[ACU_NRML_OFFSET]   = ACU_Stopped;
+  sysStates.lcd.lcdFacesIndex[ACU_FAIL_OFFSET]   = no_Status;
+  for(uint8_t Address = MIN_ACU_ADDRESS; (Address <= MAX_ACU_ADDRESS); Address++)
   {
-    if( !(ms.StopTEC(Address)) )
+    if( !(StopACU(Address)) )
     {
       #ifdef __DEBUG_VIA_SERIAL__
-      Serial.print("stopTECs unable to stop TEC ");
+      Serial.print("stopACUs unable to stop ACU ");
       Serial.println(Address, DEC);
       #endif
 
@@ -709,22 +578,22 @@ bool stopTECs(void)
       //
       // update the LCD state at least
       //
-      sysStates.lcd.lcdFacesIndex[TEC_FAIL_OFFSET]  = tec_ComFailure;
-      sysStates.tec[(Address - MIN_TEC_ADDRESS)].online       = offline;
-      sysStates.tec[(Address - MIN_TEC_ADDRESS)].state        = stopped;  // we don't know, or don't change this
+      sysStates.lcd.lcdFacesIndex[ACU_FAIL_OFFSET]  = ACU_ComFailure;
+      sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online       = offline;
+      sysStates.ACU[(Address - MIN_ACU_ADDRESS)].state        = stopped;  // we don't know, or don't change this
 
     } else
     {
-      sysStates.tec[(Address - MIN_TEC_ADDRESS)].online   = online;
-      sysStates.tec[(Address - MIN_TEC_ADDRESS)].state  = stopped;
+      sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online   = online;
+      sysStates.ACU[(Address - MIN_ACU_ADDRESS)].state  = stopped;
     }
   }
 
   return(retVal);
 }
 
-
-bool setTECTemp(uint16_t tecAddress, float temp)
+/*
+bool setACUTemp(uint16_t ACUAddress, float temp)
 {
   bool retVal = false;
 
@@ -734,17 +603,17 @@ bool setTECTemp(uint16_t tecAddress, float temp)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
-  if( (MAX_TEC_ADDRESS >= tecAddress) )
+  if( (MAX_ACU_ADDRESS >= ACUAddress) )
   {
-    if( (ms.SetTECTemp(tecAddress, temp)) )
+    if( (ms.SetACUTemp(ACUAddress, temp)) )
     {
       retVal  = true;
     #ifdef __DEBUG_VIA_SERIAL__
     } else
     {
       Serial.print(__PRETTY_FUNCTION__);
-      Serial.print(" ERROR: failed to set temp for TEC at addr: ");
-      Serial.println(tecAddress);
+      Serial.print(" ERROR: failed to set temp for ACU at addr: ");
+      Serial.println(ACUAddress);
       Serial.flush();
     #endif
     }
@@ -752,18 +621,20 @@ bool setTECTemp(uint16_t tecAddress, float temp)
   } else
   {
     Serial.print(__PRETTY_FUNCTION__);
-    Serial.print(" ERROR: failed to set temp for TEC addr out of range: ");
-    Serial.println(tecAddress);
+    Serial.print(" ERROR: failed to set temp for ACU addr out of range: ");
+    Serial.println(ACUAddress);
     Serial.flush();
   #endif
   }
 
   return(retVal);
 }
+*/
 
 
 bool setChillerSetPoint(char* temp)
 {
+#if defined (__USING_CHILLER__)
   #ifdef __DEBUG2_VIA_SERIAL__
   Serial.println("---------------------------------------");
   Serial.println(__PRETTY_FUNCTION__);
@@ -772,6 +643,9 @@ bool setChillerSetPoint(char* temp)
 
 
   return(chiller.SetSetPoint(temp));
+#else
+  return(true);
+#endif
 }
 
 
@@ -785,31 +659,28 @@ void handleMsgs(void)
 
   if( (currentButtonOnOff != buttonOnOff) )
   {
-    if( (!humidityHigh()) )
-    {
-      currentButtonOnOff = buttonOnOff;
+    currentButtonOnOff = buttonOnOff;
       
-      #ifdef __DEBUG_VIA_SERIAL__
-      Serial.print("button press happened, switching ");
-      if( (true == currentButtonOnOff) ) Serial.println("on"); else Serial.println("off");
-      Serial.flush();
-      #endif
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("button press happened, switching ");
+    if( (true == currentButtonOnOff) ) Serial.println("on"); else Serial.println("off");
+    Serial.flush();
+    #endif
 
-      if( (true == currentButtonOnOff) )
-      {
-        //
-        // adjust the button LED
-        //
-        digitalWrite(BUTTON_LED, HIGH);
-        startUp();
-      } else
-      {
-        //
-        // adjust the button LED
-        //
-        digitalWrite(BUTTON_LED, LOW);
-        shutDownSys(false);
-      }
+    if( (true == currentButtonOnOff) )
+    {
+      //
+      // adjust the button LED
+      //
+      digitalWrite(BUTTON_LED, HIGH);
+      startUp();
+    } else
+    {
+      //
+      // adjust the button LED
+      //
+      digitalWrite(BUTTON_LED, LOW);
+      shutDownSys(false);
     }
   } else
   {
@@ -823,19 +694,19 @@ void handleMsgs(void)
       //
       switch( (cp.getMsgId()) )
       {
-        case startUpCmd:        // start the chiller, TECs, and sensor
+        case startUpCmd:        // start the chiller if present, and ACUs
         {
           handleStartUpCmd();
           break;
         }
   
-        case shutDownCmd:         // shutdown the chiller, TECs, and sensor
+        case shutDownCmd:         // shutdown the chiller, ACUs, and sensor
         {
           handleShutDownCmd();
           break;
         }
-  
-        case getStatusCmd:         // fetch the status of chiller, all TECs, and humidity sensor
+/*  
+        case getStatusCmd:         // fetch the status of chiller, all ACUs, and humidity sensor
         {
           handleGetStatusCmd();
           break;
@@ -859,24 +730,24 @@ void handleMsgs(void)
           break;
         };
   
-        case setTECTemperature:      // target TEC m_address and temp
+        case setACUTemperature:      // target ACU m_address and temp
         {
-          handleSetTECTemperature();
+          handleSetACUTemperature();
           break;
         };
   
-        case getTECTemperature:      // target TEC m_address and temp
+        case getACUTemperature:      // target ACU m_address and temp
         {
-          handleGetTECTemperature(false);
+          handleGetACUTemperature(false);
           break;
         };
   
-        case getTECObjTemperature:
+        case getACUObjTemperature:
         {
-          handleGetTECTemperature(true);
+          handleGetACUTemperature(true);
           break;
         };
-  
+#if defined(__USING_CHILLER__)
         case startChillerMsg:
         {
           handleStartChillerMsg();
@@ -895,42 +766,42 @@ void handleMsgs(void)
           break;
         };
   
-        case setChillerTemperature:    // target TEC m_address and temp
+        case setChillerTemperature:    // target ACU m_address and temp
         {
           handleSetChillerTemperature();
           break;
         };
   
-        case getChillerTemperature:    // target TEC m_address and temp
+        case getChillerTemperature:    // target ACU m_address and temp
         {
           handleGetChillerTemperature(true);
           break;
         };
   
-        case getChillerObjTemperature:    // target TEC m_address and temp
+        case getChillerObjTemperature:    // target ACU m_address and temp
         {
           handleGetChillerTemperature(false);
           break;
         };
-  
-        case getTECInfoMsg:
+#endif
+        case getACUInfoMsg:
         {
-          handlGetTECInfo();
+          handlGetACUInfo();
           break;
         };
   
-        case enableTECs:         // turn on all TECs
+        case enableACUs:         // turn on all ACUs
         {
-          handleEnableTECs();
+          handleEnableACUs();
           break;
         };
   
-        case disableTECs:        // turn off all TECs
+        case disableACUs:        // turn off all ACUs
         {
-          handleDisableTECs();
+          handleDisableACUs();
           break;
         };
-  
+*/
         default:
         {
           // send NACK
@@ -1078,7 +949,7 @@ void lcd_systemFailure(void)
 }
 
 
-void lcd_tecsRunning(void)
+void lcd_ACUsRunning(void)
 {
   #ifdef __DEBUG2_VIA_SERIAL__
   Serial.println("---------------------------------------");
@@ -1089,18 +960,18 @@ void lcd_tecsRunning(void)
   lcd.clear();
   lcd.home();
   lcd.setCursor(0,0);
-  lcd.print("TEC run     ");
+  lcd.print("ACU run     ");
   lcd.setCursor(9,0);
-  lcd.print(sysStates.tec[0].setpoint,1);
+  lcd.print(sysStates.ACU[0].setpoint,1);
   lcd.setCursor(0,1);
-  lcd.print(sysStates.tec[1].setpoint,1);
+  lcd.print(sysStates.ACU[1].setpoint,1);
   lcd.setCursor(9,1);
-  lcd.print(sysStates.tec[2].setpoint,1);
+  lcd.print(sysStates.ACU[2].setpoint,1);
   lcd.display();
 }
 
 
-void lcd_tecsStopped(void)
+void lcd_ACUsStopped(void)
 {
   #ifdef __DEBUG2_VIA_SERIAL__
   Serial.println("---------------------------------------");
@@ -1111,18 +982,18 @@ void lcd_tecsStopped(void)
   lcd.clear();
   lcd.home();
   lcd.setCursor(0,0);
-  lcd.print("TEC stop    ");
+  lcd.print("ACU stop    ");
   lcd.setCursor(9,0);
-  lcd.print(sysStates.tec[0].setpoint,1);
+  lcd.print(sysStates.ACU[0].setpoint,1);
   lcd.setCursor(0,1);
-  lcd.print(sysStates.tec[1].setpoint,1);
+  lcd.print(sysStates.ACU[1].setpoint,1);
   lcd.setCursor(9,1);
-  lcd.print(sysStates.tec[2].setpoint,1);
+  lcd.print(sysStates.ACU[2].setpoint,1);
   lcd.display();
 }
 
 
-void lcd_tecComFailure(void)
+void lcd_ACUComFailure(void)
 {
   #ifdef __DEBUG2_VIA_SERIAL__
   Serial.println("---------------------------------------");
@@ -1133,13 +1004,14 @@ void lcd_tecComFailure(void)
   lcd.clear();
   lcd.home();
   lcd.setCursor(0,0);
-  lcd.print("TEC COMM");
+  lcd.print("ACU COMM");
   lcd.setCursor(0,1);
   lcd.print("FAILURE");
   lcd.display();
 }
 
 
+#if defined(__USING_CHILLER__)
 void lcd_chillerRunning(void)
 {
   #ifdef __DEBUG2_VIA_SERIAL__
@@ -1204,57 +1076,10 @@ void lcd_chillerComFailure(void)
   lcd.print("CHL COM FAILURE");
   lcd.display();
 }
-
-
-void lcd_humidityAndThreshold(void)
-{
-  #ifdef __DEBUG2_VIA_SERIAL__
-  Serial.println("---------------------------------------");
-  Serial.println(__PRETTY_FUNCTION__);
-  #endif
-
-
-  lcd.noDisplay();
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("Humidity:     %");
-  lcd.setCursor(11,0);
-  lcd.print(sysStates.sensor.humidity);
-  lcd.setCursor(0,1);
-  lcd.print("Threshold:    %");
-  lcd.setCursor(11,1);
-  lcd.print(sysStates.sensor.threshold);
-  lcd.display();
-}
-
-
-void lcd_highHumidity(void)
-{
-  #ifdef __DEBUG2_VIA_SERIAL__
-  Serial.println("---------------------------------------");
-  Serial.println(__PRETTY_FUNCTION__);
-  #endif
-
-
-  lcd.noDisplay();
-  lcd.clear();
-  lcd.home();
-  lcd.setCursor(0,0);
-  lcd.print("*** HUMIDITY ***");
-  lcd.setCursor(0,1);
-  lcd.print("**** ALERT *****");
-  lcd.display();
-}
-
+#endif
 
 void lcd_sensorFailure(void)
 {
-  #ifdef __DEBUG2_VIA_SERIAL__
-  Serial.println("---------------------------------------");
-  Serial.println(__PRETTY_FUNCTION__);
-  #endif
-
-
   lcd.noDisplay();
   lcd.clear();
   lcd.home();
@@ -1307,7 +1132,7 @@ void handleStartUpCmd(void)
           ntohs(pstartUpCmd->crc), ntohs(pstartUpCmd->eop))) )
     {
       //
-      // start the TECs, chiller, sensor ...
+      // start the ACUs, chiller, sensor ...
       //
       if( (startUp()) )
       {
@@ -1453,6 +1278,7 @@ void handleShutDownCmd(void)
 // all message handlers expect the controlProtocol object
 // to have the received message
 //
+/*
 void handleGetStatusCmd(void)
 {
   getStatus_t*  pgetStatus = reinterpret_cast<getStatus_t*>(cp.m_buff);
@@ -1475,8 +1301,8 @@ void handleGetStatusCmd(void)
       // use the sysStates conentent to respond, send back the received seqNum
       //
       respLength = cp.Make_getStatusResp(cp.m_peerAddress, cp.m_buff,
-        ((humidityHigh()) ? 1 : 0), // humidity alert
-        ((true == TECsRunning()) ? 1 : 0),                  // TECs running
+        0, // humidity alert
+        ((true == ACUsRunning()) ? 1 : 0),                  // ACUs running
         ((running == sysStates.chiller.state) ? 1 : 0),           // chiller running
         pgetStatus->header.seqNum
       );
@@ -1518,277 +1344,68 @@ void handleGetStatusCmd(void)
 
 
 
-void handleSetHumidityThreshold(void)
+void handleSetACUTemperature(void)
 {
-  setHumidityThreshold_t* psetHumidityThreshold = reinterpret_cast<setHumidityThreshold_t*>(cp.m_buff);
-  uint16_t        respLength;
-  uint16_t        result = 0;
-
-
-  //
-  // verify the received packet, here beause this is a setHumidityThreshold
-  // check this is my address and the CRC is correct
-  //
-  if( (ntohs(psetHumidityThreshold->header.address.address)) == cp.m_myAddress)
-  {
-    //
-    // verify the CRC
-    //
-    if( (cp.verifyMessage(len_setHumidityThreshold_t,
-      ntohs(psetHumidityThreshold->crc), ntohs(psetHumidityThreshold->eop))) )
-    {
-      //
-      // pick up the new threshold if not running
-      //
-      if( (RUNNING != sysStates.sysStatus) )
-      {
-        sysStates.sensor.threshold  = ntohs(psetHumidityThreshold->threshold);
-        result = 1;
-        #ifdef __DEBUG2_VIA_SERIAL__
-        Serial.print(__PRETTY_FUNCTION__); Serial.print( " set humidity threshold to: ");
-        Serial.println(sysStates.sensor.threshold);
-        #endif
-      }
-      
-      //
-      // use the sysStates conentent to respond, send back the received seqNum
-      //
-      respLength = cp.Make_setHumidityThresholdResp(cp.m_peerAddress, cp.m_buff, result,
-        psetHumidityThreshold->header.seqNum
-      );
-
-      //
-      // use the CP object to send the response back
-      // this functoin usese the cp.m_buff created above, just
-      // need to send the lenght into the function
-      //
-      if( !(cp.doTxResponse(respLength)))
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
-        Serial.flush();
-      #ifdef __DEBUG2_VIA_SERIAL__
-      } else
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
-        Serial.flush();
-      #endif
-      }
-    #ifdef __DEBUG_VIA_SERIAL__
-    } else
-    {
-      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(psetHumidityThreshold->crc));
-      Serial.flush();
-    #endif
-    }
-
-  #ifdef __DEBUG_VIA_SERIAL__
-  } else
-  {
-    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(psetHumidityThreshold->header.address.address));
-    Serial.flush();
-  #endif
-  }
-}
-
-
-void handleGetHumidityThreshold(void)
-{
-  getHumidityThreshold_t* pgetHumidityThreshold = reinterpret_cast<getHumidityThreshold_t*>(cp.m_buff);
-  uint16_t        respLength; 
-
-
-  //
-  // verify the received packet, here beause this is a getHumidityThresholdCmd
-  // check this is my address and the CRC is correct
-  //
-  if( (ntohs(pgetHumidityThreshold->header.address.address)) == cp.m_myAddress)
-  {
-    //
-    // verify the CRC
-    //
-    if( (cp.verifyMessage(len_getHumidityThreshold_t,
-              ntohs(pgetHumidityThreshold->crc), ntohs(pgetHumidityThreshold->eop))) )
-    {
-      #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.print(__PRETTY_FUNCTION__); Serial.print( " returning humidity threshold: ");
-      Serial.println(sysStates.sensor.threshold);
-      #endif
-      
-      //
-      // use the sysStates conentent to respond, send back the received seqNum
-      //
-      respLength = cp.Make_getHumidityThresholdResp(cp.m_peerAddress, cp.m_buff,
-        sysStates.sensor.threshold,
-        pgetHumidityThreshold->header.seqNum
-      );
-
-      //
-      // use the CP object to send the response back
-      // this functoin usese the cp.m_buff created above, just
-      // need to send the lenght into the function
-      //
-      if( !(cp.doTxResponse(respLength)))
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
-        Serial.flush();
-      #ifdef __DEBUG2_VIA_SERIAL__
-      } else
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
-        Serial.flush();
-      #endif
-      }
-    #ifdef __DEBUG_VIA_SERIAL__
-    } else
-    {
-      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(pgetHumidityThreshold->crc));
-      Serial.flush();
-    #endif
-    }
-
-  #ifdef __DEBUG_VIA_SERIAL__
-  } else
-  {
-    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(pgetHumidityThreshold->header.address.address));
-    Serial.flush();
-  #endif
-  }
-}
-
-
-void handleGetHumidity(void)
-{
-  getHumidity_t* pgetHumidity = reinterpret_cast<getHumidity_t*>(cp.m_buff);
-  uint16_t     respLength; 
-
-
-  //
-  // verify the received packet, here beause this is a getHumidityCmd
-  // check this is my address and the CRC is correct
-  //
-  if( (ntohs(pgetHumidity->header.address.address)) == cp.m_myAddress)
-  {
-    //
-    // verify the CRC
-    //
-    if( (cp.verifyMessage(len_getHumidity_t,
-            ntohs(pgetHumidity->crc), ntohs(pgetHumidity->eop))) )
-    {
-      #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.print(__PRETTY_FUNCTION__); Serial.print( " returning humidity: ");
-      Serial.println(sysStates.sensor.humidity);
-      #endif
-      
-      //
-      // use the sysStates content to respond, send back the received seqNum
-      //
-      respLength = cp.Make_getHumidityResp(cp.m_peerAddress, cp.m_buff,
-        sysStates.sensor.humidity,
-        pgetHumidity->header.seqNum
-      );
-
-      //
-      // use the CP object to send the response back
-      // this functoin usese the cp.m_buff created above, just
-      // need to send the lenght into the function
-      //
-      if( !(cp.doTxResponse(respLength)))
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
-        Serial.flush();
-      #ifdef __DEBUG2_VIA_SERIAL__
-      } else
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
-        Serial.flush();
-      #endif
-      }
-    #ifdef __DEBUG_VIA_SERIAL__
-    } else
-    {
-      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(pgetHumidity->crc));
-      Serial.flush();
-    #endif
-    }
-
-  #ifdef __DEBUG_VIA_SERIAL__
-  } else
-  {
-    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(pgetHumidity->header.address.address));
-    Serial.flush();
-  #endif
-  }
-}
-
-
-void handleSetTECTemperature(void)
-{
-  setTECTemperature_t* psetTECTemperature = reinterpret_cast<setTECTemperature_t*>(cp.m_buff);
+  setACUTemperature_t* psetACUTemperature = reinterpret_cast<setACUTemperature_t*>(cp.m_buff);
   uint16_t  respLength; 
-  uint16_t  tecAddress;
+  uint16_t  ACUAddress;
   uint16_t  result = 0;
   float     setPoint;
 
 
   //
-  // verify the received packet, here beause this is a setTECTemperatureCmd
+  // verify the received packet, here beause this is a setACUTemperatureCmd
   // check this is my address and the CRC is correct
   //
-  if( (ntohs(psetTECTemperature->header.address.address)) == cp.m_myAddress)
+  if( (ntohs(psetACUTemperature->header.address.address)) == cp.m_myAddress)
   {
     //
     // verify the CRC
     //
-    if( (cp.verifyMessage(len_setTECTemperature_t,
-              ntohs(psetTECTemperature->crc), ntohs(psetTECTemperature->eop))) )
+    if( (cp.verifyMessage(len_setACUTemperature_t,
+              ntohs(psetACUTemperature->crc), ntohs(psetACUTemperature->eop))) )
     {
       //
       // pick up the new temperature
       //
-      // if the TECs addresses is out of range, send back failure
+      // if the ACUs addresses is out of range, send back failure
       //
-      setPoint = atof(reinterpret_cast<char*>(psetTECTemperature->temperature));
-      tecAddress = ntohs(psetTECTemperature->tec_address);
+      setPoint = atof(reinterpret_cast<char*>(psetACUTemperature->temperature));
+      ACUAddress = ntohs(psetACUTemperature->ACU_address);
 
       #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.print(__PRETTY_FUNCTION__); Serial.print( " found setPoint:tecAddress ");
+      Serial.print(__PRETTY_FUNCTION__); Serial.print( " found setPoint:ACUAddress ");
       Serial.print(setPoint,2);
       Serial.print(":");
-      Serial.println(tecAddress);
+      Serial.println(ACUAddress);
       Serial.flush();
       #endif
 
-      if( (MAX_TEC_ADDRESS >= tecAddress) )
+      if( (MAX_ACU_ADDRESS >= ACUAddress) )
       {
-        if( (setTECTemp(tecAddress, setPoint)) )
+        if( (setACUTemp(ACUAddress, setPoint)) )
         {
           #ifdef __DEBUG2_VIA_SERIAL__
-          Serial.print(__PRETTY_FUNCTION__); Serial.print( " success set temp for TEC: ");
-          Serial.println(tecAddress);
+          Serial.print(__PRETTY_FUNCTION__); Serial.print( " success set temp for ACU: ");
+          Serial.println(ACUAddress);
           Serial.flush();
           #endif
           result  = 1;
 
           //
-          // TODO: DO NOT update the TEC's set point temperature ! 
+          // TODO: DO NOT update the ACU's set point temperature ! 
           // rather, getStatus() queries the Meerstetter device
           //
           // TODO: document this behavior, update may not show on LCD
           // for 'a few seconds' until getStatus() queries the device
           //
-          //sysStates.tec[(tecAddress - MIN_TEC_ADDRESS)].setpoint = setPoint;
+          //sysStates.ACU[(ACUAddress - MIN_ACU_ADDRESS)].setpoint = setPoint;
 
         } else
         {
           #ifdef __DEBUG_VIA_SERIAL__
-          Serial.print(__PRETTY_FUNCTION__); Serial.print( " ERROR: unable to temp for TEC: ");
-          Serial.println(tecAddress);
+          Serial.print(__PRETTY_FUNCTION__); Serial.print( " ERROR: unable to temp for ACU: ");
+          Serial.println(ACUAddress);
           #endif
           result  = 0;
         }
@@ -1800,14 +1417,14 @@ void handleSetTECTemperature(void)
         result  = 0;
 
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.print(__PRETTY_FUNCTION__); Serial.print( " ERROR: tec_address out of range: ");
-        Serial.println(tecAddress);
+        Serial.print(__PRETTY_FUNCTION__); Serial.print( " ERROR: ACU_address out of range: ");
+        Serial.println(ACUAddress);
         #endif
       }
 
       #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.print(__PRETTY_FUNCTION__); Serial.print( " sending back response for TEC: ");
-      Serial.println(tecAddress);
+      Serial.print(__PRETTY_FUNCTION__); Serial.print( " sending back response for ACU: ");
+      Serial.println(ACUAddress);
       #endif
 
       Serial.flush();
@@ -1815,8 +1432,8 @@ void handleSetTECTemperature(void)
       //
       // use the sysStates conentent to respond, send back the received seqNum
       //
-      respLength = cp.Make_setTECTemperatureResp(cp.m_peerAddress, cp.m_buff,
-        tecAddress, result, psetTECTemperature->header.seqNum
+      respLength = cp.Make_setACUTemperatureResp(cp.m_peerAddress, cp.m_buff,
+        ACUAddress, result, psetACUTemperature->header.seqNum
       );
 
       //
@@ -1839,7 +1456,7 @@ void handleSetTECTemperature(void)
     } else
     {
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(psetTECTemperature->crc));
+      Serial.println(ntohs(psetACUTemperature->crc));
       Serial.flush();
     #endif
     }
@@ -1848,39 +1465,39 @@ void handleSetTECTemperature(void)
   } else
   {
     Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(psetTECTemperature->header.address.address));
+    Serial.println(ntohs(psetACUTemperature->header.address.address));
     Serial.flush();
   #endif
   }
 }
 
 
-void handleGetTECTemperature(bool getObjTemp)
+void handleGetACUTemperature(bool getObjTemp)
 {
-  getTECTemperature_t* pgetTECTemperature = reinterpret_cast<getTECTemperature_t*>(cp.m_buff);
+  getACUTemperature_t* pgetACUTemperature = reinterpret_cast<getACUTemperature_t*>(cp.m_buff);
   uint16_t  respLength; 
-  uint16_t  tecAddress;
+  uint16_t  ACUAddress;
   uint16_t  result;
 
 
   //
-  // verify the received packet, here beause this is a getTECTemperatureCmd
+  // verify the received packet, here beause this is a getACUTemperatureCmd
   // check this is my address and the CRC is correct
   //
-  if( (ntohs(pgetTECTemperature->header.address.address)) == cp.m_myAddress)
+  if( (ntohs(pgetACUTemperature->header.address.address)) == cp.m_myAddress)
   {
     //
     // verify the CRC
     //
-    if( (cp.verifyMessage(len_getTECTemperature_t,
-                ntohs(pgetTECTemperature->crc), ntohs(pgetTECTemperature->eop))) )
+    if( (cp.verifyMessage(len_getACUTemperature_t,
+                ntohs(pgetACUTemperature->crc), ntohs(pgetACUTemperature->eop))) )
     {
       //
-      // if the TECs addresses is out of range, send back failure
+      // if the ACUs addresses is out of range, send back failure
       //
-      tecAddress = ntohs(pgetTECTemperature->tec_address);
+      ACUAddress = ntohs(pgetACUTemperature->ACU_address);
 
-      if( (MAX_TEC_ADDRESS < tecAddress) )
+      if( (MAX_ACU_ADDRESS < ACUAddress) )
       {
         //
         // send back failure
@@ -1888,8 +1505,8 @@ void handleGetTECTemperature(bool getObjTemp)
         result  = 0;
 
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.print(__PRETTY_FUNCTION__); Serial.print( " ERROR: tec_address out of range: ");
-        Serial.println(tecAddress);
+        Serial.print(__PRETTY_FUNCTION__); Serial.print( " ERROR: ACU_address out of range: ");
+        Serial.println(ACUAddress);
         #endif
       } else
       {
@@ -1900,13 +1517,13 @@ void handleGetTECTemperature(bool getObjTemp)
       // use the sysStates conentent to respond, send back the received seqNum
       //
       if( (true == getObjTemp) )
-        respLength = cp.Make_getTECObjTemperatureResp(cp.m_peerAddress, cp.m_buff,
-          tecAddress, result, sysStates.tec[(tecAddress - MIN_TEC_ADDRESS)].temperature,
-          pgetTECTemperature->header.seqNum);
+        respLength = cp.Make_getACUObjTemperatureResp(cp.m_peerAddress, cp.m_buff,
+          ACUAddress, result, sysStates.ACU[(ACUAddress - MIN_ACU_ADDRESS)].temperature,
+          pgetACUTemperature->header.seqNum);
       else
-        respLength = cp.Make_getTECTemperatureResp(cp.m_peerAddress, cp.m_buff,
-          tecAddress, result, sysStates.tec[(tecAddress - MIN_TEC_ADDRESS)].setpoint,
-          pgetTECTemperature->header.seqNum);
+        respLength = cp.Make_getACUTemperatureResp(cp.m_peerAddress, cp.m_buff,
+          ACUAddress, result, sysStates.ACU[(ACUAddress - MIN_ACU_ADDRESS)].setpoint,
+          pgetACUTemperature->header.seqNum);
 
       //
       // use the CP object to send the response back
@@ -1921,7 +1538,7 @@ void handleGetTECTemperature(bool getObjTemp)
       } else
       {
         Serial.print(__PRETTY_FUNCTION__); Serial.print(" sent response: ");
-        Serial.println(sysStates.tec[(tecAddress - MIN_TEC_ADDRESS)].temperature, 2);
+        Serial.println(sysStates.ACU[(ACUAddress - MIN_ACU_ADDRESS)].temperature, 2);
         Serial.flush();
       #endif
       }
@@ -1929,7 +1546,7 @@ void handleGetTECTemperature(bool getObjTemp)
     } else
     {
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(pgetTECTemperature->crc));
+      Serial.println(ntohs(pgetACUTemperature->crc));
       Serial.flush();
     #endif
     }
@@ -1938,13 +1555,14 @@ void handleGetTECTemperature(bool getObjTemp)
   } else
   {
     Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(pgetTECTemperature->header.address.address));
+    Serial.println(ntohs(pgetACUTemperature->header.address.address));
     Serial.flush();
   #endif
   }
 }
+*/
 
-
+#if defined (__USING_CHILLER__)
 void handleStartChillerMsg(void)
 {
   startChillerMsg_t* pstartChillerMsg = reinterpret_cast<startChillerMsg_t*>(cp.m_buff);
@@ -1965,7 +1583,7 @@ void handleStartChillerMsg(void)
           ntohs(pstartChillerMsg->crc), ntohs(pstartChillerMsg->eop))) )
     {
       //
-      // start the TECs, chiller, sensor ...
+      // start the ACUs, chiller, sensor ...
       //
       if( (startChiller()) )
       {
@@ -2040,7 +1658,7 @@ void handleStopChiller(void)
           ntohs(pstopChiller->crc), ntohs(pstopChiller->eop))) )
     {
       //
-      // stop chiller is effectively a shutDownSys() as the TECs cannot
+      // stop chiller is effectively a shutDownSys() as the ACUs cannot
       // be running w/o the chiller running
       //
       if(shutDownSys(true))
@@ -2297,11 +1915,12 @@ void handleGetChillerTemperature(bool GetSetPoint)
   #endif
   }
 }
+#endif
 
-
-void handlGetTECInfo(void)
+/*
+void handlGetACUInfo(void)
 {
-  getTECInfoMsg_t*   pgetTECInfo = reinterpret_cast<getTECInfoMsg_t*>(cp.m_buff);
+  getACUInfoMsg_t*   pgetACUInfo = reinterpret_cast<getACUInfoMsg_t*>(cp.m_buff);
   uint16_t    respLength;
   uint16_t    result = 0;
   uint32_t    deviceType  = 0;
@@ -2310,32 +1929,32 @@ void handlGetTECInfo(void)
   uint32_t    serialNumber= 0;
 
 
-  if( (ntohs(pgetTECInfo->header.address.address)) == cp.m_myAddress)
+  if( (ntohs(pgetACUInfo->header.address.address)) == cp.m_myAddress)
   {
     //
     // verify the CRC
     //
-    if( (cp.verifyMessage(len_getTECInfoMsg_t,
-                ntohs(pgetTECInfo->crc), ntohs(pgetTECInfo->eop))) )
+    if( (cp.verifyMessage(len_getACUInfoMsg_t,
+                ntohs(pgetACUInfo->crc), ntohs(pgetACUInfo->eop))) )
     {
       //
       // chiller informaion is gotton during getStatus
       //
-      if( (getTECInfo(ntohs(pgetTECInfo->tec_address), &deviceType,
+      if( (getACUInfo(ntohs(pgetACUInfo->ACU_address), &deviceType,
                 &hwVersion, &fwVersion, &serialNumber)) )
       {
         result  = 1;
       } else
       {
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to startTECs");
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to startACUs");
         Serial.flush();
         #endif
         result  = 0;
       }
 
-      respLength = cp.Make_getTECInfoMsgResp(cp.m_peerAddress, cp.m_buff, htons(pgetTECInfo->tec_address), result,
-                deviceType, hwVersion, fwVersion, serialNumber, pgetTECInfo->header.seqNum);
+      respLength = cp.Make_getACUInfoMsgResp(cp.m_peerAddress, cp.m_buff, htons(pgetACUInfo->ACU_address), result,
+                deviceType, hwVersion, fwVersion, serialNumber, pgetACUInfo->header.seqNum);
 
       //
       // use the CP object to send the response back
@@ -2357,7 +1976,7 @@ void handlGetTECInfo(void)
     } else
     {
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(pgetTECInfo->crc));
+      Serial.println(ntohs(pgetACUInfo->crc));
       Serial.flush();
     #endif
     }
@@ -2366,49 +1985,49 @@ void handlGetTECInfo(void)
   } else
   {
     Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(pgetTECInfo->header.address.address));
+    Serial.println(ntohs(pgetACUInfo->header.address.address));
     Serial.flush();
   #endif
   }
 }
 
 
-void handleEnableTECs(void)
+void handleEnableACUs(void)
 {
-  enableTECs_t* penableTECs = reinterpret_cast<enableTECs_t*>(cp.m_buff);
+  enableACUs_t* penableACUs = reinterpret_cast<enableACUs_t*>(cp.m_buff);
   uint16_t  respLength; 
   uint16_t  result = 0;
 
 
   //
-  // verify the received packet, here beause this is a enableTECsCmd
+  // verify the received packet, here beause this is a enableACUsCmd
   // check this is my address and the CRC is correct
   //
-  if( (ntohs(penableTECs->header.address.address)) == cp.m_myAddress)
+  if( (ntohs(penableACUs->header.address.address)) == cp.m_myAddress)
   {
     //
     // verify the CRC
     //
-    if( (cp.verifyMessage(len_enableTECs_t,
-                ntohs(penableTECs->crc), ntohs(penableTECs->eop))) )
+    if( (cp.verifyMessage(len_enableACUs_t,
+                ntohs(penableACUs->crc), ntohs(penableACUs->eop))) )
     {
       //
       // chiller informaion is gotton during getStatus
       //
-      if( (startTECs()) )
+      if( (startACUs()) )
       {
         result  = 1;
       } else
       {
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to startTECs");
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to startACUs");
         Serial.flush();
         #endif
         result  = 0;
       }
 
-      respLength = cp.Make_enableTECsResp(cp.m_peerAddress, cp.m_buff,
-        result, penableTECs->header.seqNum
+      respLength = cp.Make_enableACUsResp(cp.m_peerAddress, cp.m_buff,
+        result, penableACUs->header.seqNum
       );
 
       //
@@ -2431,7 +2050,7 @@ void handleEnableTECs(void)
     } else
     {
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(penableTECs->crc));
+      Serial.println(ntohs(penableACUs->crc));
       Serial.flush();
     #endif
     }
@@ -2440,49 +2059,49 @@ void handleEnableTECs(void)
   } else
   {
     Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(penableTECs->header.address.address));
+    Serial.println(ntohs(penableACUs->header.address.address));
     Serial.flush();
   #endif
   }
 }
 
 
-void handleDisableTECs(void)
+void handleDisableACUs(void)
 {
-  disableTECs_t* pdisableTECs = reinterpret_cast<disableTECs_t*>(cp.m_buff);
+  disableACUs_t* pdisableACUs = reinterpret_cast<disableACUs_t*>(cp.m_buff);
   uint16_t  respLength; 
   uint16_t  result = 0;
 
 
   //
-  // verify the received packet, here beause this is a disableTECsCmd
+  // verify the received packet, here beause this is a disableACUsCmd
   // check this is my address and the CRC is correct
   //
-  if( (ntohs(pdisableTECs->header.address.address)) == cp.m_myAddress)
+  if( (ntohs(pdisableACUs->header.address.address)) == cp.m_myAddress)
   {
     //
     // verify the CRC
     //
-    if( (cp.verifyMessage(len_disableTECs_t,
-                ntohs(pdisableTECs->crc), ntohs(pdisableTECs->eop))) )
+    if( (cp.verifyMessage(len_disableACUs_t,
+                ntohs(pdisableACUs->crc), ntohs(pdisableACUs->eop))) )
     {
       //
       // chiller informaion is gotton during getStatus
       //
-      if( (stopTECs()) )
+      if( (stopACUs()) )
       {
         result  = 1;
       } else
       {
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.println(__PRETTY_FUNCTION__); Serial.println(" ERROR: failed to stopTECs");
+        Serial.println(__PRETTY_FUNCTION__); Serial.println(" ERROR: failed to stopACUs");
         Serial.flush();
         #endif
         result  = 0;
       }
 
-      respLength = cp.Make_disableTECsResp(cp.m_peerAddress, cp.m_buff,
-        result, pdisableTECs->header.seqNum
+      respLength = cp.Make_disableACUsResp(cp.m_peerAddress, cp.m_buff,
+        result, pdisableACUs->header.seqNum
       );
 
       //
@@ -2505,7 +2124,7 @@ void handleDisableTECs(void)
     } else
     {
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(pdisableTECs->crc));
+      Serial.println(ntohs(pdisableACUs->crc));
       Serial.flush();
     #endif
     }
@@ -2514,12 +2133,13 @@ void handleDisableTECs(void)
   } else
   {
     Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(pdisableTECs->header.address.address));
+    Serial.println(ntohs(pdisableACUs->header.address.address));
     Serial.flush();
   #endif
   }
 }
 
+*/
 
 void sendNACK(void)
 {
@@ -2548,105 +2168,14 @@ void sendNACK(void)
 }
 
 
-
-
-
-bool getHumidityLevel(void)
+bool ACUsRunning(void)
 {
   bool retVal = true;
 
 
-  //
-  // update status and take a reading
-  //
-  if( (sysStates.sensor.online == offline) )
-    digitalWrite(FAULT_LED, HIGH);
-    
-  sysStates.sensor.online = online;
-
-  if( (sht.readSample()) )
+  for(int i = MIN_ACU_ADDRESS; i <= MAX_ACU_ADDRESS; i++)
   {
-    //
-    // update the sysStates for humidity - take an average to smooth spikes
-    //
-    sysStates.sensor.sampleData.sample[sysStates.sensor.sampleData.index] = sht.getHumidity();
-    sysStates.sensor.humidity = 0;  // this will eventually be an average when have enough samples
-    for(int i = 0; i < MAX_HUMIDITY_SAMPLES; i++)
-    {
-      if( ( 0 != sysStates.sensor.sampleData.sample[i]) )
-        sysStates.sensor.humidity += (sysStates.sensor.sampleData.sample[i]);
-      else
-      {
-        sysStates.sensor.humidity = 0;
-        break;
-      }
-    }
-
-    if( (0 != sysStates.sensor.humidity) )
-    {
-      // have enough samples, make an average
-      sysStates.sensor.humidity /= (float)MAX_HUMIDITY_SAMPLES;
-
-      #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.print(__PRETTY_FUNCTION__); Serial.print(" took an average for humidity: ");
-      Serial.print(sysStates.sensor.humidity, 2); Serial.println("%"); Serial.flush();
-      #endif
-
-    } else
-      // not enough samples - take the raw reading
-      sysStates.sensor.humidity = sysStates.sensor.sampleData.sample[sysStates.sensor.sampleData.index];
-
-    //
-    // update the index for the next reading
-    //
-    sysStates.sensor.sampleData.index += 1;
-
-    if( (sysStates.sensor.sampleData.index >= MAX_HUMIDITY_SAMPLES) )
-      sysStates.sensor.sampleData.index = 0;
-
-    if (humidityHigh())
-    {
-      #ifdef __DEBUG_VIA_SERIAL__
-      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: found high humidity: ");
-      Serial.print(sysStates.sensor.humidity, 2); Serial.println("%"); Serial.flush();
-      #endif
-
-      // update the LCD
-      sysStates.lcd.lcdFacesIndex[HUMIDITY_FAIL_OFFSET]   = sensor_HighHumidity;
-      retVal  = false;
-    } else
-    {
-      sysStates.lcd.lcdFacesIndex[HUMIDITY_FAIL_OFFSET]   = no_Status;
-    }
-  } else
-  {
-    #ifdef __DEBUG_VIA_SERIAL__
-    Serial.print(__PRETTY_FUNCTION__); Serial.println(" ERROR: sensor not on-line");
-    #endif
-
-    //
-    // update sysStates
-    //
-    sysStates.sensor.online = offline;
-
-    // update the LCD
-    sysStates.lcd.lcdFacesIndex[HUMIDITY_FAIL_OFFSET]   = sensor_Failure;
-
-    retVal = false;
-  }
-
-  return(retVal);
-}
-
-
-bool TECsRunning(void)
-{
-  bool retVal = true;
-
-
-  for(int i = MIN_TEC_ADDRESS; i <= MAX_TEC_ADDRESS; i++)
-  {
-    if( (running != sysStates.tec[(i - MIN_TEC_ADDRESS)].state) )
+    if( (running != sysStates.ACU[(i - MIN_ACU_ADDRESS)].state) )
       retVal = false;
   }
 
@@ -2654,63 +2183,10 @@ bool TECsRunning(void)
 }
 
 
-void enableRotaryEncoder(void)
-{
-  // encoder
-  pinMode(pinA, INPUT);
-  digitalWrite(pinA, HIGH);
-  pinMode(pinB, INPUT);
-  digitalWrite(pinB, HIGH);
-
-  attachInterrupt(digitalPinToInterrupt(pinA), digitalEncoderISR, LOW);
-
-  virtualPosition = sysStates.sensor.threshold;
-}
-
-
-void disableRotaryEncoder(void)
-{
-  detachInterrupt(digitalPinToInterrupt(pinA));
-}
-
-
-void digitalEncoderISR(void)
-{
-  static unsigned long  lastInterruptTime = 0;
-  unsigned long     interruptTime   = millis();
-
-
-  // pick up the system value - may have changed from ctrl PC
-  virtualPosition = sysStates.sensor.threshold;
-
-  if( (5 < (interruptTime - lastInterruptTime)) )
-  {
-    // read the pins
-    if( (LOW == digitalRead(pinB)) )
-      --virtualPosition;
-    else
-      ++virtualPosition;
-
-    virtualPosition = min(100, max(0, virtualPosition));
-
-    lastInterruptTime = interruptTime;
-
-    // update the system variable
-    sysStates.sensor.threshold = virtualPosition;
-
-    // update the LCD
-    lcd.noDisplay();
-    lcd.clear(); lcd.home();
-    lcd.setCursor(0,0);  lcd.print("Humidity");
-    lcd.setCursor(0,1);  lcd.print("Threshold: ");
-    lcd.setCursor(11,1); lcd.print(virtualPosition);
-    lcd.display();
-  }
-}
-
-
 void handleChillerStatus(void)
 {
+#if defined(__USING_CHILLER__)
+
   bool  retVal  = false;
 
   
@@ -2746,7 +2222,7 @@ void handleChillerStatus(void)
   } else
   {
     //
-    // update sysStates with what was feteched from GetAllChillerInfo
+    // update sysStates with what was feACUhed from GetAllChillerInfo
     //
     sysStates.chiller.online              = online;
     if( ('O' == chiller.GetTempCtrlMode()) )
@@ -2771,186 +2247,190 @@ void handleChillerStatus(void)
     Serial.flush();
     #endif
   }
+#endif
 }
 
 
-void handleTECStatus(void)
+void handleACUStatus(void)
 {
-  bool  TECsOnline  = true;
-  bool  TECsRunning = true;
+  bool  ACUsOnline  = true;
+  bool  ACUsRunning = true;
 
 
   //
-  // check all TECs running - get Device Status, possible status are
+  // check all ACUs running - get Device Status, possible status are
   //
   // assume they are running, if one if found not running, mark the group
   // as not running
   //
-  // before going to chat w/ the TECs - enable the FAUL_LED so it is on 
+  // before going to chat w/ the ACUs - enable the FAUL_LED so it is on 
   // when there is a fault and on while we could be timing out chatting
-  // to a dead TEC
-  for(uint8_t Address = MIN_TEC_ADDRESS; (Address <= MAX_TEC_ADDRESS); Address++)
+  // to a dead ACU
+  for(uint8_t Address = MIN_ACU_ADDRESS; (Address <= MAX_ACU_ADDRESS); Address++)
   {
-    if( (sysStates.tec[(Address - MIN_TEC_ADDRESS)].online == offline) )
+    if( (sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online == offline) )
     {
     digitalWrite(FAULT_LED, HIGH);
     break;
     }
   }
 
-  for(uint8_t Address = MIN_TEC_ADDRESS; (Address <= MAX_TEC_ADDRESS); Address++)
+  for(uint8_t Address = MIN_ACU_ADDRESS; (Address <= MAX_ACU_ADDRESS); Address++)
   {
-    sysStates.tec[(Address - MIN_TEC_ADDRESS)].state      = running;
-    sysStates.tec[(Address - MIN_TEC_ADDRESS)].online     = online;
+    sysStates.ACU[(Address - MIN_ACU_ADDRESS)].state      = running;
+    sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online     = online;
 
     //
-    // always fetch the TEC's set point and object temperatures
+    // always fetch the ACU's set point and object temperatures
     //
-    if( !(ms.GetTECTemp(Address,
-      &sysStates.tec[(Address - MIN_TEC_ADDRESS)].setpoint,
-      &sysStates.tec[(Address - MIN_TEC_ADDRESS)].temperature)) )
+    if( !(GetACUTemp(Address,
+      &sysStates.ACU[(Address - MIN_ACU_ADDRESS)].setpoint,
+      &sysStates.ACU[(Address - MIN_ACU_ADDRESS)].temperature)) )
     {
       #ifdef __DEBUG_VIA_SERIAL__
-      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:TEC ");
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
       Serial.print(Address, DEC); Serial.println(" unable to get temps");
       Serial.flush();
       #endif
 
-      sysStates.tec[(Address - MIN_TEC_ADDRESS)].online   = offline;
-      sysStates.tec[(Address - MIN_TEC_ADDRESS)].state  = stopped;
+      sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online   = offline;
+      sysStates.ACU[(Address - MIN_ACU_ADDRESS)].state  = stopped;
       #ifdef __DEBUG2_VIA_SERIAL__
     } else
     {
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" found ");
-      Serial.print(sysStates.tec[(Address - MIN_TEC_ADDRESS)].setpoint, 2);
-      Serial.print(" : "); Serial.println(sysStates.tec[(Address - MIN_TEC_ADDRESS)].temperature, 2);
+      Serial.print(sysStates.ACU[(Address - MIN_ACU_ADDRESS)].setpoint, 2);
+      Serial.print(" : "); Serial.println(sysStates.ACU[(Address - MIN_ACU_ADDRESS)].temperature, 2);
       Serial.flush();
       #endif
     }
 
-    if( !(ms.TECRunning(Address)) )
+    if( !(ACURunning(Address)) )
     {
       #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: TEC ");
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: ACU ");
       Serial.print(Address); Serial.println(" is not running");
       Serial.flush();
       #endif
 
       //
-      // keep track of whether all TECs are running
+      // keep track of whether all ACUs are running
       //
-      TECsRunning = false;
+      ACUsRunning = false;
 
       // update sysStates
-      sysStates.tec[(Address - MIN_TEC_ADDRESS)].state = stopped;
+      sysStates.ACU[(Address - MIN_ACU_ADDRESS)].state = stopped;
 
       //
-      // check if we can still communicate with TECs
+      // check if we can still communicate with ACUs
       //
-      if( !(ms.TECPresent(Address)) )
+      if( !(ACUPresent(Address)) )
       {
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:TEC ");
+        Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
         Serial.print(Address, DEC); Serial.println(" is not on-line");
         Serial.flush();
         #endif
 
-        TECsOnline  = false;
+        ACUsOnline  = false;
 
         // update the sysStates
-        sysStates.tec[(Address - MIN_TEC_ADDRESS)].online = offline;
+        sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online = offline;
       }
     }
   }
 
 
   //
-  // if one TEC is down or bad, the overall status is bad
+  // if one ACU is down or bad, the overall status is bad
   //
-  if( !(TECsOnline) )
-    sysStates.lcd.lcdFacesIndex[TEC_FAIL_OFFSET]   = tec_ComFailure;
+  if( !(ACUsOnline) )
+    sysStates.lcd.lcdFacesIndex[ACU_FAIL_OFFSET]   = ACU_ComFailure;
   else
-    sysStates.lcd.lcdFacesIndex[TEC_FAIL_OFFSET]   = no_Status;
+    sysStates.lcd.lcdFacesIndex[ACU_FAIL_OFFSET]   = no_Status;
 
-  if( !(TECsRunning) )
-    sysStates.lcd.lcdFacesIndex[TEC_NRML_OFFSET]   = tec_Stopped;
+  if( !(ACUsRunning) )
+    sysStates.lcd.lcdFacesIndex[ACU_NRML_OFFSET]   = ACU_Stopped;
   else
-    sysStates.lcd.lcdFacesIndex[TEC_NRML_OFFSET]   = tec_Running;
+    sysStates.lcd.lcdFacesIndex[ACU_NRML_OFFSET]   = ACU_Running;
 }
 
 
-// careful . . tec_address is a
-bool getTECInfo(uint8_t tec_address, uint32_t* deviceType, uint32_t* hwVersion,
+/* this will be replaces w/ a get info for the accuthermo
+// careful . . ACU_address is a
+bool getACUInfo(uint8_t ACU_address, uint32_t* deviceType, uint32_t* hwVersion,
                     uint32_t* fwVersion, uint32_t* serialNumber)
 {
   bool retVal = true;
 
 
-  if( !(ms.GetTECInfo(tec_address, deviceType, hwVersion, fwVersion, serialNumber)) )
+  if( !(ms.GetACUInfo(ACU_address, deviceType, hwVersion, fwVersion, serialNumber)) )
   {
     retVal  = false;
     #ifdef __DEBUG_VIA_SERIAL__
-    Serial.println(__PRETTY_FUNCTION__); Serial.println(" getTECInfo failed");
+    Serial.println(__PRETTY_FUNCTION__); Serial.println(" getACUInfo failed");
     #endif
   }
 
   return(retVal);
 }
-
+*/
 
 systemStatus setSystemStatus(void)
 {
   systemStatus  retVal    = RUNNING;
-  bool      TECsOnline  = true;
-  bool      TECsRunning = true;
-  bool      TECMismatch = false;
+  bool      ACUsOnline  = true;
+  bool      ACUsRunning = true;
+  bool      ACUMismatch = false;
   
 
   //
-  // use the humidity sensor, chiller, and TECs status
+  // use the chiller and ACUs status
   //
   // the other 'bad' status for the other components shoudl already be
   // updated
   //
-  // SHUTDOWN - if high humidity, or one thing is offline, or the chiller is not running - shutdown
+  // SHUTDOWN - if one thing is offline, or the chiller is not running - shutdown
   //
 
 
   //
-  // accumulate the TECs status'
+  // accumulate the ACUs status'
   //
-  for(int i = MIN_TEC_ADDRESS; i <= MAX_TEC_ADDRESS; i++)
+  for(int i = MIN_ACU_ADDRESS; i <= MAX_ACU_ADDRESS; i++)
   {
-    if( (offline == sysStates.tec[(i - MIN_TEC_ADDRESS)].online) )
-      TECsOnline = false;
+    if( (offline == sysStates.ACU[(i - MIN_ACU_ADDRESS)].online) )
+      ACUsOnline = false;
 
-    if( (stopped == sysStates.tec[(i - MIN_TEC_ADDRESS)].state) )
-      TECsRunning = false;
+    if( (stopped == sysStates.ACU[(i - MIN_ACU_ADDRESS)].state) )
+      ACUsRunning = false;
 
     //
-    // check for TEC on/off line or running mismatch, shutdown if present
-    // can/could happen if a TEC fails or is reset
+    // check for ACU on/off line or running mismatch, shutdown if present
+    // can/could happen if a ACU fails or is reset
     //
-    if( (sysStates.tec[(i - MIN_TEC_ADDRESS)].online != sysStates.tec[0].online) ||
-      (sysStates.tec[(i - MIN_TEC_ADDRESS)].state != sysStates.tec[0].state) )
+    if( (sysStates.ACU[(i - MIN_ACU_ADDRESS)].online != sysStates.ACU[0].online) ||
+      (sysStates.ACU[(i - MIN_ACU_ADDRESS)].state != sysStates.ACU[0].state) )
     {
-      TECMismatch = true;
+      ACUMismatch = true;
     }
   }
 
   //
-  // special case check - if the chiller is not running and the TECs are running, shutdown the TECs
+  // special case check - if the chiller is not running and the ACUs are running, shutdown the ACUs
   //
-  if( (sysStates.chiller.state != running && TECsRunning == true) ||
-    (humidityHigh()) ||
-    (TECMismatch || offline == sysStates.sensor.online || offline == sysStates.chiller.online || false== TECsOnline) ) {
-      
+#if defined(__USING_CHILLER__)
+  if( (sysStates.chiller.state != running && ACUsRunning == true) ||
+    (ACUMismatch || offline == sysStates.chiller.online || false== ACUsOnline) ) {
+#else
+  if( (ACUMismatch || false== ACUsOnline) ) {
+#endif
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Shutdown;
     retVal  = SHUTDOWN;
 
     if( (SHUTDOWN != sysStates.sysStatus) )
     {
-      buttonOnOff     = false;
+      buttonOnOff         = false;
       currentButtonOnOff  = buttonOnOff;
       shutDownSys(false);
     }
@@ -2975,16 +2455,17 @@ systemStatus setSystemStatus(void)
       
     digitalWrite(NO_FAULT_LED, LOW);
   
-    // enable the humidity threshold knob
-    enableRotaryEncoder();
 
   //
-  // READY - else everythig is online, chiller is running, TECs are not running
-  //  
-  } else if( ((online == sysStates.sensor.online &&
-         online == sysStates.chiller.online &&
-         true   == TECsOnline)
-        && (running != sysStates.chiller.state || false == TECsRunning)) )
+  // READY - else everythig is online, ACUs are not running
+  //
+  }
+#if defined(__USING_CHILLER__)
+  else if( (online == sysStates.chiller.online && true == ACUsOnline)
+        && (running != sysStates.chiller.state || false == ACUsRunning)) )
+#else
+  else if( ((true == ACUsOnline) && (false == ACUsRunning)) )
+#endif
   {
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Ready;
     retVal  = READY;
@@ -3004,11 +2485,7 @@ systemStatus setSystemStatus(void)
       //
       digitalWrite(FAULT_LED, LOW);
       digitalWrite(NO_FAULT_LED, HIGH);
-  
-      // enable the humidity threshold knob
-      enableRotaryEncoder();
     }
-
   //
   // else the system is running
   //
@@ -3032,8 +2509,6 @@ systemStatus setSystemStatus(void)
       digitalWrite(FAULT_LED, LOW);
       digitalWrite(NO_FAULT_LED, LOW);
    
-      // disable the humidity threshold knob
-      disableRotaryEncoder();
     }
   }
 
@@ -3044,7 +2519,7 @@ systemStatus setSystemStatus(void)
 
 void configureButton(void)
 {
-  pinMode(BUTTON_PIN, INPUT_PULLUP);     // TODO: INPUT_PULLUP or just INPUT
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
 
   // status LED - start as off
   pinMode(BUTTON_LED, OUTPUT);
@@ -3060,11 +2535,8 @@ void enableButtonISR(void)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
-  if( ! (humidityHigh()) )
-  {
-    pinMode(BUTTON_PIN, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);
-  }
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);
 }
 
 
@@ -3099,40 +2571,165 @@ void buttonISR(void)
 }
 
 
-bool humidityHigh(void)
+//-------------------------------------------------------------
+//
+// - use global rs486Bus to write PVOF
+// - read the value back
+// - return the value read
+//
+uint16_t writePVOF(uint8_t id, uint16_t val)
 {
-  bool retVal = false;
+  uint16_t  retVal  = 0x0000;
 
-
-  if( ((sysStates.sensor.humidity > sysStates.sensor.threshold) 
-    || (offline == sysStates.sensor.online)) )
+  
+  // do the write
+  cmdResp writePVOF = rs485Bus.writeProcess(id, PVOF, val);
+  if( (false == writePVOF.retCode()) )
   {
-    #ifdef __DEBUG_VIA_SERIAL__
-    Serial.print(__PRETTY_FUNCTION__);
-    Serial.println(" WARNING: humidity too high or sensor failure");
-    #endif
+    Serial.println("writePVOF fail");
+  #ifdef __DEBUG_VIA_SERIAL__
+  } else
+  {
+    Serial.println("writePVOF success");
+  #endif
+  }
 
-    retVal = true;
+
+  // do the read, request 2 bytes back
+  cmdResp readPVOF = rs485Bus.readProcess(id, PVOF, 2);
+  if( (false == readPVOF.retCode()) )
+  {
+    Serial.print("readPVOF fail");
+  } else
+  {
+    retVal = htons((*(reinterpret_cast<uint16_t*>(readPVOF.buff()))));
+  #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("readPVOF success");
+    Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readPVOF.bufflen()); Serial.println(" bytes returned");
+    Serial.print(" read value is: "); Serial.println(retVal, 16);
+  #endif
   }
 
   return(retVal);
 }
 
 
-void setInitialHumidityThreshold(void)
+//-------------------------------------------------------------
+//
+// - use global rs486Bus to do something for now
+// - this will eventually be the 'start' cmd the ACU
+// - read the value back
+// - return the value read
+// - return true if the value read back is what is expected .. 
+//
+bool StartACU(uint8_t id)
 {
-  //
-  // fetch current humidity 2x w/ breif delay inbetween
-  //
-  getHumidityLevel();
+  // for now, just call writePVOF w/ the __INIT_PVOF__ and return true
+  writePVOF(id, __INIT_PVOF__);
 
-  delay(1000);
-  getHumidityLevel();
-
-  //
-  // set threshold to ambient + 10
-  //
-  sysStates.sensor.threshold = sysStates.sensor.humidity + HUMIDITY_BUFFER;
+  return(true);
 }
 
-*/
+
+//-------------------------------------------------------------
+//
+// - use global rs486Bus to do something for now
+// - this will eventually be the 'stop' cmd the ACU
+// - read the value back
+// - return the value read
+// - return true if the value read back is what is expected .. 
+//
+bool StopACU(uint8_t id)
+{
+  // for now, just call writePVOF w/ the __INIT_PVOF__ and return true
+  writePVOF(id, __INIT_PVOF__);
+
+  return(true);
+}
+
+
+//-------------------------------------------------------------
+//
+// - use global rs486Bus to do something for now
+// - this will eventually be the 'stop' cmd the ACU
+// - read the value back
+// - return the value read
+// - return true if the value read back is what is expected .. 
+//
+bool ACURunning(uint8_t id)
+{
+  // for now, just call writePVOF w/ the __INIT_PVOF__ and return true
+  writePVOF(id, __INIT_PVOF__);
+
+  return(true);
+}
+
+
+//-------------------------------------------------------------
+//
+// - use global rs486Bus to do something for now
+// - this will eventually be the 'stop' cmd the ACU
+// - read the value back
+// - return the value read
+// - return true if the value read back is what is expected .. 
+//
+bool ACUPresent(uint8_t id)
+{
+  // for now, just call writePVOF w/ the __INIT_PVOF__ and return true
+  writePVOF(id, __INIT_PVOF__);
+
+  return(true);
+}
+
+
+//-------------------------------------------------------------
+//
+// - use global rs486Bus to do something for now
+// - this will eventually be the 'stop' cmd the ACU
+// - read the value back
+// - return the value read
+// - return true if the value read back is what is expected .. 
+//
+bool GetACUTemp(uint8_t id, float* setpoint, float* temperature)
+{
+  uint16_t  setp  = 0x0000;
+  uint16_t  temp  = 0x0000;
+
+
+  // do the read, request 2 bytes back
+  cmdResp readPVPVOF = rs485Bus.readProcess(id, PVPVOF, 2);
+  if( (false == readPVPVOF.retCode()) )
+  {
+    Serial.println("readPVPVOF fail");
+  } else
+  {
+    temp = htons((*(reinterpret_cast<uint16_t*>(readPVPVOF.buff()))));
+  #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("readPVPVOF success");
+    Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readPVPVOF.bufflen()); Serial.println(" bytes returned");
+    Serial.print(" read value is: "); Serial.println(temp, 16);
+  #endif
+  }
+
+
+  // do the read, request 2 bytes back
+  cmdResp readSV = rs485Bus.readProcess(id, SV, 2);
+  if( (false == readSV.retCode()) )
+  {
+    Serial.println("readSV fail");
+  } else
+  {
+    setp = htons((*(reinterpret_cast<uint16_t*>(readSV.buff()))));
+  #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("readSV success");
+    Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
+    Serial.print(" read value is: "); Serial.println(setp, 16);
+  #endif
+  }
+
+  // convert the read values to float
+  *setpoint     = (float)setp / (float)10;
+  *temperature  = (float)temp / (float)10;
+
+  return(true);
+}

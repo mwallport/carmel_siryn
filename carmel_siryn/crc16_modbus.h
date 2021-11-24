@@ -3,7 +3,7 @@
 
 //
 // is a character based protocol
-// using CCITT-16 CRC to protect the data
+// using CCITT-16 CRC to proACUt the data
 // which most definitely is coped from the meerstetter implementation
 //
 
