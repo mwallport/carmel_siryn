@@ -9,7 +9,6 @@
 
 void setup(void)
 {
-
   //
   // start the system components and Serial port if running debug
   //
@@ -25,6 +24,12 @@ void setup(void)
   Serial.println(" -------------------------> setup() <-----------------------"); Serial.flush();
   Serial.println(" -----------------------------------------------------------"); Serial.flush();
   #endif
+
+
+  //
+  // TODO: testing only, remove - using this for random temps for RTD testing
+  //
+  randomSeed(analogRead(0));
 
 
   //
@@ -46,9 +51,9 @@ void loop(void)
   //
   // write the PVOF
   //
-  uint16_t currPVOF = writePVOF(ASIC_ID, __INIT_PVOF__);
+  //uint16_t currPVOF = writePVOF(ASIC_ID, __INIT_PVOF__);
 
-  #ifdef __DEBUG_VIA_SERIAL__
+  #ifdef __DEBUG2_VIA_SERIAL__
   Serial.print("PVOF read back : "); Serial.print(currPVOF, 16); Serial.println("");
   #endif
 
@@ -170,7 +175,7 @@ void initSysStates(systemState& states)
     states.ACU[(i - MIN_ACU_ADDRESS)].online      = offline;
     states.ACU[(i - MIN_ACU_ADDRESS)].state       = stopped;
     states.ACU[(i - MIN_ACU_ADDRESS)].setpoint    = 0;
-    states.ACU[(i - MIN_ACU_ADDRESS)].temperature   = 0;
+    states.ACU[(i - MIN_ACU_ADDRESS)].temperature = 0;
   }
 
   // lcd - initialize all messages
@@ -352,7 +357,7 @@ void getStatus(void)
   //
   if( (GET_STATUS_INTERVAL < (currentGetStatusTime - lastGetStatusTime)) )
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("- check ACUs and chiller --------------");
     Serial.println(__PRETTY_FUNCTION__);
     #endif
@@ -592,10 +597,10 @@ bool stopACUs(void)
   return(retVal);
 }
 
-/*
+
 bool setACUTemp(uint16_t ACUAddress, float temp)
 {
-  bool retVal = false;
+  bool retVal = true;
 
 
   #ifdef __DEBUG2_VIA_SERIAL__
@@ -605,7 +610,7 @@ bool setACUTemp(uint16_t ACUAddress, float temp)
 
   if( (MAX_ACU_ADDRESS >= ACUAddress) )
   {
-    if( (ms.SetACUTemp(ACUAddress, temp)) )
+    if( (SetACUSetPointValue(ACUAddress, temp)) )
     {
       retVal  = true;
     #ifdef __DEBUG_VIA_SERIAL__
@@ -629,7 +634,7 @@ bool setACUTemp(uint16_t ACUAddress, float temp)
 
   return(retVal);
 }
-*/
+
 
 
 bool setChillerSetPoint(char* temp)
@@ -689,6 +694,10 @@ void handleMsgs(void)
     //
     if( (getMsgFromControl()) )
     {
+     #ifdef __DEBUG_VIA_SERIAL__
+     Serial.println("got a command");
+     #endif
+     
       //
       // cp.m_buff has the message just received, process that message
       //
@@ -696,12 +705,18 @@ void handleMsgs(void)
       {
         case startUpCmd:        // start the chiller if present, and ACUs
         {
+          #ifdef __DEBUG_VIA_SERIAL__
+          Serial.println("got startUpCmd");
+          #endif
           handleStartUpCmd();
           break;
         }
   
         case shutDownCmd:         // shutdown the chiller, ACUs, and sensor
         {
+          #ifdef __DEBUG_VIA_SERIAL__
+          Serial.println("got shutDownCmd");
+          #endif
           handleShutDownCmd();
           break;
         }
@@ -711,42 +726,62 @@ void handleMsgs(void)
           handleGetStatusCmd();
           break;
         };
-  
-        case setHumidityThreshold:     // get the humidity threshold
-        {
-          handleSetHumidityThreshold();
-          break;
-        };
-  
-        case getHumidityThreshold:     // set the humidity threshold
-        {
-          handleGetHumidityThreshold();
-          break;
-        };
-  
-        case getHumidity:        // get current humidity and temperature
-        {
-          handleGetHumidity();
-          break;
-        };
+*/  
   
         case setACUTemperature:      // target ACU m_address and temp
         {
+          #ifdef __DEBUG_VIA_SERIAL__
+          Serial.println("got setACUTemperature");
+          #endif
           handleSetACUTemperature();
           break;
         };
   
         case getACUTemperature:      // target ACU m_address and temp
         {
+          #ifdef __DEBUG_VIA_SERIAL__
+          Serial.println("got getACUTemperature");
+          #endif
           handleGetACUTemperature(false);
           break;
         };
   
         case getACUObjTemperature:
         {
+          #ifdef __DEBUG_VIA_SERIAL__
+          Serial.println("got getACUObjTemperature");
+          #endif
           handleGetACUTemperature(true);
           break;
         };
+
+        case getACUInfoMsg:
+        {
+          #ifdef __DEBUG_VIA_SERIAL__
+          Serial.println("got getACUInfoMsg");
+          #endif
+          handlGetACUInfo();
+          break;
+        };
+  
+        case enableACUs:         // turn on all ACUs
+        {
+          #ifdef __DEBUG_VIA_SERIAL__
+          Serial.println("got enableACUs");
+          #endif
+          handleEnableACUs();
+          break;
+        };
+  
+        case disableACUs:        // turn off all ACUs
+        {
+          #ifdef __DEBUG_VIA_SERIAL__
+          Serial.println("got disableACUs");
+          #endif
+          handleDisableACUs();
+          break;
+        };
+        
 #if defined(__USING_CHILLER__)
         case startChillerMsg:
         {
@@ -784,24 +819,7 @@ void handleMsgs(void)
           break;
         };
 #endif
-        case getACUInfoMsg:
-        {
-          handlGetACUInfo();
-          break;
-        };
-  
-        case enableACUs:         // turn on all ACUs
-        {
-          handleEnableACUs();
-          break;
-        };
-  
-        case disableACUs:        // turn off all ACUs
-        {
-          handleDisableACUs();
-          break;
-        };
-*/
+
         default:
         {
           // send NACK
@@ -810,6 +828,10 @@ void handleMsgs(void)
         }
       }
     } // else no message from control
+    #ifdef __DEBUG_VIA_SERIAL__
+    else 
+    Serial.println("did not get a command");
+    #endif
   }
 }
   
@@ -1093,7 +1115,7 @@ bool getMsgFromControl(void)
 {
   bool      retVal  = false;
 
-  #ifdef __DEBUG2_VIA_SERIAL__
+  #ifdef __DEBUG_VIA_SERIAL__
   Serial.println("---------------------------------------");
   Serial.println(__PRETTY_FUNCTION__);
   Serial.flush();
@@ -1134,6 +1156,7 @@ void handleStartUpCmd(void)
       //
       // start the ACUs, chiller, sensor ...
       //
+/* TODO: put this back <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       if( (startUp()) )
       {
         result  = 1;
@@ -1151,7 +1174,7 @@ void handleStartUpCmd(void)
         
       } else
         setSystemStatus();  // derive the button state
-        
+ end TODO: */        
 
       respLength = cp.Make_startUpCmdResp(cp.m_peerAddress, cp.m_buff,
         result, pstartUpCmd->header.seqNum
@@ -1342,7 +1365,7 @@ void handleGetStatusCmd(void)
   }
 }
 
-
+*/
 
 void handleSetACUTemperature(void)
 {
@@ -1371,9 +1394,9 @@ void handleSetACUTemperature(void)
       // if the ACUs addresses is out of range, send back failure
       //
       setPoint = atof(reinterpret_cast<char*>(psetACUTemperature->temperature));
-      ACUAddress = ntohs(psetACUTemperature->ACU_address);
+      ACUAddress = ntohs(psetACUTemperature->acu_address);
 
-      #ifdef __DEBUG2_VIA_SERIAL__
+      #ifdef __DEBUG_VIA_SERIAL__
       Serial.print(__PRETTY_FUNCTION__); Serial.print( " found setPoint:ACUAddress ");
       Serial.print(setPoint,2);
       Serial.print(":");
@@ -1385,7 +1408,7 @@ void handleSetACUTemperature(void)
       {
         if( (setACUTemp(ACUAddress, setPoint)) )
         {
-          #ifdef __DEBUG2_VIA_SERIAL__
+          #ifdef __DEBUG_VIA_SERIAL__
           Serial.print(__PRETTY_FUNCTION__); Serial.print( " success set temp for ACU: ");
           Serial.println(ACUAddress);
           Serial.flush();
@@ -1417,7 +1440,7 @@ void handleSetACUTemperature(void)
         result  = 0;
 
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.print(__PRETTY_FUNCTION__); Serial.print( " ERROR: ACU_address out of range: ");
+        Serial.print(__PRETTY_FUNCTION__); Serial.print( " ERROR: acu_address out of range: ");
         Serial.println(ACUAddress);
         #endif
       }
@@ -1495,7 +1518,7 @@ void handleGetACUTemperature(bool getObjTemp)
       //
       // if the ACUs addresses is out of range, send back failure
       //
-      ACUAddress = ntohs(pgetACUTemperature->ACU_address);
+      ACUAddress = ntohs(pgetACUTemperature->acu_address);
 
       if( (MAX_ACU_ADDRESS < ACUAddress) )
       {
@@ -1505,7 +1528,7 @@ void handleGetACUTemperature(bool getObjTemp)
         result  = 0;
 
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.print(__PRETTY_FUNCTION__); Serial.print( " ERROR: ACU_address out of range: ");
+        Serial.print(__PRETTY_FUNCTION__); Serial.print( " ERROR: acu_address out of range: ");
         Serial.println(ACUAddress);
         #endif
       } else
@@ -1560,7 +1583,229 @@ void handleGetACUTemperature(bool getObjTemp)
   #endif
   }
 }
-*/
+
+
+void handlGetACUInfo(void)
+{
+  getACUInfoMsg_t*   pgetACUInfo = reinterpret_cast<getACUInfoMsg_t*>(cp.m_buff);
+  uint16_t    respLength;
+  uint16_t    result = 0;
+  uint32_t    deviceType  = 0;
+  uint32_t    hwVersion   = 0;
+  uint32_t    fwVersion   = 0;
+  uint32_t    serialNumber= 0;
+
+
+  if( (ntohs(pgetACUInfo->header.address.address)) == cp.m_myAddress)
+  {
+    //
+    // verify the CRC
+    //
+    if( (cp.verifyMessage(len_getACUInfoMsg_t,
+                ntohs(pgetACUInfo->crc), ntohs(pgetACUInfo->eop))) )
+    {
+      //
+      // chiller informaion is gotton during getStatus
+      //
+      if( (getACUInfo(ntohs(pgetACUInfo->acu_address), &deviceType,
+                &hwVersion, &fwVersion, &serialNumber)) )
+      {
+        result  = 1;
+      } else
+      {
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to startACUs");
+        Serial.flush();
+        #endif
+        result  = 0;
+      }
+
+      respLength = cp.Make_getACUInfoMsgResp(cp.m_peerAddress, cp.m_buff, htons(pgetACUInfo->acu_address), result,
+                deviceType, hwVersion, fwVersion, serialNumber, pgetACUInfo->header.seqNum);
+
+      //
+      // use the CP object to send the response back
+      // this function usese the cp.m_buff created above, just
+      // need to send the lenght into the function
+      //
+      if( !(cp.doTxResponse(respLength)))
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+        Serial.flush();
+      #ifdef __DEBUG2_VIA_SERIAL__
+      } else
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+        Serial.flush();
+      #endif
+      }
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+      Serial.println(ntohs(pgetACUInfo->crc));
+      Serial.flush();
+    #endif
+    }
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  } else
+  {
+    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+    Serial.println(ntohs(pgetACUInfo->header.address.address));
+    Serial.flush();
+  #endif
+  }
+}
+
+
+void handleEnableACUs(void)
+{
+  enableACUs_t* penableACUs = reinterpret_cast<enableACUs_t*>(cp.m_buff);
+  uint16_t  respLength; 
+  uint16_t  result = 0;
+
+
+  //
+  // verify the received packet, here beause this is a enableACUsCmd
+  // check this is my address and the CRC is correct
+  //
+  if( (ntohs(penableACUs->header.address.address)) == cp.m_myAddress)
+  {
+    //
+    // verify the CRC
+    //
+    if( (cp.verifyMessage(len_enableACUs_t,
+                ntohs(penableACUs->crc), ntohs(penableACUs->eop))) )
+    {
+      //
+      // chiller informaion is gotton during getStatus
+      //
+      if( (startACUs()) )
+      {
+        result  = 1;
+      } else
+      {
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to startACUs");
+        Serial.flush();
+        #endif
+        result  = 0;
+      }
+
+      respLength = cp.Make_enableACUsResp(cp.m_peerAddress, cp.m_buff,
+        result, penableACUs->header.seqNum
+      );
+
+      //
+      // use the CP object to send the response back
+      // this function usese the cp.m_buff created above, just
+      // need to send the lenght into the function
+      //
+      if( !(cp.doTxResponse(respLength)))
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+        Serial.flush();
+      #ifdef __DEBUG2_VIA_SERIAL__
+      } else
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+        Serial.flush();
+      #endif
+      }
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+      Serial.println(ntohs(penableACUs->crc));
+      Serial.flush();
+    #endif
+    }
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  } else
+  {
+    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+    Serial.println(ntohs(penableACUs->header.address.address));
+    Serial.flush();
+  #endif
+  }
+}
+
+
+void handleDisableACUs(void)
+{
+  disableACUs_t* pdisableACUs = reinterpret_cast<disableACUs_t*>(cp.m_buff);
+  uint16_t  respLength; 
+  uint16_t  result = 0;
+
+
+  //
+  // verify the received packet, here beause this is a disableACUsCmd
+  // check this is my address and the CRC is correct
+  //
+  if( (ntohs(pdisableACUs->header.address.address)) == cp.m_myAddress)
+  {
+    //
+    // verify the CRC
+    //
+    if( (cp.verifyMessage(len_disableACUs_t,
+                ntohs(pdisableACUs->crc), ntohs(pdisableACUs->eop))) )
+    {
+      //
+      // chiller informaion is gotton during getStatus
+      //
+      if( (stopACUs()) )
+      {
+        result  = 1;
+      } else
+      {
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.println(__PRETTY_FUNCTION__); Serial.println(" ERROR: failed to stopACUs");
+        Serial.flush();
+        #endif
+        result  = 0;
+      }
+
+      respLength = cp.Make_disableACUsResp(cp.m_peerAddress, cp.m_buff,
+        result, pdisableACUs->header.seqNum
+      );
+
+      //
+      // use the CP object to send the response back
+      // this function usese the cp.m_buff created above, just
+      // need to send the lenght into the function
+      //
+      if( !(cp.doTxResponse(respLength)))
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+        Serial.flush();
+      #ifdef __DEBUG2_VIA_SERIAL__
+      } else
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+        Serial.flush();
+      #endif
+      }
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+      Serial.println(ntohs(pdisableACUs->crc));
+      Serial.flush();
+    #endif
+    }
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  } else
+  {
+    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+    Serial.println(ntohs(pdisableACUs->header.address.address));
+    Serial.flush();
+  #endif
+  }
+}
+
 
 #if defined (__USING_CHILLER__)
 void handleStartChillerMsg(void)
@@ -1918,226 +2163,7 @@ void handleGetChillerTemperature(bool GetSetPoint)
 #endif
 
 /*
-void handlGetACUInfo(void)
-{
-  getACUInfoMsg_t*   pgetACUInfo = reinterpret_cast<getACUInfoMsg_t*>(cp.m_buff);
-  uint16_t    respLength;
-  uint16_t    result = 0;
-  uint32_t    deviceType  = 0;
-  uint32_t    hwVersion   = 0;
-  uint32_t    fwVersion   = 0;
-  uint32_t    serialNumber= 0;
 
-
-  if( (ntohs(pgetACUInfo->header.address.address)) == cp.m_myAddress)
-  {
-    //
-    // verify the CRC
-    //
-    if( (cp.verifyMessage(len_getACUInfoMsg_t,
-                ntohs(pgetACUInfo->crc), ntohs(pgetACUInfo->eop))) )
-    {
-      //
-      // chiller informaion is gotton during getStatus
-      //
-      if( (getACUInfo(ntohs(pgetACUInfo->ACU_address), &deviceType,
-                &hwVersion, &fwVersion, &serialNumber)) )
-      {
-        result  = 1;
-      } else
-      {
-        #ifdef __DEBUG_VIA_SERIAL__
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to startACUs");
-        Serial.flush();
-        #endif
-        result  = 0;
-      }
-
-      respLength = cp.Make_getACUInfoMsgResp(cp.m_peerAddress, cp.m_buff, htons(pgetACUInfo->ACU_address), result,
-                deviceType, hwVersion, fwVersion, serialNumber, pgetACUInfo->header.seqNum);
-
-      //
-      // use the CP object to send the response back
-      // this function usese the cp.m_buff created above, just
-      // need to send the lenght into the function
-      //
-      if( !(cp.doTxResponse(respLength)))
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
-        Serial.flush();
-      #ifdef __DEBUG2_VIA_SERIAL__
-      } else
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
-        Serial.flush();
-      #endif
-      }
-    #ifdef __DEBUG_VIA_SERIAL__
-    } else
-    {
-      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(pgetACUInfo->crc));
-      Serial.flush();
-    #endif
-    }
-
-  #ifdef __DEBUG_VIA_SERIAL__
-  } else
-  {
-    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(pgetACUInfo->header.address.address));
-    Serial.flush();
-  #endif
-  }
-}
-
-
-void handleEnableACUs(void)
-{
-  enableACUs_t* penableACUs = reinterpret_cast<enableACUs_t*>(cp.m_buff);
-  uint16_t  respLength; 
-  uint16_t  result = 0;
-
-
-  //
-  // verify the received packet, here beause this is a enableACUsCmd
-  // check this is my address and the CRC is correct
-  //
-  if( (ntohs(penableACUs->header.address.address)) == cp.m_myAddress)
-  {
-    //
-    // verify the CRC
-    //
-    if( (cp.verifyMessage(len_enableACUs_t,
-                ntohs(penableACUs->crc), ntohs(penableACUs->eop))) )
-    {
-      //
-      // chiller informaion is gotton during getStatus
-      //
-      if( (startACUs()) )
-      {
-        result  = 1;
-      } else
-      {
-        #ifdef __DEBUG_VIA_SERIAL__
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to startACUs");
-        Serial.flush();
-        #endif
-        result  = 0;
-      }
-
-      respLength = cp.Make_enableACUsResp(cp.m_peerAddress, cp.m_buff,
-        result, penableACUs->header.seqNum
-      );
-
-      //
-      // use the CP object to send the response back
-      // this function usese the cp.m_buff created above, just
-      // need to send the lenght into the function
-      //
-      if( !(cp.doTxResponse(respLength)))
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
-        Serial.flush();
-      #ifdef __DEBUG2_VIA_SERIAL__
-      } else
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
-        Serial.flush();
-      #endif
-      }
-    #ifdef __DEBUG_VIA_SERIAL__
-    } else
-    {
-      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(penableACUs->crc));
-      Serial.flush();
-    #endif
-    }
-
-  #ifdef __DEBUG_VIA_SERIAL__
-  } else
-  {
-    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(penableACUs->header.address.address));
-    Serial.flush();
-  #endif
-  }
-}
-
-
-void handleDisableACUs(void)
-{
-  disableACUs_t* pdisableACUs = reinterpret_cast<disableACUs_t*>(cp.m_buff);
-  uint16_t  respLength; 
-  uint16_t  result = 0;
-
-
-  //
-  // verify the received packet, here beause this is a disableACUsCmd
-  // check this is my address and the CRC is correct
-  //
-  if( (ntohs(pdisableACUs->header.address.address)) == cp.m_myAddress)
-  {
-    //
-    // verify the CRC
-    //
-    if( (cp.verifyMessage(len_disableACUs_t,
-                ntohs(pdisableACUs->crc), ntohs(pdisableACUs->eop))) )
-    {
-      //
-      // chiller informaion is gotton during getStatus
-      //
-      if( (stopACUs()) )
-      {
-        result  = 1;
-      } else
-      {
-        #ifdef __DEBUG_VIA_SERIAL__
-        Serial.println(__PRETTY_FUNCTION__); Serial.println(" ERROR: failed to stopACUs");
-        Serial.flush();
-        #endif
-        result  = 0;
-      }
-
-      respLength = cp.Make_disableACUsResp(cp.m_peerAddress, cp.m_buff,
-        result, pdisableACUs->header.seqNum
-      );
-
-      //
-      // use the CP object to send the response back
-      // this function usese the cp.m_buff created above, just
-      // need to send the lenght into the function
-      //
-      if( !(cp.doTxResponse(respLength)))
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
-        Serial.flush();
-      #ifdef __DEBUG2_VIA_SERIAL__
-      } else
-      {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
-        Serial.flush();
-      #endif
-      }
-    #ifdef __DEBUG_VIA_SERIAL__
-    } else
-    {
-      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
-      Serial.println(ntohs(pdisableACUs->crc));
-      Serial.flush();
-    #endif
-    }
-
-  #ifdef __DEBUG_VIA_SERIAL__
-  } else
-  {
-    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
-    Serial.println(ntohs(pdisableACUs->header.address.address));
-    Serial.flush();
-  #endif
-  }
-}
 
 */
 
@@ -2356,25 +2382,25 @@ void handleACUStatus(void)
 }
 
 
-/* this will be replaces w/ a get info for the accuthermo
-// careful . . ACU_address is a
-bool getACUInfo(uint8_t ACU_address, uint32_t* deviceType, uint32_t* hwVersion,
+/* this will be replaces w/ a get info for the accuthermo */
+// careful . . acu_address is a
+bool getACUInfo(uint8_t acu_address, uint32_t* deviceType, uint32_t* hwVersion,
                     uint32_t* fwVersion, uint32_t* serialNumber)
 {
   bool retVal = true;
 
-
-  if( !(ms.GetACUInfo(ACU_address, deviceType, hwVersion, fwVersion, serialNumber)) )
+/* TODO: put this back <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  if( !(ms.GetACUInfo(acu_address, deviceType, hwVersion, fwVersion, serialNumber)) )
   {
     retVal  = false;
     #ifdef __DEBUG_VIA_SERIAL__
     Serial.println(__PRETTY_FUNCTION__); Serial.println(" getACUInfo failed");
     #endif
   }
-
+*/
   return(retVal);
 }
-*/
+
 
 systemStatus setSystemStatus(void)
 {
@@ -2587,7 +2613,7 @@ uint16_t writePVOF(uint8_t id, uint16_t val)
   if( (false == writePVOF.retCode()) )
   {
     Serial.println("writePVOF fail");
-  #ifdef __DEBUG_VIA_SERIAL__
+  #ifdef __DEBUG2_VIA_SERIAL__
   } else
   {
     Serial.println("writePVOF success");
@@ -2603,10 +2629,10 @@ uint16_t writePVOF(uint8_t id, uint16_t val)
   } else
   {
     retVal = htons((*(reinterpret_cast<uint16_t*>(readPVOF.buff()))));
-  #ifdef __DEBUG_VIA_SERIAL__
+  #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("readPVOF success");
     Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readPVOF.bufflen()); Serial.println(" bytes returned");
-    Serial.print(" read value is: "); Serial.println(retVal, 16);
+    Serial.print(" read value is: 0x"); Serial.println(retVal, 16);
   #endif
   }
 
@@ -2697,17 +2723,74 @@ bool GetACUTemp(uint8_t id, float* setpoint, float* temperature)
 
 
   // do the read, request 2 bytes back
-  cmdResp readPVPVOF = rs485Bus.readProcess(id, PVPVOF, 2);
+  cmdResp readPVPVOF = rs485Bus.readProcess(id, PVPVOF, 4); // get response w/ PV and PVOF
   if( (false == readPVPVOF.retCode()) )
   {
     Serial.println("readPVPVOF fail");
   } else
   {
     temp = htons((*(reinterpret_cast<uint16_t*>(readPVPVOF.buff()))));
+    *temperature  = (float)temp / (float)10;
   #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("readPVPVOF success");
     Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readPVPVOF.bufflen()); Serial.println(" bytes returned");
-    Serial.print(" read value is: "); Serial.println(temp, 16);
+    Serial.print(" read value is: 0x"); Serial.println(temp, 16);
+  #endif
+  }
+
+
+  // do the read, request 2 bytes back
+  cmdResp readSV = rs485Bus.readProcess(id, SVSVOF, 4);  // get response w/ SV and SVOF
+  if( (false == readSV.retCode()) )
+  {
+    Serial.println("readSV fail");
+  } else
+  {
+    setp = htons((*(reinterpret_cast<uint16_t*>(readSV.buff()))));
+    *setpoint = (float)setp / (float)10;
+
+  #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("readSV success");
+    Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
+    Serial.print(" read value is: 0x"); Serial.println(setp, 16);
+  #endif
+  }
+
+
+  return(true);
+}
+
+
+//
+// write the SV register
+//
+bool SetACUSetPointValue(uint16_t id, float temp)
+{
+  bool      retCode = true;
+  uint16_t  val, retVal;
+
+
+  //
+  // temp is a float, may have 2 decimal places
+  // we only want 1 decimal place
+  // then we multiply by 10 to no decimal
+  //
+  val = (uint16_t) ((float)temp * (float)10);
+
+  #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("SetACUSetPointValue got input temp: "); Serial.println(temp);
+    Serial.print("atttempting to write this to register: 0x"); Serial.println(val,16);
+  #endif
+  
+  // do the write
+  cmdResp writeSV = rs485Bus.writeProcess(id, SV, val);
+  if( (false == writeSV.retCode()) )
+  {
+    Serial.println("writeSV fail");
+  #ifdef __DEBUG_VIA_SERIAL__
+  } else
+  {
+    Serial.println("writeSV success");
   #endif
   }
 
@@ -2716,20 +2799,25 @@ bool GetACUTemp(uint8_t id, float* setpoint, float* temperature)
   cmdResp readSV = rs485Bus.readProcess(id, SV, 2);
   if( (false == readSV.retCode()) )
   {
-    Serial.println("readSV fail");
+    Serial.print("readSV fail");
   } else
   {
-    setp = htons((*(reinterpret_cast<uint16_t*>(readSV.buff()))));
-  #ifdef __DEBUG_VIA_SERIAL__
+    retVal = htons((*(reinterpret_cast<uint16_t*>(readSV.buff()))));
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("readSV success");
-    Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
-    Serial.print(" read value is: "); Serial.println(setp, 16);
-  #endif
+    Serial.print("readProcess(id, SV, 2) success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
+    Serial.print(" read value is: 0x"); Serial.println(retVal, 16);
+    #endif
+
+    if( (retVal != val) )
+    {
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.println("write and read values don't match, fail ...");
+      #endif
+
+      retCode = false;
+    }
   }
 
-  // convert the read values to float
-  *setpoint     = (float)setp / (float)10;
-  *temperature  = (float)temp / (float)10;
-
-  return(true);
+  return(retCode);
 }

@@ -8,9 +8,12 @@
 //#define __DEBUG_CONTROL_PKT_RX__
 
 // platform
-//#define __USING_LINUX_USB__
+#define __USING_LINUX_USB__
 //#define __USING_WINDOWS_USB__
-#define __RUNNING_ON_CONTROLLINO__
+//#define __RUNNING_ON_CONTROLLINO__
+
+//chiller
+//#define __USING_CHILLER__
 
 // common
 #include <unistd.h>
@@ -111,7 +114,7 @@ uint16_t calcCRC16(uint8_t* pBuff, uint16_t length);
 //  - an end of frame character
 //
 const   uint8_t     MAX_CHILLER_TEMP_LENGH  = 8;    // i.e "-21.5"  or "+100.1" - sign and a float number
-const   uint8_t     MAX_TEC_TEMP_LENGH      = 8;    // i.e "-21.5"  or "+100.1" - sign and a float number
+const   uint8_t     MAX_ACU_TEMP_LENGH      = 8;    // i.e "-21.5"  or "+100.1" - sign and a float number
 const   uint8_t     MAX_HUMIDITY_LENGTH     = 8;    // "34.37" interpreted as percent
 const   uint8_t     MAX_BUFF_LENGTH_CP      = 64;   // size of the work m_buffer
 const   uint8_t     MAX_CHILLER_INFO_LENGTH = 20;   // same size as the name in the huber protocol
@@ -124,26 +127,21 @@ const   uint16_t    COMM_TIMEOUT            = 10000; // milliseconds communicati
 
 typedef enum _msgID
 {
-    getStatusCmd,               // fetch the status of chiller, all TECs, and humidity sensor
+    getStatusCmd,               // fetch the status of chiller, all ACUs, and humidity sensor
     getStatusResp,              // get status response
-    setHumidityThreshold,       // get the humidity threshold
-    setHumidityThresholdResp,   // get the humidity threshold response
-    getHumidityThreshold,       // set the humidity threshold
-    getHumidityThresholdResp,   // set the humidity threshold response
-    getHumidity,                // get current humidity and temperature
-    getHumidityResp,            // get current humidity and temperature response
-    setTECTemperature,          // target TEC m_address and temp
-    setTECTemperatureResp,      // target TEC m_address and temp response
-    getTECTemperature,          // target TEC m_address and temp
-    getTECTemperatureResp,      // target TEC m_address and temp response
-    getTECObjTemperature,       // target TEC m_address and object temp
-    getTECObjTemperatureResp,   // target TEC m_address and object temp response
-    getTECInfoMsg,              // get TEC info
-    getTECInfoMsgResp,          // response ***
-    enableTECs,                 // turn on all TECs
-    enableTECsResp,             // turn on all TECs response
-    disableTECs,                // turn off all TECs
-    disableTECsResp,            // turn off all TECs response
+    setACUTemperature,          // target ACU m_address and temp
+    setACUTemperatureResp,      // target ACU m_address and temp response
+    getACUTemperature,          // target ACU m_address and temp
+    getACUTemperatureResp,      // target ACU m_address and temp response
+    getACUObjTemperature,       // target ACU m_address and object temp
+    getACUObjTemperatureResp,   // target ACU m_address and object temp response
+    getACUInfoMsg,              // get ACU info
+    getACUInfoMsgResp,          // response ***
+    enableACUs,                 // turn on all ACUs
+    enableACUsResp,             // turn on all ACUs response
+    disableACUs,                // turn off all ACUs
+    disableACUsResp,            // turn off all ACUs response
+#if defined(__USING_CHILLER__)
     setChillerTemperature,      // set chiller set point
     setChillerTemperatureResp,  // set chiller set point response
     getChillerTemperature,      // get chiller set point
@@ -156,6 +154,7 @@ typedef enum _msgID
     stopChillerResp,            // response ***
     getChillerInfo,             // get the name of the chiller  ***
     getChillerInfoResp,         // response ***
+#endif
     startUpCmd,                 // start up
     startUpCmdResp,             // reponse
     shutDownCmd,                // shutdown
@@ -197,7 +196,7 @@ const uint16_t len_getStatus_t    = sizeof(getStatus_t) - sizeof(CRC) - sizeof(E
 typedef struct _statusReport
 {
     uint16_t    humidityAlert;  // 0 - no ; 1 - yes
-    uint16_t    TECsRunning;    // 0 - no ; 1 - yes
+    uint16_t    ACUsRunning;    // 0 - no ; 1 - yes
     uint16_t    chillerOnLine;  // 0 - no ; 1 - yes
 } statusReport_t;
 
@@ -211,166 +210,108 @@ typedef struct _getStatusResp
 const uint16_t len_getStatusResp_t  = sizeof(getStatusResp_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _setHumidityThreshold
+typedef struct _setACUTemperature
 {
     msgHeader_t header;
-    uint16_t    threshold;      // uint16_6 - humidity threshold - TODO: make this ASCII char ?
+    uint16_t    acu_address;    // uint16_6 - ACU address
+    uint8_t     temperature[MAX_ACU_TEMP_LENGH];    // float in 32 bits
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} setHumidityThreshold_t;
-const uint16_t len_setHumidityThreshold_t    = sizeof(setHumidityThreshold_t) - sizeof(CRC) - sizeof(EOP);
+} setACUTemperature_t;
+const uint16_t len_setACUTemperature_t    = sizeof(setACUTemperature_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _setHumidityThresholdResp
+typedef struct _setACUTemperatureResp
 {
     msgHeader_t header;
-    uint16_t    result;         // 0 - failed to set; 1 - successfully set
-    CRC         crc;            // 16 bit CRC over the packet
-    EOP         eop;            // end of transmission character/byte
-} setHumidityThresholdResp_t;
-const uint16_t len_setHumidityThresholdResp_t    = sizeof(setHumidityThresholdResp_t) - sizeof(CRC) - sizeof(EOP);
-
-
-typedef struct _getHumidityThreshold
-{
-    msgHeader_t header;
-    CRC         crc;            // 16 bit CRC over the packet
-    EOP         eop;            // end of transmission character/byte
-} getHumidityThreshold_t;
-const uint16_t len_getHumidityThreshold_t    = sizeof(getHumidityThreshold_t) - sizeof(CRC) - sizeof(EOP);
-
-
-typedef struct _getHumidityThresholdResp
-{
-    msgHeader_t header;
-    uint16_t    threshold;      // uint16_6 - current humidity threshold - TODO: make this ASCII char?
-    CRC         crc;            // 16 bit CRC over the packet
-    EOP         eop;            // end of transmission character/byte
-} getHumidityThresholdResp_t;
-const uint16_t len_getHumidityThresholdResp_t    = sizeof(getHumidityThresholdResp_t) - sizeof(CRC) - sizeof(EOP);
-
-
-typedef struct _getHumidity
-{
-    msgHeader_t header;
-    CRC         crc;            // 16 bit CRC over the packet
-    EOP         eop;            // end of transmission character/byte
-} getHumidity_t;
-const uint16_t len_getHumidity_t    = sizeof(getHumidity_t) - sizeof(CRC) - sizeof(EOP);
-
-
-typedef struct _getHumidityResp
-{
-    msgHeader_t header;
-    uint8_t     humidity[MAX_HUMIDITY_LENGTH];    // float in 32 bits
-    CRC         crc;            // 16 bit CRC over the packet
-    EOP         eop;            // end of transmission character/byte
-} getHumidityResp_t;
-const uint16_t len_getHumidityResp_t    = sizeof(getHumidityResp_t) - sizeof(CRC) - sizeof(EOP);
-
-
-typedef struct _setTECTemperature
-{
-    msgHeader_t header;
-    uint16_t    tec_address;    // uint16_6 - TEC address
-    uint8_t     temperature[MAX_TEC_TEMP_LENGH];    // float in 32 bits
-    CRC         crc;            // 16 bit CRC over the packet
-    EOP         eop;            // end of transmission character/byte
-} setTECTemperature_t;
-const uint16_t len_setTECTemperature_t    = sizeof(setTECTemperature_t) - sizeof(CRC) - sizeof(EOP);
-
-
-typedef struct _setTECTemperatureResp
-{
-    msgHeader_t header;
-    uint16_t    tec_address;    // uint16_6 - TEC address
+    uint16_t    acu_address;    // uint16_6 - ACU address
     uint16_t    result;         // 0 - fail ; 1 - success
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} setTECTemperatureResp_t;
-const uint16_t len_setTECTemperatureResp_t    = sizeof(setTECTemperatureResp_t) - sizeof(CRC) - sizeof(EOP);
+} setACUTemperatureResp_t;
+const uint16_t len_setACUTemperatureResp_t    = sizeof(setACUTemperatureResp_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _getTECTemperature
+typedef struct _getACUTemperature
 {
     msgHeader_t header;
-    uint16_t    tec_address;    // uint16_6 - TEC address
+    uint16_t    acu_address;    // uint16_6 - ACU address
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} getTECTemperature_t;
-const uint16_t len_getTECTemperature_t    = sizeof(getTECTemperature_t) - sizeof(CRC) - sizeof(EOP);
+} getACUTemperature_t;
+const uint16_t len_getACUTemperature_t    = sizeof(getACUTemperature_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _getTECTemperatureResp
+typedef struct _getACUTemperatureResp
 {
     msgHeader_t header;
-    uint16_t    tec_address;    // uint16_6 - TEC address
+    uint16_t    acu_address;    // uint16_6 - ACU address
     uint16_t    result;         // 0 - fail ; 1 - success
-    uint8_t     temperature[MAX_TEC_TEMP_LENGH];    // float in 32 bits
+    uint8_t     temperature[MAX_ACU_TEMP_LENGH];    // float in 32 bits
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} getTECTemperatureResp_t;
-const uint16_t len_getTECTemperatureResp_t    = sizeof(getTECTemperatureResp_t) - sizeof(CRC) - sizeof(EOP);
+} getACUTemperatureResp_t;
+const uint16_t len_getACUTemperatureResp_t    = sizeof(getACUTemperatureResp_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _getTECObjTemperature
+typedef struct _getACUObjTemperature
 {
     msgHeader_t header;
-    uint16_t    tec_address;    // uint16_6 - TEC address
+    uint16_t    acu_address;    // uint16_6 - ACU address
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} getTECObjTemperature_t;
-const uint16_t len_getTECObjTemperature_t    = sizeof(getTECObjTemperature_t) - sizeof(CRC) - sizeof(EOP);
+} getACUObjTemperature_t;
+const uint16_t len_getACUObjTemperature_t    = sizeof(getACUObjTemperature_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _getTECObjTemperatureResp
+typedef struct _getACUObjTemperatureResp
 {
     msgHeader_t header;
-    uint16_t    tec_address;    // uint16_6 - TEC address
+    uint16_t    acu_address;    // uint16_6 - ACU address
     uint16_t    result;         // 0 - fail ; 1 - success
-    uint8_t     temperature[MAX_TEC_TEMP_LENGH];    // float in 32 bits
+    uint8_t     temperature[MAX_ACU_TEMP_LENGH];    // float in 32 bits
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} getTECObjTemperatureResp_t;
-const uint16_t len_getTECObjTemperatureResp_t    = sizeof(getTECObjTemperatureResp_t) - sizeof(CRC) - sizeof(EOP);
+} getACUObjTemperatureResp_t;
+const uint16_t len_getACUObjTemperatureResp_t    = sizeof(getACUObjTemperatureResp_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _enableTECs
+typedef struct _enableACUs
 {
     msgHeader_t header;
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} enableTECs_t;
-const uint16_t len_enableTECs_t    = sizeof(enableTECs_t) - sizeof(CRC) - sizeof(EOP);
+} enableACUs_t;
+const uint16_t len_enableACUs_t    = sizeof(enableACUs_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _enableTECsResp
+typedef struct _enableACUsResp
 {
     msgHeader_t header;
     uint16_t    result;         // 0 - fail ; 1 - success
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} enableTECsResp_t;
-const uint16_t len_enableTECsResp_t    = sizeof(enableTECsResp_t) - sizeof(CRC) - sizeof(EOP);
+} enableACUsResp_t;
+const uint16_t len_enableACUsResp_t    = sizeof(enableACUsResp_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _disableTECs
+typedef struct _disableACUs
 {
     msgHeader_t header;
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} disableTECs_t;
-const uint16_t len_disableTECs_t    = sizeof(disableTECs_t) - sizeof(CRC) - sizeof(EOP);
+} disableACUs_t;
+const uint16_t len_disableACUs_t    = sizeof(disableACUs_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _disableTECsResp
+typedef struct _disableACUsResp
 {
     msgHeader_t header;
     uint16_t    result;         // 0 - fail ; 1 - success
-    CRC         crc;            // 16 bit CRC over the packet } disableTECsResp_t;
+    CRC         crc;            // 16 bit CRC over the packet } disableACUsResp_t;
     EOP         eop;            // end of transmission character/byte
-} disableTECsResp_t;
-const uint16_t len_disableTECsResp_t    = sizeof(disableTECsResp_t) - sizeof(CRC) - sizeof(EOP);
+} disableACUsResp_t;
+const uint16_t len_disableACUsResp_t    = sizeof(disableACUsResp_t) - sizeof(CRC) - sizeof(EOP);
 
 typedef struct _setChillerTemperature
 {
@@ -488,22 +429,22 @@ typedef struct _getChillerInfoResp
 const uint16_t len_getChillerInfoResp_t = sizeof(getChillerInfoResp_t) - sizeof(CRC) - sizeof(EOP);
 
 
-typedef struct _getTECInfoMsg
+typedef struct _getACUInfoMsg
 {
     msgHeader_t header;
-    uint16_t    tec_address;    // uint16_6 - TEC address
+    uint16_t    acu_address;    // uint16_6 - ACU address
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} getTECInfoMsg_t;
-const uint16_t len_getTECInfoMsg_t = sizeof(getTECInfoMsg_t) - sizeof(CRC) - sizeof(EOP);
+} getACUInfoMsg_t;
+const uint16_t len_getACUInfoMsg_t = sizeof(getACUInfoMsg_t) - sizeof(CRC) - sizeof(EOP);
 
 
-//typedef struct __attribute__((packed)) _getTECInfoMsgResp
-typedef struct _getTECInfoMsgResp
+//typedef struct __attribute__((packed)) _getACUInfoMsgResp
+typedef struct _getACUInfoMsgResp
 {
     msgHeader_t header;
     uint16_t    result;         // 0 - failed to get; 1 - successfully set
-    uint16_t    tec_address;    // uint16_6 - TEC address
+    uint16_t    acu_address;    // uint16_6 - ACU address
     uint32_t    deviceType;     // meerstetter device type, see MeCom Protocol Specification 5117C.pdf
     uint32_t    hwVersion;      // meerstetter h/w version
     uint32_t    fwVersion;      // meerstetter f/w version
@@ -513,8 +454,8 @@ typedef struct _getTECInfoMsgResp
     uint32_t    serialNumber;   // meerstetter serial number
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
-} getTECInfoMsgResp_t;
-const uint16_t len_getTECInfoMsgResp_t = sizeof(getTECInfoMsgResp_t) - sizeof(CRC) - sizeof(EOP);
+} getACUInfoMsgResp_t;
+const uint16_t len_getACUInfoMsgResp_t = sizeof(getACUInfoMsgResp_t) - sizeof(CRC) - sizeof(EOP);
 
 
 typedef struct _startUpCmd
@@ -591,21 +532,18 @@ class controlProtocol
     bool    StartUpCmd(uint16_t);
     bool    ShutDownCmd(uint16_t);
     bool    GetStatus(uint16_t, uint16_t*, uint16_t*, uint16_t*);
-    bool    GetHumidity(uint16_t, float*);
-    bool    SetHumidityThreshold(uint16_t, uint16_t);
-    bool    GetHumidityThreshold(uint16_t, uint16_t*);
-    bool    SetTECTemperature(uint16_t, uint16_t, float);
-    bool    GetTECTemperature(uint16_t, uint16_t, uint16_t*, float*);
-    bool    GetTECObjTemperature(uint16_t, uint16_t, uint16_t*, float*);
+    bool    SetACUTemperature(uint16_t, uint16_t, float);
+    bool    GetACUTemperature(uint16_t, uint16_t, uint16_t*, float*);
+    bool    GetACUObjTemperature(uint16_t, uint16_t, uint16_t*, float*);
     bool    StartChiller(uint16_t);
     bool    StopChiller(uint16_t);
     bool    GetChillerInfo(uint16_t, char*, uint8_t);
     bool    SetChillerTemperature(uint16_t, float);
     bool    GetChillerTemperature(uint16_t, float*);
     bool    GetChillerObjTemperature(uint16_t, float*);
-    bool    EnableTECs(uint16_t);
-    bool    DisableTECs(uint16_t);
-    bool    GetTECInfo(uint16_t, uint16_t, uint32_t*, uint32_t*, uint32_t*, uint32_t*);
+    bool    EnableACUs(uint16_t);
+    bool    DisableACUs(uint16_t);
+    bool    GetACUInfo(uint16_t, uint16_t, uint32_t*, uint32_t*, uint32_t*, uint32_t*);
 
     // master - control/test PC USB or serial interface
     bool        TxCommandUSB(uint16_t);    // uses m_buff and m_seqNum
@@ -655,43 +593,31 @@ class controlProtocol
     uint16_t    Make_getStatusResp(uint16_t, uint8_t*, uint16_t, uint16_t, uint16_t, uint16_t);
     void        Parse_getStatusResp(uint8_t*, uint16_t*, uint16_t*, uint16_t*, uint16_t*);
 
-    uint16_t    Make_setHumidityThreshold(uint16_t, uint8_t*, uint16_t);
-    uint16_t    Make_setHumidityThresholdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
-    void        Parse_setHumidityThresholdResp(uint8_t*, uint16_t*, uint16_t*);
+    uint16_t    Make_setACUTemperature(uint16_t, uint8_t*, uint16_t, float);
+    uint16_t    Make_setACUTemperatureResp(uint16_t, uint8_t*, uint16_t, uint16_t, uint16_t);
+    void        Parse_setACUTemperatureResp(uint8_t*, uint16_t*, uint16_t*);
 
-    uint16_t    Make_getHumidityThreshold(uint16_t, uint8_t*);
-    uint16_t    Make_getHumidityThresholdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
-    void        Parse_getHumidityThresholdResp(uint8_t*, uint16_t*, uint16_t*);
+    uint16_t    Make_getACUTemperature(uint16_t, uint8_t*, uint16_t);
+    uint16_t    Make_getACUTemperatureResp(uint16_t, uint8_t*, uint16_t, uint16_t, float, uint16_t);
+    void        Parse_getACUTemperatureResp(uint8_t*, uint16_t*, float*, uint16_t*);
 
-    uint16_t    Make_getHumidity(uint16_t, uint8_t*);
-    uint16_t    Make_getHumidityResp(uint16_t, uint8_t*, float, uint16_t);
-    void        Parse_getHumidityResp(uint8_t*, float*, uint16_t*);
+    uint16_t    Make_getACUObjTemperature(uint16_t, uint8_t*, uint16_t);
+    uint16_t    Make_getACUObjTemperatureResp(uint16_t, uint8_t*, uint16_t, uint16_t, float, uint16_t);
+    void        Parse_getACUObjTemperatureResp(uint8_t*, uint16_t*, float*, uint16_t*);
 
-    uint16_t    Make_setTECTemperature(uint16_t, uint8_t*, uint16_t, float);
-    uint16_t    Make_setTECTemperatureResp(uint16_t, uint8_t*, uint16_t, uint16_t, uint16_t);
-    void        Parse_setTECTemperatureResp(uint8_t*, uint16_t*, uint16_t*);
-
-    uint16_t    Make_getTECTemperature(uint16_t, uint8_t*, uint16_t);
-    uint16_t    Make_getTECTemperatureResp(uint16_t, uint8_t*, uint16_t, uint16_t, float, uint16_t);
-    void        Parse_getTECTemperatureResp(uint8_t*, uint16_t*, float*, uint16_t*);
-
-    uint16_t    Make_getTECObjTemperature(uint16_t, uint8_t*, uint16_t);
-    uint16_t    Make_getTECObjTemperatureResp(uint16_t, uint8_t*, uint16_t, uint16_t, float, uint16_t);
-    void        Parse_getTECObjTemperatureResp(uint8_t*, uint16_t*, float*, uint16_t*);
-
-    uint16_t    Make_getTECInfoMsg(uint16_t, uint8_t*, uint16_t);
-    uint16_t    Make_getTECInfoMsgResp(uint16_t, uint8_t*, uint16_t, uint16_t, uint32_t, 
+    uint16_t    Make_getACUInfoMsg(uint16_t, uint8_t*, uint16_t);
+    uint16_t    Make_getACUInfoMsgResp(uint16_t, uint8_t*, uint16_t, uint16_t, uint32_t, 
                                             uint32_t, uint32_t, uint32_t, uint16_t);
-    void        Parse_getTECInfoMsgResp(uint8_t*, uint16_t*, uint32_t*, uint32_t*, uint32_t*,
+    void        Parse_getACUInfoMsgResp(uint8_t*, uint16_t*, uint32_t*, uint32_t*, uint32_t*,
                                                                 uint32_t*, uint16_t*);
 
-    uint16_t    Make_enableTECs(uint16_t, uint8_t*);
-    uint16_t    Make_enableTECsResp(uint16_t, uint8_t*, uint16_t, uint16_t);
-    void        Parse_enableTECsResp(uint8_t*, uint16_t*, uint16_t*);
+    uint16_t    Make_enableACUs(uint16_t, uint8_t*);
+    uint16_t    Make_enableACUsResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    void        Parse_enableACUsResp(uint8_t*, uint16_t*, uint16_t*);
 
-    uint16_t    Make_disableTECs(uint16_t, uint8_t*);
-    uint16_t    Make_disableTECsResp(uint16_t, uint8_t*, uint16_t, uint16_t);
-    void        Parse_disableTECsResp(uint8_t*, uint16_t*, uint16_t*);
+    uint16_t    Make_disableACUs(uint16_t, uint8_t*);
+    uint16_t    Make_disableACUsResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    void        Parse_disableACUsResp(uint8_t*, uint16_t*, uint16_t*);
 
     uint16_t    Make_startChillerMsg(uint16_t, uint8_t*);
     uint16_t    Make_startChillerMsgResp(uint16_t, uint8_t*, uint16_t, uint16_t);

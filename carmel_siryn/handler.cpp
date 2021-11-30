@@ -36,23 +36,29 @@ cmdResp handler::readProcess(HardwareSerial& so, uint8_t id, uint16_t param_addr
   if( (c.cmdLength() == bytesWritten) )
   {
   // read the response into the m_rx_buff
-  bytesRead = rcvReadResp(so, READ_RESP_PKT_LEN, rx_buff, rx_buff_size);   // return function style cast
+    bytesRead = rcvReadResp(so, READ_RESP_PKT_LEN, rx_buff, rx_buff_size);   // return function style cast
 
-  if( (-1 != bytesRead) )
-  {
-    #ifdef __DEBUG_MODBUS_CMDS__
-    Serial.print("rvcReadResp got "); Serial.print(bytesRead); Serial.print(" bytes: ");
-    for(int i = 0; i < bytesRead; i++) {  Serial.print(rx_buff[i], 16); Serial.print(" "); }
-    Serial.println("");
-    #endif
+    if( (-1 != bytesRead) )
+    {
+      #ifdef __DEBUG_MODBUS_CMDS__
+      Serial.print("rvcReadResp got "); Serial.print(bytesRead); Serial.print(" bytes: ");
+      for(int i = 0; i < bytesRead; i++) {  Serial.print(rx_buff[i], 16); Serial.print(" "); }
+      Serial.println("");
+      #endif
     
-    return(c.buildReadResp(rx_buff, bytesRead, id));
+      return(c.buildReadResp(rx_buff, bytesRead, id));
+      
+    } else
+    {
+      #ifdef __DEBUG_MODBUS_CMDS__
+      Serial.print("rvcReadResp failed");
+      #endif
+    }
   } else
   {
     #ifdef __DEBUG_MODBUS_CMDS__
-    Serial.print("rvcReadResp failed");
-    #endif
-  }
+    Serial.print("not all bytes written");
+    #endif    
   }
 
   #ifdef __DEBUG_MODBUS_CMDS__
@@ -154,25 +160,40 @@ int handler::rcvWriteResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_b
   // TODO: generate fail return from unit and verify it is also 8 bytes
   while( ((!timed_out) && (bytes_read < min_pkt_size) && (bytes_read < rx_buff_size)) )
   {
-  if( ((millis() - start_time) > _READ_TIME_OUT_) )  // 3 seconds
-  {
-    #ifdef __DEBUG_MODBUS_TXRX__
-    Serial.println("rcvWriteResp timed out");
-    #endif
+    if( ((millis() - start_time) > _READ_TIME_OUT_) )  // 3 seconds
+    {
+      #ifdef __DEBUG_MODBUS_TXRX__
+      Serial.println("rcvWriteResp timed out");
+      #endif
       
-    timed_out = true;
-    break;
-  }
+      timed_out = true;
+      break;
+    }
 
-  if( (so.available()) )
-  {
-    rx_buff[bytes_read++] = so.read();
+    if( (0 < so.available()) )
+    {
+      rx_buff[bytes_read] = so.read();
 
-  } else
-  {
-    // delay, let the unit respond
-    delay(100);
-  }
+      if( (0 == bytes_read) && (0 == rx_buff[bytes_read]) )
+      {
+        #ifdef __DEBUG_MODBUS_TXRX__
+        Serial.println("rcvWriteResp dropping 1st byte 0");
+        #endif
+
+        continue;
+      }
+      
+      #ifdef __DEBUG_MODBUS_TXRX__
+      Serial.print("rcvWriteResp read byte: 0x"); Serial.print(rx_buff[bytes_read], 16); Serial.print(" into index: "); Serial.println(bytes_read);
+      #endif
+
+      bytes_read ++;
+      
+    } else
+    {
+      // delay, let the unit respond
+      delay(100);
+    }
   }
 
   Controllino_RS485TxEnable();
@@ -211,12 +232,25 @@ int handler::rcvReadResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_bu
       break;
     }
 
-    if( (so.available()) )
+    if( (0 < so.available()) )
     {
       rx_buff[bytes_read] = so.read();
 
+      if( (0 == bytes_read) && (0 == rx_buff[bytes_read]) )
+      {
+        #ifdef __DEBUG_MODBUS_TXRX__
+        Serial.println("rcvReadResp dropping 1st byte 0");
+        #endif
+
+        continue;
+      }
+
+      #ifdef __DEBUG_MODBUS_TXRX__
+      Serial.print("rcvReadResp read byte: 0x"); Serial.print(rx_buff[bytes_read], 16); Serial.print(" into index: "); Serial.println(bytes_read);
+      #endif
+
       // handle CTRLR_READ_BYTE_CNT_OFFSET data
-      // there is a word in the packet that is the count of bytes after it
+      // there is a word in the pac ket that is the count of bytes after it
       // then there is the CRC word after those bytes
       if( (CTRLR_READ_BYTE_CNT_OFFSET + 1 == bytes_read) )
       {

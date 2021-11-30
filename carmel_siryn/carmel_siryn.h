@@ -17,15 +17,15 @@
 
 
 
-#define __DEBUG_MODBUS_CMDS__
-#define __DEBUG_MODBUS_TXRX__
+//#define __DEBUG_MODBUS_CMDS__
+//#define __DEBUG_MODBUS_TXRX__
 
 
 // this is for important, error condition debug output
 #define __DEBUG_VIA_SERIAL__
 
 // this is for frivilous debug output
-#define __DEBUG2_VIA_SERIAL__
+//#define __DEBUG2_VIA_SERIAL__
 
 // initial PVOF value
 #define __INIT_PVOF__  0x01FA
@@ -75,22 +75,23 @@ controlProtocol cp(1, 0, 57600);  // slave address (arduino) is 1, control addre
 // constants - using #define - have limited space on Arduino
 //
 #define GET_STATUS_INTERVAL   10000
-#define GET_HUMIDITY_INTERVAL   2500
-#define BUTTON_PERIOD       5000
+#define GET_HUMIDITY_INTERVAL 2500
+#define BUTTON_PERIOD         5000
 #define HUMIDITY_THRESHOLD    80
-#define HUMIDITY_BUFFER     10
-#define PIN_HW_ENABLE_n     8
-#define SWITCH_PIN        9
-#define MAX_BUFF_LENGHT     10
-#define MAX_ACU_ADDRESS     1
-#define MIN_ACU_ADDRESS     1
-#define MAX_SHUTDOWN_ATTEMPTS   1
+#define HUMIDITY_BUFFER       10
+#define PIN_HW_ENABLE_n       8
+#define SWITCH_PIN            9
+#define MAX_BUFF_LENGHT       10
+#define MAX_ACU_ADDRESS       1
+#define MIN_ACU_ADDRESS       1
+#define MAX_SHUTDOWN_ATTEMPTS 1
+#define MAX_RTD_ADDRESS       7
 
 
 #define SYSTEM_NRML_OFFSET    0   // 2 msgs, good and bad
 #define SYSTEM_FAIL_OFFSET    1   // 2 msgs, good and bad
-#define ACU_NRML_OFFSET     2   // 2 msgs, good and bad
-#define ACU_FAIL_OFFSET     3   // 2 msgs, good and bad
+#define ACU_NRML_OFFSET       2   // 2 msgs, good and bad
+#define ACU_FAIL_OFFSET       3   // 2 msgs, good and bad
 #if defined(__USING_CHILLER__)
 #define CHILLER_NRML_OFFSET   4   // 2 msgs, good and bad
 #define CHILLER_FAIL_OFFSET   5   // 2 msgs, good and bad
@@ -179,26 +180,26 @@ typedef enum { SHUTDOWN, READY, RUNNING, UNKNOWN } systemStatus;
 #if defined(__USING_CHILLER__)
 typedef struct _chillerState
 {
-  runningStates   online;     // online or offline
-  runningStates   state;      // running or stopped
-  float       setpoint;     // current set point temperature
-  float       temperature;  // current temperature
+  runningStates online;         // online or offline
+  runningStates state;          // running or stopped
+  float         setpoint;       // current set point temperature
+  float         temperature;    // current temperature
 } chillerState;
 #endif
 
 typedef struct _ACUState
 {
-  runningStates   online;     // online or offline
-  runningStates   state;      // running or stopped
+  runningStates   online;       // online or offline
+  runningStates   state;        // running or stopped
   float           setpoint;     // current set point temperature
   float           temperature;  // current temperature
 } ACUState;
 
 typedef struct _LCDState
 {
-  int16_t     lcdFacesIndex[MAX_LCD_MSGS];// index into lcd faces array
-  int16_t     index;            // index into lcdFacesIndex array
-  unsigned long   prior_millis;         // prior time in millis()
+  int16_t       lcdFacesIndex[MAX_LCD_MSGS];// index into lcd faces array
+  int16_t       index;            // index into lcdFacesIndex array
+  unsigned long prior_millis;         // prior time in millis()
 } LCDState;
 
 typedef struct _systemState
