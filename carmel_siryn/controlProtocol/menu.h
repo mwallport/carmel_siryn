@@ -148,7 +148,7 @@ class menuSetACUTemperature : public menuItemBase
     }
 
     menuSetACUTemperature()
-        :   menuItemBase("set ACU temperature", "set a TCU temperature"),
+        :   menuItemBase("set ACU SV", "set an SV temperature"),
             m_pSetACUTemperature(&controlProtocol::SetACUTemperature) {}
 
     void execute(controlProtocol* pCP)
@@ -179,7 +179,7 @@ class menuGetACUTemperature : public menuItemBase
     }
 
     menuGetACUTemperature()
-        :   menuItemBase("get ACU temperature", "get a TCU set-point temperature"),
+        :   menuItemBase("get ACU SV", "get an SV temperature"),
             m_pGetACUTemperature(&controlProtocol::GetACUTemperature) {}
 
     void execute(controlProtocol* pCP)
@@ -215,7 +215,7 @@ class menuGetACUObjTemperature : public menuItemBase
     }
 
     menuGetACUObjTemperature()
-        :   menuItemBase("get ACU obj temperature", "get a TCU object temperature"),
+        :   menuItemBase("get ACU PV", "get a PV temperature"),
             m_pGetACUObjTemperature(&controlProtocol::GetACUObjTemperature) {}
 
     void execute(controlProtocol* pCP)

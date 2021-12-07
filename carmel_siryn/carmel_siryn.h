@@ -8,6 +8,7 @@
 #endif
 
 #include <LiquidCrystal.h>    // LCD interface library
+#include <Adafruit_MAX31865.h>
 #include <controlProtocol.h>
 #include <polySci.h>        // polySci chiller communication library
 #include "common.h"
@@ -51,6 +52,7 @@ uint32_t  val;
 static const uint8_t MAX_BUFF_LENGTH_MODBUS = 255;
 uint8_t tx_buff[MAX_BUFF_LENGTH_MODBUS];
 uint8_t rx_buff[MAX_BUFF_LENGTH_MODBUS];
+
 deviceHandler rs485Bus(Serial3, tx_buff, MAX_BUFF_LENGTH_MODBUS, rx_buff, MAX_BUFF_LENGTH_MODBUS);
 
 
@@ -68,7 +70,23 @@ polySci chiller(9600);  // hard programmed to use Serial2 SERIAL_8N1
 controlProtocol cp(1, 0, 57600);  // slave address (arduino) is 1, control address is 0
                   // hard coded to use Serial1 
 
+//
+// Adafruit RTDs - do we have enough pins for all these ?
+//
+// TODO: set these up w/ the correct pins
+//
+Adafruit_MAX31865 ASIC_RTD          = Adafruit_MAX31865(10, 11, 12, 13);
+Adafruit_MAX31865 ASIC_Chiller_RTD  = Adafruit_MAX31865(10, 11, 12, 13);
+Adafruit_MAX31865 DDR1_RTD          = Adafruit_MAX31865(10, 11, 12, 13);
+Adafruit_MAX31865 DDR2_RTD          = Adafruit_MAX31865(10, 11, 12, 13);
+Adafruit_MAX31865 DDR3_RTD          = Adafruit_MAX31865(10, 11, 12, 13);
+Adafruit_MAX31865 DDR_Chiller_RTD   = Adafruit_MAX31865(10, 11, 12, 13);
 
+// The value of the Rref resistor. Use 430.0 for PT100 and 4300.0 for PT1000
+#define RREF      430.0
+// The 'nominal' 0-degrees-C resistance of the sensor
+// 100.0 for PT100, 1000.0 for PT1000
+#define RNOMINAL  100.0
 
 
 //
@@ -82,7 +100,7 @@ controlProtocol cp(1, 0, 57600);  // slave address (arduino) is 1, control addre
 #define PIN_HW_ENABLE_n       8
 #define SWITCH_PIN            9
 #define MAX_BUFF_LENGHT       10
-#define MAX_ACU_ADDRESS       1
+#define MAX_ACU_ADDRESS       2
 #define MIN_ACU_ADDRESS       1
 #define MAX_SHUTDOWN_ATTEMPTS 1
 #define MAX_RTD_ADDRESS       7
@@ -92,12 +110,16 @@ controlProtocol cp(1, 0, 57600);  // slave address (arduino) is 1, control addre
 #define SYSTEM_FAIL_OFFSET    1   // 2 msgs, good and bad
 #define ACU_NRML_OFFSET       2   // 2 msgs, good and bad
 #define ACU_FAIL_OFFSET       3   // 2 msgs, good and bad
+#define ASIC_RTD_NRML_OFFSET  4
+#define ASIC_RTD_FAIL_OFFSET  5
+#define DDR_RTD_NRML_OFFSET   6
+#define DDR_RTD_FAIL_OFFSET   7
 #if defined(__USING_CHILLER__)
-#define CHILLER_NRML_OFFSET   4   // 2 msgs, good and bad
-#define CHILLER_FAIL_OFFSET   5   // 2 msgs, good and bad
+#define CHILLER_NRML_OFFSET   8   // 2 msgs, good and bad
+#define CHILLER_FAIL_OFFSET   9   // 2 msgs, good and bad
 #define MAX_LCD_MSGS      (CHILLER_FAIL_OFFSET + 1)
 #else
-#define MAX_LCD_MSGS      (ACU_FAIL_OFFSET + 1)
+#define MAX_LCD_MSGS      (DDR_RTD_FAIL_OFFSET + 1)
 #endif
 #define MAX_MSG_DISPLAY_TIME  1500  // 1.5 minimum seconds per message
 
@@ -110,12 +132,19 @@ controlProtocol cp(1, 0, 57600);  // slave address (arduino) is 1, control addre
 //
 enum {
   // no status to display
-  no_Status,
+  no_Status = 0,
+  
   // sys LCD status
   sys_Initializing, sys_Ready, sys_Running, sys_Shutdown, sys_StartFailed, sys_Failure,
 
   // ACU status
   ACU_Stopped, ACU_Running, ACU_ComFailure,
+
+  // ASIC RTD status
+  ASIC_RTD_Running, ASIC_RTD_Failure,
+
+  // DDR RTD status
+  DDR_RTD_Running, DDR_RTD_Failure,
 
 #if defined(__USING_CHILLER__)
   // chiller
@@ -136,6 +165,14 @@ void lcd_systemFailure(); // some run-time fail, loss of comm w/ device, etc.
 void lcd_ACUsStopped();   // set point and current temp
 void lcd_ACUsRunning();   // set point and current temp
 void lcd_ACUComFailure(); // set point and current temp
+
+// ASIC RTDs
+void lcd_ASIC_RTDs_Running();
+void lcd_ASIC_RTDs_Failure();
+
+// DDR RTDs
+void lcd_DDR_RTDs_Running();
+void lcd_DDR_RTDs_Failure();
 
 #if defined(__USING_CHILLER__)
 // chiller
@@ -159,6 +196,10 @@ lcdFunc lcdFaces[MAX_LCD_FUNC] =
   lcd_ACUsStopped,  // stopped and 3 set points 
   lcd_ACUsRunning,  // running and 3 set points
   lcd_ACUComFailure,  // can't communicate with one of the ACUs asterisks and which ACU
+  lcd_ASIC_RTDs_Running,
+  lcd_ASIC_RTDs_Failure,
+  lcd_DDR_RTDs_Running,
+  lcd_DDR_RTDs_Failure,
 #if defined(__USING_CHILLER__)
   lcd_chillerRunning, // running - pump is on, etc. and temps
   lcd_chillerStopped, // not running - pump is off and temps
@@ -195,6 +236,15 @@ typedef struct _ACUState
   float           temperature;  // current temperature
 } ACUState;
 
+typedef struct _RTDState
+{
+  runningStates   online;       // online or offline
+  runningStates   state;        // running or stopped
+  uint8_t         fault;        // tightly coupled to adafruit .. boo .. can display on the LCD fault face which could be good-ish ..?
+  uint16_t        rtd;          // same same - tightly coupled
+  float           temperature;  // current temperature
+} RTDState;
+
 typedef struct _LCDState
 {
   int16_t       lcdFacesIndex[MAX_LCD_MSGS];// index into lcd faces array
@@ -208,6 +258,12 @@ typedef struct _systemState
   chillerState  chiller;
 #endif
   ACUState    ACU[MAX_ACU_ADDRESS];
+  RTDState    ASIC_RTD;             // ASIC chip temp
+  RTDState    ASIC_Chiller_RTD;     // ASIC chiller temp
+  RTDState    DDR1_RTD;             // 1st DDR chip temp
+  RTDState    DDR2_RTD;             // 2nd DDR chip temp
+  RTDState    DDR3_RTD;             // 3rd DDR chip temp
+  RTDState    DDR_Chiller_RTD;      // DDR chiller temp
   LCDState    lcd;
   systemStatus  sysStatus;
 } systemState;
@@ -241,7 +297,6 @@ volatile bool buttonOnOff = false;
 //
 const int rs = 8, en = 10, d4 = 11, d5 = 12, d6 = 13, d7 = 42, rw=9;
 LiquidCrystal lcd(rs, rw, en, d4, d5, d6, d7);
-
 
 
 //

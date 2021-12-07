@@ -1,6 +1,7 @@
 #include <SPI.h>
 #include <Controllino.h>
 #include <LiquidCrystal.h>    // LCD interface library
+#include <Adafruit_MAX31865.h>
 #include <HardwareSerial.h>
 #include <stdio.h>
 #include <inttypes.h>
@@ -43,6 +44,7 @@ void setup(void)
   //
   handleChillerStatus();
   handleACUStatus();
+  handleRTDStatus();
 }
 
 
@@ -76,6 +78,10 @@ void loop(void)
   // update the LCD
   //
   manageLCD();
+
+  //
+  // set PVOF
+  //
 }
 
 
@@ -130,12 +136,8 @@ void initSystem(void)
   //
   // start the LCD and paint system initializing
   //
-  //  startLCD();
+  startLCD();
 
-  //
-  // register the ISR for the digital encoder
-  //
-  //enableRotaryEncoder();
 
   //
   // initialize the start/stop button
@@ -178,9 +180,35 @@ void initSysStates(systemState& states)
     states.ACU[(i - MIN_ACU_ADDRESS)].temperature = 0;
   }
 
+  // RTDs all start offline until discovered to be online via getStatus()
+  states.ASIC_RTD.online      = offline;
+  states.ASIC_RTD.state       = stopped;
+  states.ASIC_RTD.temperature = 0;
+
+  states.ASIC_Chiller_RTD.online      = offline;
+  states.ASIC_Chiller_RTD.state       = stopped;
+  states.ASIC_Chiller_RTD.temperature = 0;
+
+  states.DDR1_RTD.online      = offline;
+  states.DDR1_RTD.state       = stopped;
+  states.DDR1_RTD.temperature = 0;
+
+  states.DDR2_RTD.online      = offline;
+  states.DDR2_RTD.state       = stopped;
+  states.DDR2_RTD.temperature = 0;
+
+  states.DDR3_RTD.online      = offline;
+  states.DDR3_RTD.state       = stopped;
+  states.DDR3_RTD.temperature = 0;
+
+  states.DDR_Chiller_RTD.online      = offline;
+  states.DDR_Chiller_RTD.state       = stopped;
+  states.DDR_Chiller_RTD.temperature = 0;
+
+
   // lcd - initialize all messages
   for(int i = 0; i < MAX_LCD_MSGS; i++)
-    sysStates.lcd.lcdFacesIndex[i] = 0;
+    sysStates.lcd.lcdFacesIndex[i] = no_Status; // no_Status is 0, so same as NULL .. sort of ..
 
   // pick up the millis() 'now' - something fishy about this, what will happen when
   // the counter rolls over ?  This program is suppossed to run for a long time..
@@ -188,12 +216,14 @@ void initSysStates(systemState& states)
   sysStates.lcd.prior_millis = millis();
 
   //
-  // setup the 'good' lcd functions
+  // setup the 'good' lcd functions - the error faces are 0
   //
-  sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Initializing;
-  sysStates.lcd.lcdFacesIndex[ACU_NRML_OFFSET]     = ACU_Stopped;
+  sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]   = sys_Initializing;
+  sysStates.lcd.lcdFacesIndex[ACU_NRML_OFFSET]      = ACU_Stopped;
+  sysStates.lcd.lcdFacesIndex[ASIC_RTD_NRML_OFFSET] = ASIC_RTD_Running;
+  sysStates.lcd.lcdFacesIndex[DDR_RTD_NRML_OFFSET]  = DDR_RTD_Running;
 #if defined(__USING_CHILLER__)
-  sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]   = chiller_Stopped;
+  sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Stopped;
 #endif
   sysStates.lcd.index = 0;
   sysStates.sysStatus = UNKNOWN;
@@ -349,7 +379,7 @@ void getStatus(void)
 {
   static unsigned long  lastGetStatusTime     = 0;
   static unsigned long  lastGetHumidityTime   = 0;
-  unsigned long       currentGetStatusTime  = millis();
+  unsigned long         currentGetStatusTime  = millis();
 
 
   //
@@ -365,6 +395,7 @@ void getStatus(void)
     lastGetStatusTime = currentGetStatusTime;
     handleChillerStatus();
     handleACUStatus();
+    handleRTDStatus();
   }
 
 
@@ -987,8 +1018,6 @@ void lcd_ACUsRunning(void)
   lcd.print(sysStates.ACU[0].setpoint,1);
   lcd.setCursor(0,1);
   lcd.print(sysStates.ACU[1].setpoint,1);
-  lcd.setCursor(9,1);
-  lcd.print(sysStates.ACU[2].setpoint,1);
   lcd.display();
 }
 
@@ -1009,8 +1038,6 @@ void lcd_ACUsStopped(void)
   lcd.print(sysStates.ACU[0].setpoint,1);
   lcd.setCursor(0,1);
   lcd.print(sysStates.ACU[1].setpoint,1);
-  lcd.setCursor(9,1);
-  lcd.print(sysStates.ACU[2].setpoint,1);
   lcd.display();
 }
 
@@ -1032,7 +1059,30 @@ void lcd_ACUComFailure(void)
   lcd.display();
 }
 
+void lcd_ASIC_RTDs_Running(void)
+{
+  
+}
 
+
+void lcd_ASIC_RTDs_Failure(void)
+{
+  
+}
+
+
+void lcd_DDR_RTDs_Running(void)
+{
+  
+}
+
+
+void lcd_DDR_RTDs_Failure(void)
+{
+  
+}
+
+  
 #if defined(__USING_CHILLER__)
 void lcd_chillerRunning(void)
 {
@@ -1099,16 +1149,6 @@ void lcd_chillerComFailure(void)
   lcd.display();
 }
 #endif
-
-void lcd_sensorFailure(void)
-{
-  lcd.noDisplay();
-  lcd.clear();
-  lcd.home();
-  lcd.setCursor(0,1);
-  lcd.print("SENSOR FAILURE ");
-  lcd.display();
-}
 
 
 bool getMsgFromControl(void)
@@ -2240,8 +2280,8 @@ void handleChillerStatus(void)
     //
     sysStates.chiller.online              = offline;
     sysStates.chiller.state               = stopped;  // offline, we don't know
-    sysStates.chiller.temperature             = 0;
-    sysStates.chiller.setpoint              = 0;
+    sysStates.chiller.temperature         = 0;
+    sysStates.chiller.setpoint            = 0;
     sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Stopped;
     sysStates.lcd.lcdFacesIndex[CHILLER_FAIL_OFFSET]  = chiller_ComFailure;
 
@@ -2296,8 +2336,8 @@ void handleACUStatus(void)
   {
     if( (sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online == offline) )
     {
-    digitalWrite(FAULT_LED, HIGH);
-    break;
+      digitalWrite(FAULT_LED, HIGH);
+      break;
     }
   }
 
@@ -2319,7 +2359,7 @@ void handleACUStatus(void)
       Serial.flush();
       #endif
 
-      sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online   = offline;
+      sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online = offline;
       sysStates.ACU[(Address - MIN_ACU_ADDRESS)].state  = stopped;
       #ifdef __DEBUG2_VIA_SERIAL__
     } else
@@ -2383,7 +2423,6 @@ void handleACUStatus(void)
 
 
 /* this will be replaces w/ a get info for the accuthermo */
-// careful . . acu_address is a
 bool getACUInfo(uint8_t acu_address, uint32_t* deviceType, uint32_t* hwVersion,
                     uint32_t* fwVersion, uint32_t* serialNumber)
 {
@@ -2399,6 +2438,151 @@ bool getACUInfo(uint8_t acu_address, uint32_t* deviceType, uint32_t* hwVersion,
   }
 */
   return(retVal);
+}
+
+
+void handleRTDStatus(void)
+{
+  bool  ASIC_RTDsRunning  = true;  // becomes false is at least one RTD has fault
+  bool  DDR_RTDsRunning   = true;  // becomes false is at least one RTD has fault
+
+  
+  //
+  // check all RTds running
+  //
+  // assume they are running, if one if found not running, mark the group
+  // as not running
+  //
+  // before going to chat w/ the RTDs - enable the FAUL_LED so it is on 
+  // when there is a fault and on while we could be timing out chatting
+  // to a dead RTD
+  //
+  if( (sysStates.ASIC_RTD.fault || sysStates.ASIC_Chiller_RTD.fault || sysStates.DDR1_RTD.fault ||
+      sysStates.DDR2_RTD.fault || sysStates.DDR3_RTD.fault || sysStates.DDR_Chiller_RTD.fault) )
+  {
+    digitalWrite(FAULT_LED, HIGH);
+  }
+  
+  //
+  // reset the stats/data for each RTD
+  //
+  resetRTDState(sysStates.ASIC_RTD);
+  resetRTDState(sysStates.ASIC_Chiller_RTD);
+  resetRTDState(sysStates.DDR1_RTD);
+  resetRTDState(sysStates.DDR2_RTD);
+  resetRTDState(sysStates.DDR3_RTD);
+  resetRTDState(sysStates.DDR_Chiller_RTD);
+
+  //
+  // get all the ASIC RTDs status
+  //
+  getASIC_RTD_Status();
+
+  //
+  // get all the DDR RTDs status
+  //
+  getDDR_RTD_Status();
+
+  //
+  // if any have fault . . shut it down ?
+  //
+  if( (sysStates.ASIC_RTD.fault) )
+  {
+    sysStates.ASIC_RTD.online  = offline;
+    sysStates.ASIC_RTD.state   = stopped;    
+    ASIC_RTDsRunning  = false;  
+  }
+
+  if( (sysStates.ASIC_Chiller_RTD.fault) )
+  {
+    sysStates.ASIC_Chiller_RTD.online  = offline;
+    sysStates.ASIC_Chiller_RTD.state   = stopped;
+    ASIC_RTDsRunning  = false;  
+  }
+
+  if( (sysStates.DDR1_RTD.fault) )
+  {
+    sysStates.DDR1_RTD.online  = offline;
+    sysStates.DDR1_RTD.state   = stopped;    
+    DDR_RTDsRunning  = false;  
+  }
+
+  if( (sysStates.DDR2_RTD.fault) )
+  {
+    sysStates.DDR2_RTD.online  = offline;
+    sysStates.DDR2_RTD.state   = stopped;    
+    DDR_RTDsRunning  = false;  
+  }
+
+  if( (sysStates.DDR3_RTD.fault) )
+  {
+    sysStates.DDR3_RTD.online  = offline;
+    sysStates.DDR3_RTD.state   = stopped;    
+    DDR_RTDsRunning  = false;  
+  }
+
+  if( (sysStates.DDR_Chiller_RTD.fault) )
+  {
+    sysStates.DDR_Chiller_RTD.online  = offline;
+    sysStates.DDR_Chiller_RTD.state   = stopped;    
+    DDR_RTDsRunning  = false;  
+  }
+
+
+  //
+  // if one RTD is down or bad, the overall status is bad
+  //
+  if( !(ASIC_RTDsRunning) )
+  {
+    sysStates.lcd.lcdFacesIndex[ASIC_RTD_NRML_OFFSET]   = no_Status;
+    sysStates.lcd.lcdFacesIndex[ASIC_RTD_FAIL_OFFSET]   = ASIC_RTD_Failure;
+  }
+  else
+  {
+    sysStates.lcd.lcdFacesIndex[ASIC_RTD_NRML_OFFSET]   = ASIC_RTD_Running;
+    sysStates.lcd.lcdFacesIndex[ASIC_RTD_FAIL_OFFSET]   = no_Status;
+  }
+
+  if( !(DDR_RTDsRunning) )
+  {
+    sysStates.lcd.lcdFacesIndex[DDR_RTD_NRML_OFFSET]   = no_Status;
+    sysStates.lcd.lcdFacesIndex[DDR_RTD_FAIL_OFFSET]   = DDR_RTD_Failure;
+  }
+  else
+  {
+    sysStates.lcd.lcdFacesIndex[DDR_RTD_NRML_OFFSET]   = DDR_RTD_Running;
+    sysStates.lcd.lcdFacesIndex[DDR_RTD_FAIL_OFFSET]   = no_Status;
+  }
+}
+
+
+// get the data for RTDs in the ASIC part
+void getASIC_RTD_Status(void)
+{
+  // this will be the ADAFRUIT MAX 31865 eventually ..for now, just fudge some numbers
+  getAdafruitRTDData(ASIC_RTD, sysStates.ASIC_RTD);
+  getAdafruitRTDData(ASIC_Chiller_RTD, sysStates.ASIC_RTD);
+}
+
+
+// get the data for the RTDs in the DDR part
+void getDDR_RTD_Status(void)
+{
+  getAdafruitRTDData(DDR1_RTD, sysStates.DDR1_RTD);
+  getAdafruitRTDData(DDR2_RTD, sysStates.DDR2_RTD);
+  getAdafruitRTDData(DDR3_RTD, sysStates.DDR3_RTD);
+  getAdafruitRTDData(DDR_Chiller_RTD, sysStates.DDR_Chiller_RTD);
+}
+
+
+//
+// this data is processed in the LCD and setSystemStatus functions - only getting it here
+//
+void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state)
+{
+  state.fault       = afmaxRTD.readFault();
+  state.rtd         = afmaxRTD.readRTD();
+  state.temperature = afmaxRTD.temperature(RNOMINAL, RREF);
 }
 
 
@@ -2421,7 +2605,7 @@ systemStatus setSystemStatus(void)
 
 
   //
-  // accumulate the ACUs status'
+  // accumulate the ACUs status' - if one ACU is bad, they are all bad
   //
   for(int i = MIN_ACU_ADDRESS; i <= MAX_ACU_ADDRESS; i++)
   {
@@ -2820,4 +3004,14 @@ bool SetACUSetPointValue(uint16_t id, float temp)
   }
 
   return(retCode);
+}
+
+
+void resetRTDState(RTDState& rtdState)
+{
+  rtdState.state          = running;
+  rtdState.online         = online;
+  rtdState.fault          = 0;
+  rtdState.rtd            = 0;
+  rtdState.temperature    = 0;
 }
