@@ -18,15 +18,11 @@
 
 
 
-//#define __DEBUG_MODBUS_CMDS__
-//#define __DEBUG_MODBUS_TXRX__
-
-
 // this is for important, error condition debug output
 #define __DEBUG_VIA_SERIAL__
 
 // this is for frivilous debug output
-//#define __DEBUG2_VIA_SERIAL__
+#define __DEBUG2_VIA_SERIAL__
 
 // initial PVOF value
 #define __INIT_PVOF__  0x01FA
@@ -69,6 +65,7 @@ polySci chiller(9600);  // hard programmed to use Serial2 SERIAL_8N1
 //
 controlProtocol cp(1, 0, 57600);  // slave address (arduino) is 1, control address is 0
                   // hard coded to use Serial1 
+
 
 //
 // Adafruit RTDs - do we have enough pins for all these ?
@@ -264,6 +261,7 @@ typedef struct _systemState
   RTDState    DDR2_RTD;             // 2nd DDR chip temp
   RTDState    DDR3_RTD;             // 3rd DDR chip temp
   RTDState    DDR_Chiller_RTD;      // DDR chiller temp
+  float       highRTDTemp;          // will be the temperature of the hottest RTD in the DDR group
   LCDState    lcd;
   systemStatus  sysStatus;
 } systemState;

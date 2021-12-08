@@ -10,6 +10,10 @@
 
 void setup(void)
 {
+
+
+  
+
   //
   // start the system components and Serial port if running debug
   //
@@ -32,6 +36,10 @@ void setup(void)
   //
   randomSeed(analogRead(0));
 
+  // TODO: remove - just setting some PVOF to start
+  writePVOF(1, -459);
+  writePVOF(2, -1293);
+
 
   //
   // always start the chiller
@@ -50,16 +58,6 @@ void setup(void)
 
 void loop(void)
 {
-  //
-  // write the PVOF
-  //
-  //uint16_t currPVOF = writePVOF(ASIC_ID, __INIT_PVOF__);
-
-  #ifdef __DEBUG2_VIA_SERIAL__
-  Serial.print("PVOF read back : "); Serial.print(currPVOF, 16); Serial.println("");
-  #endif
-
-  
   //
   // getStatus will update LCD and sysStats data structure
   //
@@ -1059,27 +1057,131 @@ void lcd_ACUComFailure(void)
   lcd.display();
 }
 
+
 void lcd_ASIC_RTDs_Running(void)
 {
-  
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("---------------------------------------");
+  Serial.println(__PRETTY_FUNCTION__);
+  #endif 
+
+  lcd.noDisplay();
+  lcd.clear();
+  lcd.home();
+  lcd.setCursor(0,0);
+  lcd.print("ASIC RTDs     ");
+  lcd.setCursor(0,1);
+  lcd.print("1. ");
+  lcd.setCursor(3,1);
+  lcd.print(sysStates.ASIC_RTD.temperature, 1);
+  lcd.setCursor(0,3);
+  lcd.print("C. ");
+  lcd.setCursor(3,3);
+  lcd.print(sysStates.ASIC_Chiller_RTD.temperature,1);
+  lcd.display();
 }
 
 
 void lcd_ASIC_RTDs_Failure(void)
 {
-  
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("---------------------------------------");
+  Serial.println(__PRETTY_FUNCTION__);
+  #endif
+
+
+  lcd.noDisplay();
+  lcd.clear();
+  lcd.home();
+  lcd.setCursor(0,0);
+  lcd.print("ASIC RTDs fault");
+  lcd.setCursor(0,1);
+  lcd.print("1. ");
+  lcd.setCursor(3,1);
+  lcd.print(sysStates.ASIC_RTD.fault);
+  lcd.setCursor(0,3);
+  lcd.print("C. ");
+  lcd.setCursor(3,3);
+  lcd.print(sysStates.ASIC_Chiller_RTD.fault);
+  lcd.display();
 }
 
 
 void lcd_DDR_RTDs_Running(void)
 {
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("---------------------------------------");
+  Serial.println(__PRETTY_FUNCTION__);
+  #endif  
+
+  lcd.noDisplay();
+  lcd.clear();
+  lcd.home();
+  lcd.setCursor(0,0);
+  lcd.print("DDR RTDs     ");
+  lcd.setCursor(0,1);
+  lcd.print("1. ");
+  lcd.setCursor(3,1);
+  lcd.print(sysStates.DDR1_RTD.temperature, 1);
+  lcd.setCursor(10, 1);
+  lcd.print("2. ");
+  lcd.setCursor(13, 1);
+  lcd.print(sysStates.DDR2_RTD.temperature, 1);
+  lcd.setCursor(0,3);
+  lcd.print("3. ");
+  lcd.setCursor(3,3);
+  lcd.print(sysStates.DDR3_RTD.temperature,1);
+  lcd.setCursor(10, 3);
+  lcd.print("C. ");
+  lcd.setCursor(13, 3);
+  lcd.print(sysStates.DDR_Chiller_RTD.temperature, 1);  
+
+  //
+  // put an asterisk after the temperature being used for the PVOF calculation
+  //
+  // the DDRs are checked in order of 1, 2, 3 for the hottest, so set the
+  // asterisk by checking for match to the hottest in the same order
+  //
+  if( (sysStates.highRTDTemp == sysStates.DDR1_RTD.temperature) )
+    lcd.setCursor(8,1);
+  else if( (sysStates.highRTDTemp == sysStates.DDR2_RTD.temperature) )
+    lcd.setCursor(18,1);
+  else // gotta be DDR3 ..
+    lcd.setCursor(8,3);
+
+  lcd.print("*");
+     
+  lcd.display();
+
   
 }
 
 
 void lcd_DDR_RTDs_Failure(void)
 {
-  
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("---------------------------------------");
+  Serial.println(__PRETTY_FUNCTION__);
+  #endif
+
+  lcd.print("DDR RTDs fault");
+  lcd.setCursor(0,1);
+  lcd.print("1. ");
+  lcd.setCursor(3,1);
+  lcd.print(sysStates.DDR1_RTD.fault, 1);
+  lcd.setCursor(10, 1);
+  lcd.print("2. ");
+  lcd.setCursor(13, 1);
+  lcd.print(sysStates.DDR2_RTD.fault, 1);
+  lcd.setCursor(0,3);
+  lcd.print("3. ");
+  lcd.setCursor(3,3);
+  lcd.print(sysStates.DDR3_RTD.fault,1);
+  lcd.setCursor(10, 3);
+  lcd.print("C. ");
+  lcd.setCursor(13, 3);
+  lcd.print(sysStates.DDR_Chiller_RTD.fault, 1);  
+  lcd.display();
 }
 
   
@@ -2453,18 +2555,17 @@ void handleRTDStatus(void)
   // assume they are running, if one if found not running, mark the group
   // as not running
   //
-  // before going to chat w/ the RTDs - enable the FAUL_LED so it is on 
-  // when there is a fault and on while we could be timing out chatting
-  // to a dead RTD
+  // before going to chat w/ the RTDs - enable the FAUL_LED if already in fault so it is on 
+  // while we could be timing out chatting up a dead RTD
   //
-  if( (sysStates.ASIC_RTD.fault || sysStates.ASIC_Chiller_RTD.fault || sysStates.DDR1_RTD.fault ||
-      sysStates.DDR2_RTD.fault || sysStates.DDR3_RTD.fault || sysStates.DDR_Chiller_RTD.fault) )
+  if( !(AllRTDsRunning()) )
   {
     digitalWrite(FAULT_LED, HIGH);
   }
   
   //
-  // reset the stats/data for each RTD
+  // reset the stats/data for each RTD - set them online and running
+  // and zero the rtd, fault, and temperature
   //
   resetRTDState(sysStates.ASIC_RTD);
   resetRTDState(sysStates.ASIC_Chiller_RTD);
@@ -2486,6 +2587,10 @@ void handleRTDStatus(void)
   //
   // if any have fault . . shut it down ?
   //
+
+  //
+  // check the ASIC RTDs
+  //
   if( (sysStates.ASIC_RTD.fault) )
   {
     sysStates.ASIC_RTD.online  = offline;
@@ -2500,6 +2605,10 @@ void handleRTDStatus(void)
     ASIC_RTDsRunning  = false;  
   }
 
+
+  // 
+  // check the DDR RTDs
+  //
   if( (sysStates.DDR1_RTD.fault) )
   {
     sysStates.DDR1_RTD.online  = offline;
@@ -2532,6 +2641,10 @@ void handleRTDStatus(void)
   //
   // if one RTD is down or bad, the overall status is bad
   //
+
+  //
+  // update the LCD face for ASIC RTDs
+  //
   if( !(ASIC_RTDsRunning) )
   {
     sysStates.lcd.lcdFacesIndex[ASIC_RTD_NRML_OFFSET]   = no_Status;
@@ -2543,6 +2656,10 @@ void handleRTDStatus(void)
     sysStates.lcd.lcdFacesIndex[ASIC_RTD_FAIL_OFFSET]   = no_Status;
   }
 
+
+  //
+  // update the LCD face for DDR RTDs
+  //
   if( !(DDR_RTDsRunning) )
   {
     sysStates.lcd.lcdFacesIndex[DDR_RTD_NRML_OFFSET]   = no_Status;
@@ -2553,6 +2670,16 @@ void handleRTDStatus(void)
     sysStates.lcd.lcdFacesIndex[DDR_RTD_NRML_OFFSET]   = DDR_RTD_Running;
     sysStates.lcd.lcdFacesIndex[DDR_RTD_FAIL_OFFSET]   = no_Status;
   }
+
+
+  //
+  // get the hot RTD temperature
+  //
+  sysStates.highRTDTemp = HotRTD();
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  Serial.print("highRTDTemp is set to : "); Serial.println(sysStates.highRTDTemp);
+  #endif
 }
 
 
@@ -2562,6 +2689,11 @@ void getASIC_RTD_Status(void)
   // this will be the ADAFRUIT MAX 31865 eventually ..for now, just fudge some numbers
   getAdafruitRTDData(ASIC_RTD, sysStates.ASIC_RTD);
   getAdafruitRTDData(ASIC_Chiller_RTD, sysStates.ASIC_RTD);
+
+  // make up some numbers  TODO: delete this
+  sysStates.ASIC_RTD.temperature  = random(1, 10);
+  sysStates.ASIC_Chiller_RTD.temperature  = random(1, 10);
+
 }
 
 
@@ -2572,6 +2704,12 @@ void getDDR_RTD_Status(void)
   getAdafruitRTDData(DDR2_RTD, sysStates.DDR2_RTD);
   getAdafruitRTDData(DDR3_RTD, sysStates.DDR3_RTD);
   getAdafruitRTDData(DDR_Chiller_RTD, sysStates.DDR_Chiller_RTD);
+
+  // make up some numbers TODO: delete this
+  sysStates.DDR1_RTD.temperature  = random(1, 10);
+  sysStates.DDR2_RTD.temperature  = random(1, 10);
+  sysStates.DDR3_RTD.temperature  = random(1, 10);
+  sysStates.DDR_Chiller_RTD.temperature  = random(1, 10);
 }
 
 
@@ -2583,26 +2721,21 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state)
   state.fault       = afmaxRTD.readFault();
   state.rtd         = afmaxRTD.readRTD();
   state.temperature = afmaxRTD.temperature(RNOMINAL, RREF);
+
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.print("fault: "); Serial.print(state.fault); Serial.print(" rtd: "); Serial.print(state.rtd);
+  Serial.print(" temperature: "); Serial.println(state.temperature, 1);
+  #endif
 }
 
 
 systemStatus setSystemStatus(void)
 {
-  systemStatus  retVal    = RUNNING;
-  bool      ACUsOnline  = true;
-  bool      ACUsRunning = true;
-  bool      ACUMismatch = false;
-  
-
-  //
-  // use the chiller and ACUs status
-  //
-  // the other 'bad' status for the other components shoudl already be
-  // updated
-  //
-  // SHUTDOWN - if one thing is offline, or the chiller is not running - shutdown
-  //
-
+  systemStatus  retVal      = RUNNING;
+  bool      ACUsOnline      = true;
+  bool      ACUsRunning     = true;
+  bool      ACUMismatch     = false;
+  bool      RTDsRunning     = true;  
 
   //
   // accumulate the ACUs status' - if one ACU is bad, they are all bad
@@ -2619,6 +2752,8 @@ systemStatus setSystemStatus(void)
     // check for ACU on/off line or running mismatch, shutdown if present
     // can/could happen if a ACU fails or is reset
     //
+    // checking against index 0 because they should all be the same
+    //
     if( (sysStates.ACU[(i - MIN_ACU_ADDRESS)].online != sysStates.ACU[0].online) ||
       (sysStates.ACU[(i - MIN_ACU_ADDRESS)].state != sysStates.ACU[0].state) )
     {
@@ -2626,14 +2761,22 @@ systemStatus setSystemStatus(void)
     }
   }
 
+
+  //
+  // accumulate the RTD's status - if one RTD is bad, they are all bad
+  //
+  if( !(AllRTDsRunning()) )
+    RTDsRunning = false;
+    
+
   //
   // special case check - if the chiller is not running and the ACUs are running, shutdown the ACUs
   //
 #if defined(__USING_CHILLER__)
   if( (sysStates.chiller.state != running && ACUsRunning == true) ||
-    (ACUMismatch || offline == sysStates.chiller.online || false== ACUsOnline) ) {
+    (ACUMismatch || offline == sysStates.chiller.online || false== ACUsOnline) || false == RTDsRunning) {
 #else
-  if( (ACUMismatch || false== ACUsOnline) ) {
+  if( (ACUMismatch || false== ACUsOnline || false == RTDsRunning) ) {
 #endif
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Shutdown;
     retVal  = SHUTDOWN;
@@ -2671,10 +2814,13 @@ systemStatus setSystemStatus(void)
   //
   }
 #if defined(__USING_CHILLER__)
-  else if( (online == sysStates.chiller.online && true == ACUsOnline)
-        && (running != sysStates.chiller.state || false == ACUsRunning)) )
+  //
+  // TODO: verify this fucking logic is right ..
+  //
+  else if( ((online == sysStates.chiller.online && true == ACUsOnline)
+        && (running != sysStates.chiller.state && false == ACUsRunning) && (true == RTDsRunning)) )
 #else
-  else if( ((true == ACUsOnline) && (false == ACUsRunning)) )
+  else if( ((true == ACUsOnline) && (false == ACUsRunning) && (true == RTDsRunning)) )
 #endif
   {
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Ready;
@@ -2682,7 +2828,7 @@ systemStatus setSystemStatus(void)
 
     if( (READY != sysStates.sysStatus) )
     {
-      buttonOnOff     = false;
+      buttonOnOff         = false;
       currentButtonOnOff  = buttonOnOff;
 
       //
@@ -2787,6 +2933,9 @@ void buttonISR(void)
 // - read the value back
 // - return the value read
 //
+// - TODO: how to return failure . . is 0xffff ok for failure ?
+// - same for all these read and write functions
+//
 uint16_t writePVOF(uint8_t id, uint16_t val)
 {
   uint16_t  retVal  = 0x0000;
@@ -2796,11 +2945,11 @@ uint16_t writePVOF(uint8_t id, uint16_t val)
   cmdResp writePVOF = rs485Bus.writeProcess(id, PVOF, val);
   if( (false == writePVOF.retCode()) )
   {
-    Serial.println("writePVOF fail");
+    Serial.print("writePVOF fail to id: "); Serial.println(id);
   #ifdef __DEBUG2_VIA_SERIAL__
   } else
   {
-    Serial.println("writePVOF success");
+    Serial.print("writePVOF success to id: "); Serial.println(id);
   #endif
   }
 
@@ -2809,13 +2958,13 @@ uint16_t writePVOF(uint8_t id, uint16_t val)
   cmdResp readPVOF = rs485Bus.readProcess(id, PVOF, 2);
   if( (false == readPVOF.retCode()) )
   {
-    Serial.print("readPVOF fail");
+    Serial.print("readPVOF fail from id: "); Serial.println(id);
   } else
   {
     retVal = htons((*(reinterpret_cast<uint16_t*>(readPVOF.buff()))));
   #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("readPVOF success");
-    Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readPVOF.bufflen()); Serial.println(" bytes returned");
+    Serial.print("readProcess PVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readPVOF.bufflen()); Serial.println(" bytes returned");
     Serial.print(" read value is: 0x"); Serial.println(retVal, 16);
   #endif
   }
@@ -2895,51 +3044,46 @@ bool ACUPresent(uint8_t id)
 //-------------------------------------------------------------
 //
 // - use global rs486Bus to do something for now
-// - this will eventually be the 'stop' cmd the ACU
-// - read the value back
-// - return the value read
-// - return true if the value read back is what is expected .. 
 //
-bool GetACUTemp(uint8_t id, float* setpoint, float* temperature)
+bool GetACUTemp(uint8_t id, float* sv, float* pv)
 {
   uint16_t  setp  = 0x0000;
   uint16_t  temp  = 0x0000;
 
 
   // do the read, request 2 bytes back
-  cmdResp readPVPVOF = rs485Bus.readProcess(id, PVPVOF, 4); // get response w/ PV and PVOF
+  cmdResp readPVPVOF = rs485Bus.readProcess(id, PVPVOF, 2); // get response w/ PV and PVOF
   if( (false == readPVPVOF.retCode()) )
   {
     Serial.println("readPVPVOF fail");
   } else
   {
     temp = htons((*(reinterpret_cast<uint16_t*>(readPVPVOF.buff()))));
-    *temperature  = (float)temp / (float)10;
+    *pv  = (float)temp / (float)10;
   #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("readPVPVOF success");
-    Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readPVPVOF.bufflen()); Serial.println(" bytes returned");
-    Serial.print(" read value is: 0x"); Serial.println(temp, 16);
+    Serial.print("readProcess PVPVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readPVPVOF.bufflen()); Serial.println(" bytes returned");
+    Serial.print("read value is: 0x"); Serial.println(temp, 16);
   #endif
   }
 
 
   // do the read, request 2 bytes back
-  cmdResp readSV = rs485Bus.readProcess(id, SVSVOF, 4);  // get response w/ SV and SVOF
+  cmdResp readSV = rs485Bus.readProcess(id, SV, 2);  // get response w/ SV and SVOF
   if( (false == readSV.retCode()) )
   {
     Serial.println("readSV fail");
   } else
   {
     setp = htons((*(reinterpret_cast<uint16_t*>(readSV.buff()))));
-    *setpoint = (float)setp / (float)10;
+    *sv = (float)setp / (float)10;
 
   #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("readSV success");
-    Serial.print("readProcess(ASIC_ID, SV, 2) success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
-    Serial.print(" read value is: 0x"); Serial.println(setp, 16);
+    Serial.print("readProcess SVSVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
+    Serial.print("read value is: 0x"); Serial.println(setp, 16);
   #endif
   }
-
 
   return(true);
 }
@@ -2989,7 +3133,7 @@ bool SetACUSetPointValue(uint16_t id, float temp)
     retVal = htons((*(reinterpret_cast<uint16_t*>(readSV.buff()))));
     #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("readSV success");
-    Serial.print("readProcess(id, SV, 2) success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
+    Serial.print("readProcess SV from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
     Serial.print(" read value is: 0x"); Serial.println(retVal, 16);
     #endif
 
@@ -3014,4 +3158,38 @@ void resetRTDState(RTDState& rtdState)
   rtdState.fault          = 0;
   rtdState.rtd            = 0;
   rtdState.temperature    = 0;
+}
+
+
+bool AllRTDsRunning(void)
+{
+
+  if( (sysStates.ASIC_RTD.fault || sysStates.ASIC_Chiller_RTD.fault || sysStates.DDR1_RTD.fault ||
+      sysStates.DDR2_RTD.fault || sysStates.DDR3_RTD.fault || sysStates.DDR_Chiller_RTD.fault) )
+  {
+     return(false);
+  }
+
+  return(true);
+}
+
+
+float HotRTD(void)
+{
+  float hotRTD = sysStates.DDR1_RTD.temperature;
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  Serial.print("DDR1: "); Serial.print(sysStates.DDR1_RTD.temperature);
+  Serial.print(" DDR2: "); Serial.print(sysStates.DDR2_RTD.temperature);
+  Serial.print(" DDR3: "); Serial.println(sysStates.DDR3_RTD.temperature);
+  #endif
+
+
+  if( (hotRTD < sysStates.DDR2_RTD.temperature) )
+    hotRTD = sysStates.DDR2_RTD.temperature;
+
+  if( (hotRTD < sysStates.DDR3_RTD.temperature) )
+    hotRTD = sysStates.DDR3_RTD.temperature;
+
+  return(hotRTD);
 }
