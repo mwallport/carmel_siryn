@@ -1,18 +1,11 @@
-#include <SPI.h>
-#include <Controllino.h>
-#include <LiquidCrystal.h>    // LCD interface library
 #include <Adafruit_MAX31865.h>
 #include <HardwareSerial.h>
 #include <stdio.h>
 #include <inttypes.h>
 #include "carmel_siryn.h"
 
-
 void setup(void)
 {
-
-
-  
 
   //
   // start the system components and Serial port if running debug
@@ -35,10 +28,6 @@ void setup(void)
   // TODO: testing only, remove - using this for random temps for RTD testing
   //
   randomSeed(analogRead(0));
-
-  // TODO: remove - just setting some PVOF to start
-  writePVOF(1, -459);
-  writePVOF(2, -1293);
 
 
   //
@@ -100,12 +89,14 @@ void initSystem(void)
   delay(1000);
   #endif
 
+
+  Serial1.begin(19200);
+  delay(1000);
+
   //
   // start the Serial3 for the RS485 bus
   //
-  Controllino_RS485Init();
   Serial3.begin(19200);
-  Controllino_RS485RxEnable();
 
   while( (!Serial3) && (count < 10) )
   {
@@ -146,6 +137,12 @@ void initSystem(void)
   // initialize the fault/no-fault LED(s)
   //
   configureFaultNoFault();
+
+  //
+  // initialize the Adafruits
+  //
+  DDR1_RTD.begin(MAX31865_4WIRE);  // set to 2WIRE or 4WIRE as necessary
+  DDR2_RTD.begin(MAX31865_4WIRE);  // set to 2WIRE or 4WIRE as necessary
 
   //
   // let the Serial port settle after initButton()
@@ -346,7 +343,6 @@ bool startUp(void)
   //
   lcd_starting();
 
-
   //
   // start the chiller and the ACUs
   //
@@ -381,6 +377,10 @@ void getStatus(void)
 
 
   //
+  // get the DDR RTDs at 10Hz
+  //
+
+  //
   // get the chiller and ACU's status every GET_STATUS_INTERVAL seconds
   //
   if( (GET_STATUS_INTERVAL < (currentGetStatusTime - lastGetStatusTime)) )
@@ -395,7 +395,6 @@ void getStatus(void)
     handleACUStatus();
     handleRTDStatus();
   }
-
 
 
   //
@@ -562,7 +561,7 @@ bool startACUs(void)
     //
     // update the system state
     //
-    setSystemStatus();
+//    setSystemStatus();
 
 #if defined (__USING_CHILLER__)
   } else
@@ -663,7 +662,6 @@ bool setACUTemp(uint16_t ACUAddress, float temp)
 
   return(retVal);
 }
-
 
 
 bool setChillerSetPoint(char* temp)
@@ -1152,8 +1150,6 @@ void lcd_DDR_RTDs_Running(void)
   lcd.print("*");
      
   lcd.display();
-
-  
 }
 
 
@@ -1266,7 +1262,7 @@ bool getMsgFromControl(void)
   //
   // receive a command, wait 1 seconds for a command
   //
-  if( (cp.doRxCommand(1000)) )
+  if( (cp.doRxCommand(Serial1, 1000)) )
   {
     retVal  = true;
   }
@@ -1327,7 +1323,7 @@ void handleStartUpCmd(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1398,7 +1394,6 @@ void handleShutDownCmd(void)
       } else
         setSystemStatus();  // derive the button state
 
-
       respLength = cp.Make_shutDownCmdResp(cp.m_peerAddress, cp.m_buff,
         result, pshutDownCmd->header.seqNum
       );
@@ -1408,7 +1403,7 @@ void handleShutDownCmd(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1477,7 +1472,7 @@ void handleGetStatusCmd(void)
       // this functoin usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1606,7 +1601,7 @@ void handleSetACUTemperature(void)
       // this functoin usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1695,7 +1690,7 @@ void handleGetACUTemperature(bool getObjTemp)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1770,7 +1765,7 @@ void handlGetACUInfo(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1844,7 +1839,7 @@ void handleEnableACUs(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1918,7 +1913,7 @@ void handleDisableACUs(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1994,7 +1989,7 @@ void handleStartChillerMsg(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -2068,7 +2063,7 @@ void handleStopChiller(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -2130,7 +2125,7 @@ void handleGetChillerInfo(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -2209,7 +2204,7 @@ void handleSetChillerTemperature(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -2273,7 +2268,7 @@ void handleGetChillerTemperature(bool GetSetPoint)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(respLength)))
+      if( !(cp.doTxResponse(Serial1, respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -2304,10 +2299,6 @@ void handleGetChillerTemperature(bool GetSetPoint)
 }
 #endif
 
-/*
-
-
-*/
 
 void sendNACK(void)
 {
@@ -2322,7 +2313,7 @@ void sendNACK(void)
   // this function usese the cp.m_buff created above, just
   // need to send the lenght into the function
   //
-  if( !(cp.doTxResponse(respLength)))
+  if( !(cp.doTxResponse(Serial1, respLength)))
   {
     Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
     Serial.flush();
@@ -2548,6 +2539,7 @@ void handleRTDStatus(void)
   bool  ASIC_RTDsRunning  = true;  // becomes false is at least one RTD has fault
   bool  DDR_RTDsRunning   = true;  // becomes false is at least one RTD has fault
 
+
   
   //
   // check all RTds running
@@ -2567,12 +2559,12 @@ void handleRTDStatus(void)
   // reset the stats/data for each RTD - set them online and running
   // and zero the rtd, fault, and temperature
   //
-  resetRTDState(sysStates.ASIC_RTD);
-  resetRTDState(sysStates.ASIC_Chiller_RTD);
+//  resetRTDState(sysStates.ASIC_RTD);
+//  resetRTDState(sysStates.ASIC_Chiller_RTD);
   resetRTDState(sysStates.DDR1_RTD);
   resetRTDState(sysStates.DDR2_RTD);
-  resetRTDState(sysStates.DDR3_RTD);
-  resetRTDState(sysStates.DDR_Chiller_RTD);
+//  resetRTDState(sysStates.DDR3_RTD);
+//  resetRTDState(sysStates.DDR_Chiller_RTD);
 
   //
   // get all the ASIC RTDs status
@@ -2680,12 +2672,16 @@ void handleRTDStatus(void)
   #ifdef __DEBUG_VIA_SERIAL__
   Serial.print("highRTDTemp is set to : "); Serial.println(sysStates.highRTDTemp);
   #endif
+
 }
 
 
 // get the data for RTDs in the ASIC part
 void getASIC_RTD_Status(void)
 {
+
+/* TODO put this back
+
   // this will be the ADAFRUIT MAX 31865 eventually ..for now, just fudge some numbers
   getAdafruitRTDData(ASIC_RTD, sysStates.ASIC_RTD);
   getAdafruitRTDData(ASIC_Chiller_RTD, sysStates.ASIC_RTD);
@@ -2693,21 +2689,25 @@ void getASIC_RTD_Status(void)
   // make up some numbers  TODO: delete this
   sysStates.ASIC_RTD.temperature  = random(1, 10);
   sysStates.ASIC_Chiller_RTD.temperature  = random(1, 10);
-
+*/
 }
 
 
 // get the data for the RTDs in the DDR part
 void getDDR_RTD_Status(void)
 {
+  Serial.println("crashing here .. ");
   getAdafruitRTDData(DDR1_RTD, sysStates.DDR1_RTD);
   getAdafruitRTDData(DDR2_RTD, sysStates.DDR2_RTD);
+/*
   getAdafruitRTDData(DDR3_RTD, sysStates.DDR3_RTD);
   getAdafruitRTDData(DDR_Chiller_RTD, sysStates.DDR_Chiller_RTD);
 
   // make up some numbers TODO: delete this
   sysStates.DDR1_RTD.temperature  = random(1, 10);
   sysStates.DDR2_RTD.temperature  = random(1, 10);
+*/
+  Serial.println("crashing here part 2.. ");
   sysStates.DDR3_RTD.temperature  = random(1, 10);
   sysStates.DDR_Chiller_RTD.temperature  = random(1, 10);
 }
@@ -2718,9 +2718,20 @@ void getDDR_RTD_Status(void)
 //
 void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state)
 {
+  
+  // TODO: put this back .. or something very similar to it
+  Serial.println("1");
   state.fault       = afmaxRTD.readFault();
+  Serial.println("2");
   state.rtd         = afmaxRTD.readRTD();
+  Serial.println("3");
   state.temperature = afmaxRTD.temperature(RNOMINAL, RREF);
+  Serial.println("4");
+/*
+  state.fault       = 0;
+  state.rtd         = 0;
+  state.temperature = 0;
+*/
 
   #ifdef __DEBUG2_VIA_SERIAL__
   Serial.print("fault: "); Serial.print(state.fault); Serial.print(" rtd: "); Serial.print(state.rtd);

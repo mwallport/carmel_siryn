@@ -3,9 +3,9 @@
 #define _CONTROL_PROTOCOL_
 
 // debug
-//#define __DEBUG_CTRL_PROTO__
-//#define __DEBUG_CONTROL_PKT_TX__
-//#define __DEBUG_CONTROL_PKT_RX__
+#define __DEBUG_CTRL_PROTO__
+#define __DEBUG_CONTROL_PKT_TX__
+#define __DEBUG_CONTROL_PKT_RX__
 
 // platform
 #define __USING_LINUX_USB__
@@ -16,30 +16,22 @@
 //#define __USING_CHILLER__
 
 // common
-#include <unistd.h>
+//#include <unistd.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 
 #ifdef __RUNNING_ON_CONTROLLINO__
-    #if defined(ARDUINO) && ARDUINO >= 100
-        #include "Arduino.h"
-    #else
-        #include "WProgram.h"
-    #endif
-
-    #define htons(x) ( ((x)<< 8 & 0xFF00) | \
-                    ((x)>> 8 & 0x00FF) )
-
-    #define ntohs(x) htons(x)
-
-    #define htonl(x) ( ((x)<<24 & 0xFF000000UL) | \
+#include "Arduino.h"
+#include "HardwareSerial.h"
+#define htons(x) ( ((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF) )
+#define ntohs(x) htons(x)
+#define htonl(x) ( ((x)<<24 & 0xFF000000UL) | \
                     ((x)<< 8 & 0x00FF0000UL) | \
                     ((x)>> 8 & 0x0000FF00UL) | \
                     ((x)>>24 & 0x000000FFUL) )
-
-    #define ntohl(x) htonl(x)
+#define ntohl(x) htonl(x)
 #endif
 
 #ifdef __USING_LINUX_USB__

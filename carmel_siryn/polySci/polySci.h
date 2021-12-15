@@ -6,7 +6,7 @@
    #else
      #include "WProgram.h"
    #endif
-#include <SoftwareSerial.h>
+#include <HardwareSerial.h>
 
 #define MAX_STARTUP_ATTEMPTS 1
 #define MAX_SHUTDOWN_ATTEMPTS 1

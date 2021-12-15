@@ -1,9 +1,10 @@
-#include <SPI.h>
-#include <Controllino.h>
+//#include <SPI.h>
+//#include <Controllino.h>
 #include <inttypes.h>
 #include "handler.h"
 #include "common.h"
 #include "ctrlr_commands.h"
+#include "Arduino.h"
 
 extern "C"
 {
@@ -129,10 +130,10 @@ int handler::sndCmd(HardwareSerial& so, uint8_t* tx_buff, int8_t bufflen)
 
   
   // write the bytes, handle the return code in the caller
-  Controllino_RS485TxEnable();
+  //Controllino_RS485TxEnable();
   retVal = so.write(tx_buff, bufflen);
   so.flush();
-  Controllino_RS485RxEnable();
+  //Controllino_RS485RxEnable();
   
   #ifdef __DEBUG_MODBUS_TXRX__
   Serial.print("sent "); Serial.print(retVal); Serial.println(" bytes...");
@@ -154,7 +155,7 @@ int handler::rcvWriteResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_b
 
   memset(rx_buff, '\0', rx_buff_size);
 
-  Controllino_RS485RxEnable();
+  //Controllino_RS485RxEnable();
 
   // always going to try to read 8 bytes
   // TODO: generate fail return from unit and verify it is also 8 bytes
@@ -196,7 +197,7 @@ int handler::rcvWriteResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_b
     }
   }
 
-  Controllino_RS485TxEnable();
+  //Controllino_RS485TxEnable();
 
   return(bytes_read);
 }
@@ -216,7 +217,7 @@ int handler::rcvReadResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_bu
 
   memset(rx_buff, '\0', rx_buff_size);
 
-  Controllino_RS485RxEnable();
+  //Controllino_RS485RxEnable();
 
   // always going to try to read 8 bytes
   // TODO: generate fail return from unit and verify it is also 8 bytes
@@ -281,7 +282,7 @@ int handler::rcvReadResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_bu
     }
   }
 
-  Controllino_RS485TxEnable();
+  //Controllino_RS485TxEnable();
 
   return(bytes_read);
 }

@@ -1,15 +1,10 @@
 #ifndef __CARMEL_SIRYN__
 #define __CARMEL_SIRYN__
 
-#if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
-
 #include <LiquidCrystal.h>    // LCD interface library
 #include <Adafruit_MAX31865.h>
-#include <controlProtocol.h>
+#include "controlProtocol.h"
 #include <polySci.h>        // polySci chiller communication library
 #include "common.h"
 #include "handler.h"
@@ -63,7 +58,7 @@ polySci chiller(9600);  // hard programmed to use Serial2 SERIAL_8N1
 // control PC communication
 // assuming they will be address 0 and this program will be address 1
 //
-controlProtocol cp(1, 0, 57600);  // slave address (arduino) is 1, control address is 0
+controlProtocol cp(1, 0, 19200);  // slave address (arduino) is 1, control address is 0
                   // hard coded to use Serial1 
 
 
@@ -72,12 +67,17 @@ controlProtocol cp(1, 0, 57600);  // slave address (arduino) is 1, control addre
 //
 // TODO: set these up w/ the correct pins
 //
-Adafruit_MAX31865 ASIC_RTD          = Adafruit_MAX31865(10, 11, 12, 13);
-Adafruit_MAX31865 ASIC_Chiller_RTD  = Adafruit_MAX31865(10, 11, 12, 13);
-Adafruit_MAX31865 DDR1_RTD          = Adafruit_MAX31865(10, 11, 12, 13);
-Adafruit_MAX31865 DDR2_RTD          = Adafruit_MAX31865(10, 11, 12, 13);
-Adafruit_MAX31865 DDR3_RTD          = Adafruit_MAX31865(10, 11, 12, 13);
-Adafruit_MAX31865 DDR_Chiller_RTD   = Adafruit_MAX31865(10, 11, 12, 13);
+// TODO: put this back .. or some thing like it
+//
+
+
+//Adafruit_MAX31865 ASIC_RTD(0);//          = Adafruit_MAX31865(10, 11, 12, 13);
+//Adafruit_MAX31865 ASIC_Chiller_RTD(0);//  = Adafruit_MAX31865(10, 11, 12, 13);
+Adafruit_MAX31865 DDR1_RTD(4);//          = Adafruit_MAX31865(10, 11, 12, 13);
+Adafruit_MAX31865 DDR2_RTD(52);//          = Adafruit_MAX31865(10, 11, 12, 13);
+//Adafruit_MAX31865 DDR3_RTD(0);//          = Adafruit_MAX31865(10, 11, 12, 13);
+//Adafruit_MAX31865 DDR_Chiller_RTD(0);//   = Adafruit_MAX31865(10, 11, 12, 13);
+
 
 // The value of the Rref resistor. Use 430.0 for PT100 and 4300.0 for PT1000
 #define RREF      430.0

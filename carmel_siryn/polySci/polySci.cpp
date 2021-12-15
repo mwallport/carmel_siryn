@@ -3,7 +3,7 @@
 #else
 #include "WProgram.h"
 #endif
-#include <SoftwareSerial.h>
+#include <HardwareSerial.h>
 #include "polySci.h"
 
 

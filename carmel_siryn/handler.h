@@ -1,5 +1,3 @@
-#include <HardwareSerial.h>
-
 #ifndef __HANDLER__
 #define __HANDLER__
 #include <inttypes.h>

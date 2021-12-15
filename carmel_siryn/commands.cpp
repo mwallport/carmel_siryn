@@ -8,6 +8,12 @@
 #include "ctrlr_commands.h"
 #include "crc16_modbus.h"
 
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
+#include "WProgram.h"
+#endif
+
 
 extern "C"
 {

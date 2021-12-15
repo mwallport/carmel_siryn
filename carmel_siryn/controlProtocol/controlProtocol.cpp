@@ -1,17 +1,7 @@
 // file controlProtocol.cpp
 #include <stdio.h>
 #include <stdlib.h>
-
-#ifdef __RUNNING_ON_CONTROLLINO__
-    #if defined(ARDUINO) && ARDUINO >= 100
-        #include "Arduino.h"
-    #else
-        #include "WProgram.h"
-    #endif
-#endif
-
 #include "controlProtocol.h"
-
 
 
 // crc16.cpp
@@ -249,7 +239,8 @@ controlProtocol::controlProtocol(uint16_t myAddress, uint16_t peerAddress, uint3
     TxResponse  = &controlProtocol::TxResponseSerial;
 
     #ifdef __RUNNING_ON_CONTROLLINO__
-    Serial1.begin(Speed, SERIAL_8N1);
+    //Serial1.begin(Speed, SERIAL_8N1);
+    Serial1.begin(19200);
     #endif
 };
 
@@ -2267,7 +2258,8 @@ uint16_t controlProtocol::Make_setACUTemperature(uint16_t Address, uint8_t* pBuf
     //
     // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
     //
-    dtostrf(temperature, -(MAX_ACU_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    //dtostrf(temperature, -(MAX_ACU_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_ACU_TEMP_LENGH, "%-+3.2f", temperature);
     #else
     //
     // use the snprintf function, 
@@ -2372,7 +2364,8 @@ uint16_t controlProtocol::Make_getACUTemperatureResp(uint16_t Address, uint8_t* 
     //
     // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
     //
-    dtostrf(temperature, -(MAX_ACU_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    //dtostrf(temperature, -(MAX_ACU_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_ACU_TEMP_LENGH, "%-+3.2f", temperature);
     #else
     //
     // use the snprintf function, 
@@ -2459,7 +2452,8 @@ uint16_t controlProtocol::Make_getACUObjTemperatureResp(uint16_t Address, uint8_
     //
     // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
     //
-    dtostrf(temperature, -(MAX_ACU_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    //dtostrf(temperature, -(MAX_ACU_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_ACU_TEMP_LENGH, "%-+3.2f", temperature);
     #else
     //
     // use the snprintf function, 
@@ -2848,7 +2842,8 @@ uint16_t controlProtocol::Make_setChillerTemperature(uint16_t Address, uint8_t* 
     //
     // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
     //
-    dtostrf(temperature, -(MAX_CHILLER_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    //dtostrf(temperature, -(MAX_CHILLER_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
     #else
     //
     // use the snprintf function, 
@@ -2947,7 +2942,8 @@ uint16_t controlProtocol::Make_getChillerTemperatureResp(uint16_t Address, uint8
     //
     // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
     //
-    dtostrf(temperature, -(MAX_CHILLER_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    //dtostrf(temperature, -(MAX_CHILLER_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
     #else
     //
     // use the snprintf function, 
@@ -3028,7 +3024,8 @@ uint16_t controlProtocol::Make_getChillerObjTemperatureResp(uint16_t Address, ui
     //
     // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
     //
-    dtostrf(temperature, -(MAX_CHILLER_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    //dtostrf(temperature, -(MAX_CHILLER_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
     #else
     //
     // use the snprintf function, 
