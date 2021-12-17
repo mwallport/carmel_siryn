@@ -1,8 +1,7 @@
-#include <Adafruit_MAX31865.h>
-#include <HardwareSerial.h>
-#include <stdio.h>
-#include <inttypes.h>
 #include "carmel_siryn.h"
+
+
+
 
 void setup(void)
 {
@@ -17,7 +16,7 @@ void setup(void)
   // TODO: remove this
   // banner - used to easilyeasily  find system restarts in log file
   //
-  #ifdef __DEBUG_VIA_SERIAL__
+  #if defined( __DEBUG_VIA_SERIAL__) || defined(__DEBUG2_VIA_SERIAL__)
   Serial.println(" -----------------------------------------------------------"); Serial.flush();
   Serial.println(" -------------------------> setup() <-----------------------"); Serial.flush();
   Serial.println(" -----------------------------------------------------------"); Serial.flush();
@@ -33,13 +32,18 @@ void setup(void)
   //
   // always start the chiller
   //
+  #ifdef __USING_CHILLER__
   startChiller();
+  #endif
   
   //
-  // get all statuses at startup
-  // normally gotten via getStatus() which runs on a period
+  // these are normally gotten via getStatus() which runs on a period
+  // at start up, i.e. now, the period will not have lapsed, so get them now
+  // before getting in loop
   //
+  #ifdef __USING_CHILLER__
   handleChillerStatus();
+  #endif
   handleACUStatus();
   handleRTDStatus();
 }
@@ -47,6 +51,10 @@ void setup(void)
 
 void loop(void)
 {
+
+  // this has its own loop and exists when sysStates.sysStatus != RUNNING
+  handleRunningState();
+
   //
   // getStatus will update LCD and sysStats data structure
   //
@@ -78,41 +86,54 @@ void loop(void)
 //
 void initSystem(void)
 {
-  int count = 0;
-
-
   //
-  // start the Serial port if running debug
+  // start the Serial ports
   //
-  #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__
+  
+//  #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__
   Serial.begin(19200);
-  delay(1000);
+//  #endif
+
+  // control protocol uses Serial1
+  Serial1.begin(CONTROL_PROTO_SPEED);
+
+  // chiller protocol uses Serial2
+  #if defined(__USING_CHILLER__)
+  Serial2.begin(CHILLER_PROTO_SPEED
   #endif
 
-
-  Serial1.begin(19200);
-  delay(1000);
+  // RS485 uses Serial3
+  Serial3.begin(RS485_MOD_BUS_SPEED);
 
   //
-  // start the Serial3 for the RS485 bus
+  // wait for Serial ports to become ready - wait forever, can't start without them
   //
-  Serial3.begin(19200);
-
-  while( (!Serial3) && (count < 10) )
-  {
-    delay(500);
-    count += 1;
-  }
-
-
-  if( (!Serial3) )
+  while( (!Serial1) )
   {
     #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__
-    Serial.println("unable to start Serial3, exiting");
+    Serial.println("waiting for Serial1 to become ready");
     #endif
-    exit(1);
+    delay(250);
   }
+
+  #if defined(__USING_CHILLER__)
+  while( (!Serial2) )
+  {
+    #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__
+    Serial.println("waiting for Serial2 to become ready");
+    #endif
+    delay(250);
+  }
+  #endif
   
+  while( (!Serial3) )
+  {
+    #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__
+    Serial.println("waiting for Serial3 to become ready");
+    #endif
+    delay(250);
+  }
+
 
   //
   // initialize the system states /stats - these are
@@ -127,7 +148,6 @@ void initSystem(void)
   //
   startLCD();
 
-
   //
   // initialize the start/stop button
   //
@@ -141,13 +161,12 @@ void initSystem(void)
   //
   // initialize the Adafruits
   //
-  DDR1_RTD.begin(MAX31865_4WIRE);  // set to 2WIRE or 4WIRE as necessary
-  DDR2_RTD.begin(MAX31865_4WIRE);  // set to 2WIRE or 4WIRE as necessary
-
-  //
-  // let the Serial port settle after initButton()
-  //
-  delay(1000);
+  //ASIC_RTD.begin(MAX31865_4WIRE);
+  //ASIC_Chiller_RTD.begin(MAX31865_4WIRE);
+  DDR1_RTD.begin(MAX31865_4WIRE);
+  DDR2_RTD.begin(MAX31865_4WIRE);
+  //DDR3_RTD.begin(MAX31865_4WIRE);
+  //DDR_Chiller_RTD.begin(MAX31865_4WIRE);
 }
 
 
@@ -260,7 +279,7 @@ void manageLCD(void)
     // had been removed, advance to the next message
     //
     if( (0 == sysStates.lcd.lcdFacesIndex[sysStates.lcd.index]) ||      // no status, i.e. no fail status
-      (0 == lcdFaces[sysStates.lcd.lcdFacesIndex[(sysStates.lcd.index)]]) ) // this face has been removed
+        (0 == lcdFaces[sysStates.lcd.lcdFacesIndex[(sysStates.lcd.index)]]) ) // this face has been removed
     {
       //
       // find next non-zero message, adjust sysStates.lcd.index
@@ -369,7 +388,7 @@ bool startUp(void)
 //
 // run every 20 seconds
 //
-void getStatus(void)
+void getStatus()
 {
   static unsigned long  lastGetStatusTime     = 0;
   static unsigned long  lastGetHumidityTime   = 0;
@@ -391,7 +410,9 @@ void getStatus(void)
     #endif
     
     lastGetStatusTime = currentGetStatusTime;
+    #ifdef __USING_CHILLER__
     handleChillerStatus();
+    #endif
     handleACUStatus();
     handleRTDStatus();
   }
@@ -1262,7 +1283,7 @@ bool getMsgFromControl(void)
   //
   // receive a command, wait 1 seconds for a command
   //
-  if( (cp.doRxCommand(Serial1, 1000)) )
+  if( (cp.doRxCommand(CTRL_TIMEOUT)) )
   {
     retVal  = true;
   }
@@ -1323,7 +1344,7 @@ void handleStartUpCmd(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1403,7 +1424,7 @@ void handleShutDownCmd(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1472,7 +1493,7 @@ void handleGetStatusCmd(void)
       // this functoin usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1601,7 +1622,7 @@ void handleSetACUTemperature(void)
       // this functoin usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1690,7 +1711,7 @@ void handleGetACUTemperature(bool getObjTemp)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1765,7 +1786,7 @@ void handlGetACUInfo(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1839,7 +1860,7 @@ void handleEnableACUs(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1913,7 +1934,7 @@ void handleDisableACUs(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -1989,7 +2010,7 @@ void handleStartChillerMsg(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -2063,7 +2084,7 @@ void handleStopChiller(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -2125,7 +2146,7 @@ void handleGetChillerInfo(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -2204,7 +2225,7 @@ void handleSetChillerTemperature(void)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -2268,7 +2289,7 @@ void handleGetChillerTemperature(bool GetSetPoint)
       // this function usese the cp.m_buff created above, just
       // need to send the lenght into the function
       //
-      if( !(cp.doTxResponse(Serial1, respLength)))
+      if( !(cp.doTxResponse(respLength)))
       {
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
@@ -2313,7 +2334,7 @@ void sendNACK(void)
   // this function usese the cp.m_buff created above, just
   // need to send the lenght into the function
   //
-  if( !(cp.doTxResponse(Serial1, respLength)))
+  if( !(cp.doTxResponse(respLength)))
   {
     Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
     Serial.flush();
@@ -2556,25 +2577,14 @@ void handleRTDStatus(void)
   }
   
   //
-  // reset the stats/data for each RTD - set them online and running
-  // and zero the rtd, fault, and temperature
-  //
-//  resetRTDState(sysStates.ASIC_RTD);
-//  resetRTDState(sysStates.ASIC_Chiller_RTD);
-  resetRTDState(sysStates.DDR1_RTD);
-  resetRTDState(sysStates.DDR2_RTD);
-//  resetRTDState(sysStates.DDR3_RTD);
-//  resetRTDState(sysStates.DDR_Chiller_RTD);
-
-  //
   // get all the ASIC RTDs status
   //
-  getASIC_RTD_Status();
+  getNonDDRRTDData();
 
   //
   // get all the DDR RTDs status
   //
-  getDDR_RTD_Status();
+  getDDRRTDData();
 
   //
   // if any have fault . . shut it down ?
@@ -2676,40 +2686,57 @@ void handleRTDStatus(void)
 }
 
 
-// get the data for RTDs in the ASIC part
-void getASIC_RTD_Status(void)
+// called by handleRunningState to get the data for the non DDR RTDs
+void getNonDDRRTDData()
 {
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("---------------------------------");
+  Serial.println(__PRETTY_FUNCTION__);
+  Serial.flush();
+  #endif
+  
+  //
+  // reset the stats/data for each RTD - set them online and running
+  // and zero the rtd, fault, and temperature
+  //
+  resetRTDState(sysStates.ASIC_RTD);
+  resetRTDState(sysStates.ASIC_Chiller_RTD);
+  resetRTDState(sysStates.DDR_Chiller_RTD);
 
-/* TODO put this back
-
-  // this will be the ADAFRUIT MAX 31865 eventually ..for now, just fudge some numbers
+/*
   getAdafruitRTDData(ASIC_RTD, sysStates.ASIC_RTD);
   getAdafruitRTDData(ASIC_Chiller_RTD, sysStates.ASIC_RTD);
-
-  // make up some numbers  TODO: delete this
-  sysStates.ASIC_RTD.temperature  = random(1, 10);
-  sysStates.ASIC_Chiller_RTD.temperature  = random(1, 10);
+  getAdafruitRTDData(DDR_Chiller_RTD, sysStates.DDR_Chiller_RTD);
 */
+  sysStates.ASIC_RTD.temperature  = random(1, 10);
+  sysStates.ASIC_Chiller_RTD.temperature  = random(10, 23);
+  sysStates.DDR_Chiller_RTD.temperature  = random(10, 23);
 }
 
 
 // get the data for the RTDs in the DDR part
-void getDDR_RTD_Status(void)
+void getDDRRTDData(void)
 {
-  Serial.println("crashing here .. ");
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("---------------------------------");
+  Serial.println(__PRETTY_FUNCTION__);
+  Serial.flush();
+  #endif
+  
+  //
+  // reset the stats/data for each RTD - set them online and running
+  // and zero the rtd, fault, and temperature
+  //
+  resetRTDState(sysStates.DDR1_RTD);
+  resetRTDState(sysStates.DDR2_RTD);
+  resetRTDState(sysStates.DDR3_RTD);
+
   getAdafruitRTDData(DDR1_RTD, sysStates.DDR1_RTD);
   getAdafruitRTDData(DDR2_RTD, sysStates.DDR2_RTD);
 /*
   getAdafruitRTDData(DDR3_RTD, sysStates.DDR3_RTD);
-  getAdafruitRTDData(DDR_Chiller_RTD, sysStates.DDR_Chiller_RTD);
-
-  // make up some numbers TODO: delete this
-  sysStates.DDR1_RTD.temperature  = random(1, 10);
-  sysStates.DDR2_RTD.temperature  = random(1, 10);
 */
-  Serial.println("crashing here part 2.. ");
   sysStates.DDR3_RTD.temperature  = random(1, 10);
-  sysStates.DDR_Chiller_RTD.temperature  = random(1, 10);
 }
 
 
@@ -2720,13 +2747,9 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state)
 {
   
   // TODO: put this back .. or something very similar to it
-  Serial.println("1");
   state.fault       = afmaxRTD.readFault();
-  Serial.println("2");
   state.rtd         = afmaxRTD.readRTD();
-  Serial.println("3");
   state.temperature = afmaxRTD.temperature(RNOMINAL, RREF);
-  Serial.println("4");
 /*
   state.fault       = 0;
   state.rtd         = 0;
@@ -2953,10 +2976,12 @@ uint16_t writePVOF(uint8_t id, uint16_t val)
 
   
   // do the write
-  cmdResp writePVOF = rs485Bus.writeProcess(id, PVOF, val);
+  cmdResp writePVOF = RS485Bus.writeProcess(id, PVOF, val);
   if( (false == writePVOF.retCode()) )
   {
     Serial.print("writePVOF fail to id: "); Serial.println(id);
+    return(0xFFFF);
+    
   #ifdef __DEBUG2_VIA_SERIAL__
   } else
   {
@@ -2964,12 +2989,14 @@ uint16_t writePVOF(uint8_t id, uint16_t val)
   #endif
   }
 
-
+/*
   // do the read, request 2 bytes back
-  cmdResp readPVOF = rs485Bus.readProcess(id, PVOF, 2);
+  cmdResp readPVOF = RS485Bus.readProcess(id, PVOF, 2);
   if( (false == readPVOF.retCode()) )
   {
     Serial.print("readPVOF fail from id: "); Serial.println(id);
+    return(0xFFFF);
+
   } else
   {
     retVal = htons((*(reinterpret_cast<uint16_t*>(readPVOF.buff()))));
@@ -2979,7 +3006,7 @@ uint16_t writePVOF(uint8_t id, uint16_t val)
     Serial.print(" read value is: 0x"); Serial.println(retVal, 16);
   #endif
   }
-
+*/
   return(retVal);
 }
 
@@ -3063,7 +3090,7 @@ bool GetACUTemp(uint8_t id, float* sv, float* pv)
 
 
   // do the read, request 2 bytes back
-  cmdResp readPVPVOF = rs485Bus.readProcess(id, PVPVOF, 2); // get response w/ PV and PVOF
+  cmdResp readPVPVOF = RS485Bus.readProcess(id, PVPVOF, 2); // get response w/ PV and PVOF
   if( (false == readPVPVOF.retCode()) )
   {
     Serial.println("readPVPVOF fail");
@@ -3080,7 +3107,7 @@ bool GetACUTemp(uint8_t id, float* sv, float* pv)
 
 
   // do the read, request 2 bytes back
-  cmdResp readSV = rs485Bus.readProcess(id, SV, 2);  // get response w/ SV and SVOF
+  cmdResp readSV = RS485Bus.readProcess(id, SV, 2);  // get response w/ SV and SVOF
   if( (false == readSV.retCode()) )
   {
     Serial.println("readSV fail");
@@ -3122,7 +3149,7 @@ bool SetACUSetPointValue(uint16_t id, float temp)
   #endif
   
   // do the write
-  cmdResp writeSV = rs485Bus.writeProcess(id, SV, val);
+  cmdResp writeSV = RS485Bus.writeProcess(id, SV, val);
   if( (false == writeSV.retCode()) )
   {
     Serial.println("writeSV fail");
@@ -3135,7 +3162,7 @@ bool SetACUSetPointValue(uint16_t id, float temp)
 
 
   // do the read, request 2 bytes back
-  cmdResp readSV = rs485Bus.readProcess(id, SV, 2);
+  cmdResp readSV = RS485Bus.readProcess(id, SV, 2);
   if( (false == readSV.retCode()) )
   {
     Serial.print("readSV fail");
@@ -3203,4 +3230,125 @@ float HotRTD(void)
     hotRTD = sysStates.DDR3_RTD.temperature;
 
   return(hotRTD);
+}
+
+
+//---------------------------------------------------
+// the idea with this function to heavily favor the update of the SVPVOF in DDR accuthermo while in RUNNING state
+//
+// rather than have several millis() calculations to control the frequency of these :
+// - chiller RTD sample rate
+// - handle menu command rate
+// - lcd update rate
+// - getStatus rate
+//
+// the frequency of them will be controlled by the number of times the SVPVOF is written
+//
+// the SVPVOF needs to be written at 10Hz, so the the frequency of the other procoesses will
+// be a function of the count of SVPVOF updates
+//
+// this is to try to guarantee 10Hz sample rate as best we can for the SVPVOF update frequency
+//
+// for example, the chiller RTS sample rate will be after 2 SVPVOF updates, i.e 2x per second
+// the menu sample rate will be after 3 SVPVOF updates, i.e. 3x per second
+// the lcd update rate will be after 4 SVPVOF updates, i.e .4x per second
+// the getStatus rate will be after 5 updates, i.e. 5x per second
+//
+// this loop only runs while in the RUNNING state, ways out of this loop
+//
+// 1. the DoRTD10HzSamples() function will return false if the Accuthermo are found not running or not reachable, this 
+// will cause loop exit
+// 2. the getStatus() every 5 seconds will also cause loop exist as it can change the sysStates.sysStatus from RUNNING
+// 3. the handleMenu() every 3 seconds can cause loop exist as it can cause sysStates.sysStatus state change
+// 4. the push button can also cause sysStates.sysStatus change
+//
+void handleRunningState(void)
+{
+  uint8_t non_ddr_rtd_chiller_cnt = 0;
+  uint8_t handle_menu_cnt         = 0;
+  uint8_t handle_lcd_cnt          = 0;
+  uint8_t get_status_cnt          = 0;
+
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("---------------------------------");
+  Serial.println(__PRETTY_FUNCTION__);
+  Serial.flush();
+  #endif
+  
+  while( (RUNNING == sysStates.sysStatus) )
+  {
+    if( (false == handleDDRRTD10HzSample()) )
+      break;
+/*
+    // increment counters
+    non_ddr_rtd_chiller_cnt++; handle_menu_cnt++; handle_lcd_cnt++; get_status_cnt++;
+    
+    if( (NON_DDR_RTD_CHILLER_CNT == non_ddr_rtd_chiller_cnt) )
+    {
+      getNonDDRRTDData();   // the RTDs not involved in the DDR_RTD_10HzSample()
+      non_ddr_rtd_chiller_cnt = 0;
+    }
+
+    if( (HANDLE_MENU_CNT == handle_menu_cnt) )
+    {
+      handleMsgs();
+      handle_menu_cnt = 0;
+    }
+
+    if( (HANDLE_LCD_CNT == handle_lcd_cnt) )
+    {
+      manageLCD();
+      handle_lcd_cnt = 0;
+    }
+
+    if( (GET_STATUS_CNT == get_status_cnt) )
+    {
+      getStatus();
+      get_status_cnt = 0;
+    }
+*/
+  }
+}
+
+
+bool handleDDRRTD10HzSample(void)
+{
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("---------------------------------");
+  Serial.println(__PRETTY_FUNCTION__);
+  Serial.flush();
+  #endif
+
+  unsigned long startTime;
+  
+   
+  for(int i = 0; i < 10; i++)
+  {
+    startTime = millis();
+
+    // get the RTD temps for the DDR RTDs
+    getDDRRTDData();
+
+    // pick the hot RTD temperature
+    sysStates.highRTDTemp = HotRTD(); 
+
+    //
+    // write HotRTD to the PVOF of the accuthtermo for the DDRs
+    // this blows .. 
+    // the Adafruit library returns a float with single digit precision
+    // but the Accuthermo wants that number * 10 ..
+    // so we get to do this math 10 fucking times a second .. val = (uint16_t) ((float)temp * (float)10);
+    // 0xFFFF return from writePVOF means there something is wrong, return(false)
+    //
+    if( (0xFFFF == writePVOF(DDR_ID, (uint16_t)(sysStates.highRTDTemp * (float)10))) )
+      return(false);
+    // brutal tight loop .. don't like it
+    do
+    {
+      delay(0);
+    } while(millis() - startTime < PVOF_WRITE_FREQUENCY_MS);
+  }
+  Serial.println("+");
+
+  return(true);
 }

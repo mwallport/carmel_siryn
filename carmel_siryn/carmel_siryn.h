@@ -1,7 +1,5 @@
 #ifndef __CARMEL_SIRYN__
 #define __CARMEL_SIRYN__
-
-#include "Arduino.h"
 #include <LiquidCrystal.h>    // LCD interface library
 #include <Adafruit_MAX31865.h>
 #include "controlProtocol.h"
@@ -14,27 +12,60 @@
 
 
 // this is for important, error condition debug output
-#define __DEBUG_VIA_SERIAL__
+//#define __DEBUG_VIA_SERIAL__
 
 // this is for frivilous debug output
-#define __DEBUG2_VIA_SERIAL__
+//#define __DEBUG2_VIA_SERIAL__
 
 // initial PVOF value
 #define __INIT_PVOF__  0x01FA
 
-//
-// uncomment for the siryn project
-//
+
+// peripheral component speeds
+#define CONTROL_PROTO_SPEED   19200
+#define CHILLER_PROTO_SPEED   9600
+#define RS485_MOD_BUS_SPEED   19200
+
+
+// timeout for wait for menu command
+#define CTRL_TIMEOUT          5
+
+
+// loop counts for handleRunningState
+#define PVOF_WRITE_FREQUENCY_MS   40
+#define NON_DDR_RTD_CHILLER_CNT   2
+#define HANDLE_MENU_CNT           3
+#define HANDLE_LCD_CNT            4
+#define GET_STATUS_CNT            10
+
+
+// uncomment for the siryn project as it will use chiller
 //#define __USING_CHILLER__
+
 
 //
 // these are the RS485 bus Ids of the entities on the bus
 // need to match the actual physical assignments
 //
-uint8_t   ASIC_ID     = 1;
-uint8_t   DDR_ID      = 2;
-uint8_t   RTD_MUX_ID  = 3;
-uint32_t  val;
+uint8_t   DDR_ID      = 1;
+uint8_t   ASIC_ID     = 2;
+
+
+
+
+//
+// control PC communication
+// assuming they will be address 0 and this program will be address 1
+//
+controlProtocol cp(Serial1, 1, 0);  // slave address (arduino) is 1, control address is 0
+                  // hard coded to use Serial1 
+
+//
+// chiller communication
+//
+#if defined(__USING_CHILLER__)
+polySci chiller(9600);  // hard programmed to use Serial2 SERIAL_8N1
+#endif
 
 
 //
@@ -44,22 +75,8 @@ static const uint8_t MAX_BUFF_LENGTH_MODBUS = 255;
 uint8_t tx_buff[MAX_BUFF_LENGTH_MODBUS];
 uint8_t rx_buff[MAX_BUFF_LENGTH_MODBUS];
 
-deviceHandler rs485Bus(Serial3, tx_buff, MAX_BUFF_LENGTH_MODBUS, rx_buff, MAX_BUFF_LENGTH_MODBUS);
+deviceHandler RS485Bus(Serial3, tx_buff, MAX_BUFF_LENGTH_MODBUS, rx_buff, MAX_BUFF_LENGTH_MODBUS);
 
-
-//
-// huber chiller communication
-//
-#if defined(__USING_CHILLER__)
-polySci chiller(9600);  // hard programmed to use Serial2 SERIAL_8N1
-#endif
-
-//
-// control PC communication
-// assuming they will be address 0 and this program will be address 1
-//
-controlProtocol cp(1, 0, 19200);  // slave address (arduino) is 1, control address is 0
-                  // hard coded to use Serial1 
 
 
 //
@@ -71,13 +88,12 @@ controlProtocol cp(1, 0, 19200);  // slave address (arduino) is 1, control addre
 //
 
 
-//Adafruit_MAX31865 ASIC_RTD(0);//          = Adafruit_MAX31865(10, 11, 12, 13);
-//Adafruit_MAX31865 ASIC_Chiller_RTD(0);//  = Adafruit_MAX31865(10, 11, 12, 13);
-Adafruit_MAX31865 DDR1_RTD(4);//          = Adafruit_MAX31865(10, 11, 12, 13);
-Adafruit_MAX31865 DDR2_RTD(52);//          = Adafruit_MAX31865(10, 11, 12, 13);
-//Adafruit_MAX31865 DDR3_RTD(0);//          = Adafruit_MAX31865(10, 11, 12, 13);
-//Adafruit_MAX31865 DDR_Chiller_RTD(0);//   = Adafruit_MAX31865(10, 11, 12, 13);
-
+//Adafruit_MAX31865 ASIC_RTD(x);
+//Adafruit_MAX31865 ASIC_Chiller_RTD(x);
+Adafruit_MAX31865 DDR1_RTD(4);          // TODO: THIS ONE IS CONNECTED TO ACCUTHERMO
+Adafruit_MAX31865 DDR2_RTD(52);
+//Adafruit_MAX31865 DDR3_RTD(x);
+//Adafruit_MAX31865 DDR_Chiller_RTD(x);
 
 // The value of the Rref resistor. Use 430.0 for PT100 and 4300.0 for PT1000
 #define RREF      430.0
@@ -293,8 +309,13 @@ volatile bool buttonOnOff = false;
 //
 // LCD display
 //
-const int rs = 8, en = 10, d4 = 11, d5 = 12, d6 = 13, d7 = 42, rw=9;
-LiquidCrystal lcd(rs, rw, en, d4, d5, d6, d7);
+//const int rs = 8, en = 10, d4 = 11, d5 = 12, d6 = 13, d7 = 42, rw=9;
+//LiquidCrystal lcd(rs, rw, en, d4, d5, d6, d7);
+
+// initialize the library by associating any needed LCD interface pin
+// with the arduino pin number it is connected to
+const int rs = 8, en = 10, d4 = 11, d5 = 12, d6 = 13, d7 = 42;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 
 //
