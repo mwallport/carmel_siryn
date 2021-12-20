@@ -210,6 +210,19 @@ bool controlProtocol::openUSBPort(const char* usbPort, uint32_t Speed)
 //
 // TODO: throw if this fails
 //
+#ifdef __RUNNING_ON_CONTROLLINO__
+controlProtocol::controlProtocol(HardwareSerial& so, uint16_t myAddress, uint16_t peerAddress)
+    : m_so(so), m_seqNum(0x0000), m_myAddress(myAddress), m_peerAddress(peerAddress)
+{
+    //
+    // for now this will always be the Controllino
+    //
+    RxCommand   = &controlProtocol::RxCommandSerial;
+    TxResponse  = &controlProtocol::TxResponseSerial;
+};
+
+#else
+
 controlProtocol::controlProtocol(uint16_t myAddress, uint16_t peerAddress, const char* usbPort, uint32_t Speed)
     : m_seqNum(0x0000), m_myAddress(myAddress), m_peerAddress(peerAddress)
 {
@@ -225,24 +238,7 @@ controlProtocol::controlProtocol(uint16_t myAddress, uint16_t peerAddress, const
     openUSBPort(usbPort, Speed);
 };
 
-
-//
-// TODO: throw if this fails
-//
-controlProtocol::controlProtocol(uint16_t myAddress, uint16_t peerAddress, uint32_t Speed)
-    : m_seqNum(0x0000), m_myAddress(myAddress), m_peerAddress(peerAddress)
-{
-    //
-    // for now this will always be the Controllino
-    //
-    RxCommand   = &controlProtocol::RxCommandSerial;
-    TxResponse  = &controlProtocol::TxResponseSerial;
-
-    #ifdef __RUNNING_ON_CONTROLLINO__
-    //Serial1.begin(Speed, SERIAL_8N1);
-    Serial1.begin(19200);
-    #endif
-};
+#endif
 
 
 controlProtocol::~controlProtocol()
@@ -255,6 +251,19 @@ controlProtocol::~controlProtocol()
     CloseHandle(m_fd);
 #endif
 };
+
+
+bool controlProtocol::doRxCommand(uint16_t TimeoutMs)
+{
+  return( (this->*RxCommand)(TimeoutMs) );
+};
+
+
+bool controlProtocol::doTxResponse(uint16_t length)
+{
+  return( (this->*TxResponse)(length) );
+};
+
 
 
 bool controlProtocol::TxCommandUSB(uint16_t length)
@@ -404,9 +413,18 @@ bool controlProtocol::RxCommandSerial(uint16_t TimeoutMs)
     unsigned long startTime = millis();
 
 
+    // if nothing on the wire, don't try to read
+    // need to be faster on recognizing there is no data to read
+    if( !m_so.available() )
+      return(false);
+
+
     memset(reinterpret_cast<void*>(m_buff), '\0', MAX_BUFF_LENGTH_CP + 1);
 
+    //
     // try to read a packet for a total of TimeoutMs milliseconds
+    // but only start to read the bytes if data is present
+    //
     while( (!done) && (!timedOut) &&
             ((bytes_read < (length)) && (bytes_read < MAX_BUFF_LENGTH_CP)) )
     {
@@ -415,9 +433,10 @@ bool controlProtocol::RxCommandSerial(uint16_t TimeoutMs)
             timedOut = true;
         } else
         {
-            if( (Serial1.available()) )
+            //if( (Serial1.available()) )
+            if( (m_so.available()) )
             {
-                m_buff[bytes_read] = Serial1.read();
+                m_buff[bytes_read] = m_so.read();
 
                 //
                 // look for start of frame
@@ -512,8 +531,10 @@ bool controlProtocol::TxResponseSerial(uint16_t length)
     uint8_t lenWritten;
 
     // class member Buff is filled in by the member functions
-    lenWritten = Serial1.write(m_buff, length);
-    Serial1.flush();
+//    lenWritten = Serial1.write(m_buff, length);
+    lenWritten = m_so.write(m_buff, length);
+//    Serial1.flush();
+    m_so.flush();
 
     if( (lenWritten != length) )
     {
@@ -3258,4 +3279,3 @@ uint16_t controlProtocol::getMsgId()
 
     return(pmsgHeader->msgNum);
 }
-

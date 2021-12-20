@@ -1,11 +1,10 @@
-// file controlProtocol.h
 #ifndef _CONTROL_PROTOCOL_
 #define _CONTROL_PROTOCOL_
 
 // debug
-#define __DEBUG_CTRL_PROTO__
-#define __DEBUG_CONTROL_PKT_TX__
-#define __DEBUG_CONTROL_PKT_RX__
+//#define __DEBUG_CTRL_PROTO__
+//#define __DEBUG_CONTROL_PKT_TX__
+//#define __DEBUG_CONTROL_PKT_RX__
 
 // platform
 #define __USING_LINUX_USB__
@@ -16,7 +15,6 @@
 //#define __USING_CHILLER__
 
 // common
-//#include <unistd.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +22,7 @@
 
 #ifdef __RUNNING_ON_CONTROLLINO__
 #include "Arduino.h"
-#include "HardwareSerial.h"
+#include <HardwareSerial.h>
 #define htons(x) ( ((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF) )
 #define ntohs(x) htons(x)
 #define htonl(x) ( ((x)<<24 & 0xFF000000UL) | \
@@ -512,13 +510,16 @@ class controlProtocol
     //
     // functions to hide the member function pointer syntax
     //
-    bool    doRxCommand(uint16_t TimeoutMs) { return( (this->*RxCommand)(TimeoutMs) ); };
-    bool    doTxResponse(uint16_t length) { return( (this->*TxResponse)(length) ); };
+    bool    doRxCommand(uint16_t TimeoutMs);
+    bool    doTxResponse(uint16_t length);
     bool    doTxCommand(uint16_t length) { return( (this->*TxCommand)(length) ); };
     bool    doRxResponse(uint16_t timeout) { return( (this->*RxResponse)(timeout) ); };
 
-    controlProtocol(uint16_t, uint16_t, uint32_t);                // serial : m_myAddress, m_peerAddress
-    controlProtocol(uint16_t, uint16_t, const char*, uint32_t);   // USB : m_myAddress, m_peerAddress, USB file
+    #ifdef __RUNNING_ON_CONTROLLINO__
+    controlProtocol(HardwareSerial&, uint16_t, uint16_t);       // serial : m_myAddress, m_peerAddress
+    #else
+    controlProtocol(uint16_t, uint16_t, const char*, uint32_t); // USB : m_myAddress, m_peerAddress, USB file
+    #endif
     ~controlProtocol();
     
     bool    StartUpCmd(uint16_t);
@@ -547,11 +548,10 @@ class controlProtocol
     // slave - Controllino uC 
     bool        RxCommandSerial(uint16_t);            // uses m_buff and m_seqNum
     bool        TxResponseSerial(uint16_t);           // uses m_buff and m_seqNum
-    // implement these later if needed
-    //bool        RxCommandUSB();            // uses m_buff and m_seqNum
-    //bool        TxResponseUSB();           // uses m_buff and m_seqNum
 
-    // protected:  TODO: protect something !
+    #ifdef __RUNNING_ON_CONTROLLINO__
+    HardwareSerial& m_so;                       // serial object
+    #endif
     uint16_t    m_seqNum;                       // current m_seqNum
     uint16_t    m_myAddress;                    // 'my' Address
     uint16_t    m_peerAddress;                  // peer address, 1 to 1 communication

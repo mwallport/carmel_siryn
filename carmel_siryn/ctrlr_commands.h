@@ -14,6 +14,16 @@ static const uint8_t  CTRLR_WRITE_DATA_OFFSET   = 4;
 static const uint8_t  CTRLR_READ_DATA_CNT_OFFSET  = 4;
 static const uint8_t  CTRLR_READ_BYTE_CNT_OFFSET  = 2;
 static const uint8_t  CTRLR_CRC_OFFSET    = 6;
+
+// values for ENAB register
+static const uint8_t  OFF = 0x0000;   // turn off output
+static const uint8_t  AT1 = 0x0001;   // auto-tune at SV
+static const uint8_t  AT2 = 0x0002;   // auto-tune at 90% of SV
+static const uint8_t  MPWR  = 0x0003; // manual set duty cycle
+static const uint8_t  SPON  = 0x0004; // single temp point ctrl
+static const uint8_t  PROG  = 0x0005; // run programmable temp profile
+static const uint8_t  HOLD  = 0x0006; // hold temp durin gprog profile run
+
 //
 // temp controller modbus register addresses
 //

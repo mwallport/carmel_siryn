@@ -12,13 +12,10 @@
 
 
 // this is for important, error condition debug output
-//#define __DEBUG_VIA_SERIAL__
+#define __DEBUG_VIA_SERIAL__
 
 // this is for frivilous debug output
 //#define __DEBUG2_VIA_SERIAL__
-
-// initial PVOF value
-#define __INIT_PVOF__  0x01FA
 
 
 // peripheral component speeds
@@ -30,14 +27,16 @@
 // timeout for wait for menu command
 #define CTRL_TIMEOUT          5
 
-
 // loop counts for handleRunningState
-#define PVOF_WRITE_FREQUENCY_MS   40
+#define DDR_RTDS_SAMPLES_PER_SEC  2
 #define NON_DDR_RTD_CHILLER_CNT   2
 #define HANDLE_MENU_CNT           3
 #define HANDLE_LCD_CNT            4
 #define GET_STATUS_CNT            10
 
+// high RTD chiller temperature, if hit this, go to SHUTDOWN state
+// and don't start if RTD chiller temperature is this
+#define HIGH_CHILLER_TEMP       30
 
 // uncomment for the siryn project as it will use chiller
 //#define __USING_CHILLER__
@@ -50,6 +49,16 @@
 uint8_t   DDR_ID      = 1;
 uint8_t   ASIC_ID     = 2;
 
+
+//
+// TODO: add menu command to set mode, or just keep it as SPON ?
+// - set this global variable to the value from the 'new' menu command
+// - use this as the mode for the ENAB command
+uint8_t MODE  = MPWR;
+
+//
+// variables to control the sample rate of the DDR RTDs when in running state
+//
 
 
 

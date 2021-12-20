@@ -60,7 +60,6 @@ void loop(void)
   //
   getStatus();
 
-
   //
   // take commands from the
   // - the switch on front panel
@@ -68,15 +67,10 @@ void loop(void)
   //
   handleMsgs();
 
-
   //
   // update the LCD
   //
-  manageLCD();
-
-  //
-  // set PVOF
-  //
+  manageLCD(false);
 }
 
 
@@ -90,9 +84,9 @@ void initSystem(void)
   // start the Serial ports
   //
   
-//  #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__
+  #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__
   Serial.begin(19200);
-//  #endif
+  #endif
 
   // control protocol uses Serial1
   Serial1.begin(CONTROL_PROTO_SPEED);
@@ -110,7 +104,7 @@ void initSystem(void)
   //
   while( (!Serial1) )
   {
-    #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__
+    #if defined __DEBUG_VIA_SERIAL__
     Serial.println("waiting for Serial1 to become ready");
     #endif
     delay(250);
@@ -119,7 +113,7 @@ void initSystem(void)
   #if defined(__USING_CHILLER__)
   while( (!Serial2) )
   {
-    #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__
+    #if defined __DEBUG_VIA_SERIAL__
     Serial.println("waiting for Serial2 to become ready");
     #endif
     delay(250);
@@ -128,7 +122,7 @@ void initSystem(void)
   
   while( (!Serial3) )
   {
-    #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__
+    #if defined __DEBUG_VIA_SERIAL__
     Serial.println("waiting for Serial3 to become ready");
     #endif
     delay(250);
@@ -258,7 +252,7 @@ void configureFaultNoFault(void)
 // use the global sysStates.lcd data structures to paint
 // messages on the LCD
 //
-void manageLCD(void)
+void manageLCD(bool now)
 {
   #ifdef __DEBUG2_VIA_SERIAL__
   Serial.println("---------------------------------");
@@ -269,7 +263,7 @@ void manageLCD(void)
   //
   // if enough time has passed, display the current index
   //   
-  if( (MAX_MSG_DISPLAY_TIME <= (millis() - sysStates.lcd.prior_millis)) )
+  if( (now) || (MAX_MSG_DISPLAY_TIME <= (millis() - sysStates.lcd.prior_millis)) )
   {
     // set up the LCD's number of columns and rows:
     lcd.noDisplay(); lcd.begin(16, 2); lcd.noDisplay(); lcd.clear(); lcd.home();
@@ -391,7 +385,6 @@ bool startUp(void)
 void getStatus()
 {
   static unsigned long  lastGetStatusTime     = 0;
-  static unsigned long  lastGetHumidityTime   = 0;
   unsigned long         currentGetStatusTime  = millis();
 
 
@@ -404,7 +397,7 @@ void getStatus()
   //
   if( (GET_STATUS_INTERVAL < (currentGetStatusTime - lastGetStatusTime)) )
   {
-    #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("- check ACUs and chiller --------------");
     Serial.println(__PRETTY_FUNCTION__);
     #endif
@@ -530,7 +523,7 @@ bool startChiller(void)
 
 
 // ---------------------------------------
-// find all ACUs, there should be 3
+// find all ACUs, there should be 2
 // - verify their addresses by fetching hw version
 //      expecting ID s2, 3, and 4
 // - turn them 'on'
@@ -589,7 +582,7 @@ bool startACUs(void)
   {
     retVal = false;
     
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.print(__PRETTY_FUNCTION__);
     Serial.println(": not starting ACUs chiller is not running");
     Serial.flush();
@@ -714,7 +707,7 @@ void handleMsgs(void)
   {
     currentButtonOnOff = buttonOnOff;
       
-    #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.print("button press happened, switching ");
     if( (true == currentButtonOnOff) ) Serial.println("on"); else Serial.println("off");
     Serial.flush();
@@ -742,10 +735,6 @@ void handleMsgs(void)
     //
     if( (getMsgFromControl()) )
     {
-     #ifdef __DEBUG_VIA_SERIAL__
-     Serial.println("got a command");
-     #endif
-     
       //
       // cp.m_buff has the message just received, process that message
       //
@@ -753,18 +742,12 @@ void handleMsgs(void)
       {
         case startUpCmd:        // start the chiller if present, and ACUs
         {
-          #ifdef __DEBUG_VIA_SERIAL__
-          Serial.println("got startUpCmd");
-          #endif
           handleStartUpCmd();
           break;
         }
   
         case shutDownCmd:         // shutdown the chiller, ACUs, and sensor
         {
-          #ifdef __DEBUG_VIA_SERIAL__
-          Serial.println("got shutDownCmd");
-          #endif
           handleShutDownCmd();
           break;
         }
@@ -778,54 +761,36 @@ void handleMsgs(void)
   
         case setACUTemperature:      // target ACU m_address and temp
         {
-          #ifdef __DEBUG_VIA_SERIAL__
-          Serial.println("got setACUTemperature");
-          #endif
           handleSetACUTemperature();
           break;
         };
   
         case getACUTemperature:      // target ACU m_address and temp
         {
-          #ifdef __DEBUG_VIA_SERIAL__
-          Serial.println("got getACUTemperature");
-          #endif
           handleGetACUTemperature(false);
           break;
         };
   
         case getACUObjTemperature:
         {
-          #ifdef __DEBUG_VIA_SERIAL__
-          Serial.println("got getACUObjTemperature");
-          #endif
           handleGetACUTemperature(true);
           break;
         };
 
         case getACUInfoMsg:
         {
-          #ifdef __DEBUG_VIA_SERIAL__
-          Serial.println("got getACUInfoMsg");
-          #endif
           handlGetACUInfo();
           break;
         };
   
         case enableACUs:         // turn on all ACUs
         {
-          #ifdef __DEBUG_VIA_SERIAL__
-          Serial.println("got enableACUs");
-          #endif
           handleEnableACUs();
           break;
         };
   
         case disableACUs:        // turn off all ACUs
         {
-          #ifdef __DEBUG_VIA_SERIAL__
-          Serial.println("got disableACUs");
-          #endif
           handleDisableACUs();
           break;
         };
@@ -876,7 +841,7 @@ void handleMsgs(void)
         }
       }
     } // else no message from control
-    #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     else 
     Serial.println("did not get a command");
     #endif
@@ -1274,7 +1239,7 @@ bool getMsgFromControl(void)
 {
   bool      retVal  = false;
 
-  #ifdef __DEBUG_VIA_SERIAL__
+  #ifdef __DEBUG2_VIA_SERIAL__
   Serial.println("---------------------------------------");
   Serial.println(__PRETTY_FUNCTION__);
   Serial.flush();
@@ -1315,7 +1280,6 @@ void handleStartUpCmd(void)
       //
       // start the ACUs, chiller, sensor ...
       //
-/* TODO: put this back <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       if( (startUp()) )
       {
         result  = 1;
@@ -1333,7 +1297,6 @@ void handleStartUpCmd(void)
         
       } else
         setSystemStatus();  // derive the button state
- end TODO: */        
 
       respLength = cp.Make_startUpCmdResp(cp.m_peerAddress, cp.m_buff,
         result, pstartUpCmd->header.seqNum
@@ -1346,8 +1309,10 @@ void handleStartUpCmd(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+        #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+        #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -1554,7 +1519,7 @@ void handleSetACUTemperature(void)
       setPoint = atof(reinterpret_cast<char*>(psetACUTemperature->temperature));
       ACUAddress = ntohs(psetACUTemperature->acu_address);
 
-      #ifdef __DEBUG_VIA_SERIAL__
+      #ifdef __DEBUG2_VIA_SERIAL__
       Serial.print(__PRETTY_FUNCTION__); Serial.print( " found setPoint:ACUAddress ");
       Serial.print(setPoint,2);
       Serial.print(":");
@@ -1566,7 +1531,7 @@ void handleSetACUTemperature(void)
       {
         if( (setACUTemp(ACUAddress, setPoint)) )
         {
-          #ifdef __DEBUG_VIA_SERIAL__
+          #ifdef __DEBUG2_VIA_SERIAL__
           Serial.print(__PRETTY_FUNCTION__); Serial.print( " success set temp for ACU: ");
           Serial.println(ACUAddress);
           Serial.flush();
@@ -1837,7 +1802,7 @@ void handleEnableACUs(void)
                 ntohs(penableACUs->crc), ntohs(penableACUs->eop))) )
     {
       //
-      // chiller informaion is gotton during getStatus
+      // TODO: make the MODE some in the menu command
       //
       if( (startACUs()) )
       {
@@ -2457,11 +2422,12 @@ void handleACUStatus(void)
 
   for(uint8_t Address = MIN_ACU_ADDRESS; (Address <= MAX_ACU_ADDRESS); Address++)
   {
+    // initialize to running and online
     sysStates.ACU[(Address - MIN_ACU_ADDRESS)].state      = running;
     sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online     = online;
 
     //
-    // always fetch the ACU's set point and object temperatures
+    // get the ACU's set point and object temperatures
     //
     if( !(GetACUTemp(Address,
       &sysStates.ACU[(Address - MIN_ACU_ADDRESS)].setpoint,
@@ -2472,6 +2438,9 @@ void handleACUStatus(void)
       Serial.print(Address, DEC); Serial.println(" unable to get temps");
       Serial.flush();
       #endif
+
+      ACUsRunning = false;
+      ACUsOnline  = false;
 
       sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online = offline;
       sysStates.ACU[(Address - MIN_ACU_ADDRESS)].state  = stopped;
@@ -2485,6 +2454,9 @@ void handleACUStatus(void)
       #endif
     }
 
+    //
+    // get the value of ENAB, the current run mode
+    //
     if( !(ACURunning(Address)) )
     {
       #ifdef __DEBUG2_VIA_SERIAL__
@@ -2500,23 +2472,6 @@ void handleACUStatus(void)
 
       // update sysStates
       sysStates.ACU[(Address - MIN_ACU_ADDRESS)].state = stopped;
-
-      //
-      // check if we can still communicate with ACUs
-      //
-      if( !(ACUPresent(Address)) )
-      {
-        #ifdef __DEBUG_VIA_SERIAL__
-        Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
-        Serial.print(Address, DEC); Serial.println(" is not on-line");
-        Serial.flush();
-        #endif
-
-        ACUsOnline  = false;
-
-        // update the sysStates
-        sysStates.ACU[(Address - MIN_ACU_ADDRESS)].online = offline;
-      }
     }
   }
 
@@ -2557,7 +2512,7 @@ bool getACUInfo(uint8_t acu_address, uint32_t* deviceType, uint32_t* hwVersion,
 
 void handleRTDStatus(void)
 {
-  bool  ASIC_RTDsRunning  = true;  // becomes false is at least one RTD has fault
+  bool  NON_DDR_RTDsRunning  = true;  // becomes false is at least one RTD has fault
   bool  DDR_RTDsRunning   = true;  // becomes false is at least one RTD has fault
 
 
@@ -2571,18 +2526,18 @@ void handleRTDStatus(void)
   // before going to chat w/ the RTDs - enable the FAUL_LED if already in fault so it is on 
   // while we could be timing out chatting up a dead RTD
   //
-  if( !(AllRTDsRunning()) )
+  if( !(checkRTDStatus()) )
   {
     digitalWrite(FAULT_LED, HIGH);
   }
   
   //
-  // get all the ASIC RTDs status
+  // get all the ASIC, ASIC chiller and DDR chiller RTD data
   //
   getNonDDRRTDData();
 
   //
-  // get all the DDR RTDs status
+  // get all DDR RTDs temperatures
   //
   getDDRRTDData();
 
@@ -2591,22 +2546,28 @@ void handleRTDStatus(void)
   //
 
   //
-  // check the ASIC RTDs
+  // check the non DDR RTDs
   //
   if( (sysStates.ASIC_RTD.fault) )
   {
     sysStates.ASIC_RTD.online  = offline;
     sysStates.ASIC_RTD.state   = stopped;    
-    ASIC_RTDsRunning  = false;  
+    NON_DDR_RTDsRunning  = false;  
   }
 
   if( (sysStates.ASIC_Chiller_RTD.fault) )
   {
     sysStates.ASIC_Chiller_RTD.online  = offline;
     sysStates.ASIC_Chiller_RTD.state   = stopped;
-    ASIC_RTDsRunning  = false;  
+    NON_DDR_RTDsRunning  = false;  
   }
 
+  if( (sysStates.DDR_Chiller_RTD.fault) )
+  {
+    sysStates.DDR_Chiller_RTD.online  = offline;
+    sysStates.DDR_Chiller_RTD.state   = stopped;    
+    NON_DDR_RTDsRunning  = false;  
+  }
 
   // 
   // check the DDR RTDs
@@ -2632,12 +2593,6 @@ void handleRTDStatus(void)
     DDR_RTDsRunning  = false;  
   }
 
-  if( (sysStates.DDR_Chiller_RTD.fault) )
-  {
-    sysStates.DDR_Chiller_RTD.online  = offline;
-    sysStates.DDR_Chiller_RTD.state   = stopped;    
-    DDR_RTDsRunning  = false;  
-  }
 
 
   //
@@ -2647,10 +2602,10 @@ void handleRTDStatus(void)
   //
   // update the LCD face for ASIC RTDs
   //
-  if( !(ASIC_RTDsRunning) )
+  if( !(NON_DDR_RTDsRunning) )
   {
     sysStates.lcd.lcdFacesIndex[ASIC_RTD_NRML_OFFSET]   = no_Status;
-    sysStates.lcd.lcdFacesIndex[ASIC_RTD_FAIL_OFFSET]   = ASIC_RTD_Failure;
+    sysStates.lcd.lcdFacesIndex[ASIC_RTD_FAIL_OFFSET]   = ASIC_RTD_Failure;  // TODO: fix this
   }
   else
   {
@@ -2679,14 +2634,12 @@ void handleRTDStatus(void)
   //
   sysStates.highRTDTemp = HotRTD();
 
-  #ifdef __DEBUG_VIA_SERIAL__
+  #ifdef __DEBUG2_VIA_SERIAL__
   Serial.print("highRTDTemp is set to : "); Serial.println(sysStates.highRTDTemp);
   #endif
-
 }
 
 
-// called by handleRunningState to get the data for the non DDR RTDs
 void getNonDDRRTDData()
 {
   #ifdef __DEBUG2_VIA_SERIAL__
@@ -2709,8 +2662,8 @@ void getNonDDRRTDData()
   getAdafruitRTDData(DDR_Chiller_RTD, sysStates.DDR_Chiller_RTD);
 */
   sysStates.ASIC_RTD.temperature  = random(1, 10);
-  sysStates.ASIC_Chiller_RTD.temperature  = random(10, 23);
-  sysStates.DDR_Chiller_RTD.temperature  = random(10, 23);
+  sysStates.ASIC_Chiller_RTD.temperature  = random(25,30);
+  sysStates.DDR_Chiller_RTD.temperature  = random(23, 30);
 }
 
 
@@ -2799,7 +2752,7 @@ systemStatus setSystemStatus(void)
   //
   // accumulate the RTD's status - if one RTD is bad, they are all bad
   //
-  if( !(AllRTDsRunning()) )
+  if( !(checkRTDStatus()) )
     RTDsRunning = false;
     
 
@@ -2842,10 +2795,6 @@ systemStatus setSystemStatus(void)
       
     digitalWrite(NO_FAULT_LED, LOW);
   
-
-  //
-  // READY - else everythig is online, ACUs are not running
-  //
   }
 #if defined(__USING_CHILLER__)
   //
@@ -2857,6 +2806,9 @@ systemStatus setSystemStatus(void)
   else if( ((true == ACUsOnline) && (false == ACUsRunning) && (true == RTDsRunning)) )
 #endif
   {
+    //
+    // READY - else everythig is online, ACUs are not running
+    //
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Ready;
     retVal  = READY;
 
@@ -2876,11 +2828,11 @@ systemStatus setSystemStatus(void)
       digitalWrite(FAULT_LED, LOW);
       digitalWrite(NO_FAULT_LED, HIGH);
     }
-  //
-  // else the system is running
-  //
   } else
   {
+    //
+    // else the system is running
+    //
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Running;
     retVal  = RUNNING;
 
@@ -2898,7 +2850,6 @@ systemStatus setSystemStatus(void)
       //
       digitalWrite(FAULT_LED, LOW);
       digitalWrite(NO_FAULT_LED, LOW);
-   
     }
   }
 
@@ -2979,7 +2930,9 @@ uint16_t writePVOF(uint8_t id, uint16_t val)
   cmdResp writePVOF = RS485Bus.writeProcess(id, PVOF, val);
   if( (false == writePVOF.retCode()) )
   {
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.print("writePVOF fail to id: "); Serial.println(id);
+    #endif
     return(0xFFFF);
     
   #ifdef __DEBUG2_VIA_SERIAL__
@@ -2989,93 +2942,95 @@ uint16_t writePVOF(uint8_t id, uint16_t val)
   #endif
   }
 
-/*
-  // do the read, request 2 bytes back
-  cmdResp readPVOF = RS485Bus.readProcess(id, PVOF, 2);
-  if( (false == readPVOF.retCode()) )
-  {
-    Serial.print("readPVOF fail from id: "); Serial.println(id);
-    return(0xFFFF);
-
-  } else
-  {
-    retVal = htons((*(reinterpret_cast<uint16_t*>(readPVOF.buff()))));
-  #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.println("readPVOF success");
-    Serial.print("readProcess PVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readPVOF.bufflen()); Serial.println(" bytes returned");
-    Serial.print(" read value is: 0x"); Serial.println(retVal, 16);
-  #endif
-  }
-*/
   return(retVal);
 }
 
 
 //-------------------------------------------------------------
 //
-// - use global rs486Bus to do something for now
-// - this will eventually be the 'start' cmd the ACU
-// - read the value back
-// - return the value read
-// - return true if the value read back is what is expected .. 
 //
 bool StartACU(uint8_t id)
 {
-  // for now, just call writePVOF w/ the __INIT_PVOF__ and return true
-  writePVOF(id, __INIT_PVOF__);
+  cmdResp writeENAB = RS485Bus.writeProcess(id, ENAB, MODE);
 
-  return(true);
+  if( (true == writeENAB.retCode()) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.print("ACU: "); Serial.print(id); Serial.println(" is started");
+    #endif
+
+    // test TODO: remove this
+    ACURunning(id);
+  
+    return(true); // started
+  }
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  Serial.print("ACU: "); Serial.print(id); Serial.println(" is not started, unable to write cmd");
+  #endif
+  
+  return(true); // not started, unable to write
 }
 
 
 //-------------------------------------------------------------
 //
-// - use global rs486Bus to do something for now
-// - this will eventually be the 'stop' cmd the ACU
-// - read the value back
-// - return the value read
-// - return true if the value read back is what is expected .. 
 //
 bool StopACU(uint8_t id)
 {
-  // for now, just call writePVOF w/ the __INIT_PVOF__ and return true
-  writePVOF(id, __INIT_PVOF__);
+  cmdResp writeENAB = RS485Bus.writeProcess(id, ENAB, OFF);
 
-  return(true);
+  if( (true == writeENAB.retCode()) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.print("ACU: "); Serial.print(id); Serial.println(" is stopped");
+    #endif
+  
+    return(true); // not running
+  }
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  Serial.print("ACU: "); Serial.print(id); Serial.println(" is not stopped, unable to write cmd");
+  #endif
+  
+  return(true); // is AT1, AT2, MPWR, SPON, PROG, HOLD
 }
 
 
 //-------------------------------------------------------------
 //
-// - use global rs486Bus to do something for now
-// - this will eventually be the 'stop' cmd the ACU
-// - read the value back
-// - return the value read
-// - return true if the value read back is what is expected .. 
 //
 bool ACURunning(uint8_t id)
 {
-  // for now, just call writePVOF w/ the __INIT_PVOF__ and return true
-  writePVOF(id, __INIT_PVOF__);
+  cmdResp readENAB = RS485Bus.readProcess(id, ENAB, 2);
 
-  return(true);
+  if( ((true == readENAB.retCode()) && (0 < readENAB.bufflen()) && (OFF == readENAB.buff()[0])) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.print("ACU: "); Serial.print(id); Serial.print(" is not running: 0x"); Serial.println(readENAB.buff()[0], 16);
+    #endif
+  
+    return(false); // not running
+  }
+
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.print("ACU: "); Serial.print(id); Serial.print(" is running: 0x"); Serial.println(readENAB.buff()[0], 16);
+  #endif
+  
+  return(true); // is AT1, AT2, MPWR, SPON, PROG, HOLD
 }
 
 
 //-------------------------------------------------------------
 //
-// - use global rs486Bus to do something for now
-// - this will eventually be the 'stop' cmd the ACU
-// - read the value back
-// - return the value read
-// - return true if the value read back is what is expected .. 
+// try to read the SV, return the retCode from the deviceHandler
+// - false means there was a communication failure - device not present
+// - true means there is no communication failure - device present
 //
 bool ACUPresent(uint8_t id)
 {
-  // for now, just call writePVOF w/ the __INIT_PVOF__ and return true
-  writePVOF(id, __INIT_PVOF__);
-
-  return(true);
+  cmdResp readSV = RS485Bus.readProcess(id, SV, 2);
+  return(readSV.retCode());
 }
 
 
@@ -3091,18 +3046,22 @@ bool GetACUTemp(uint8_t id, float* sv, float* pv)
 
   // do the read, request 2 bytes back
   cmdResp readPVPVOF = RS485Bus.readProcess(id, PVPVOF, 2); // get response w/ PV and PVOF
+
   if( (false == readPVPVOF.retCode()) )
   {
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("readPVPVOF fail");
+    #endif
+    return(false);
   } else
   {
     temp = htons((*(reinterpret_cast<uint16_t*>(readPVPVOF.buff()))));
     *pv  = (float)temp / (float)10;
-  #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("readPVPVOF success");
     Serial.print("readProcess PVPVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readPVPVOF.bufflen()); Serial.println(" bytes returned");
     Serial.print("read value is: 0x"); Serial.println(temp, 16);
-  #endif
+    #endif
   }
 
 
@@ -3110,17 +3069,20 @@ bool GetACUTemp(uint8_t id, float* sv, float* pv)
   cmdResp readSV = RS485Bus.readProcess(id, SV, 2);  // get response w/ SV and SVOF
   if( (false == readSV.retCode()) )
   {
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("readSV fail");
+    #endif
+    return(false);
   } else
   {
     setp = htons((*(reinterpret_cast<uint16_t*>(readSV.buff()))));
     *sv = (float)setp / (float)10;
 
-  #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("readSV success");
     Serial.print("readProcess SVSVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
     Serial.print("read value is: 0x"); Serial.println(setp, 16);
-  #endif
+    #endif
   }
 
   return(true);
@@ -3143,16 +3105,18 @@ bool SetACUSetPointValue(uint16_t id, float temp)
   //
   val = (uint16_t) ((float)temp * (float)10);
 
-  #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.print("SetACUSetPointValue got input temp: "); Serial.println(temp);
     Serial.print("atttempting to write this to register: 0x"); Serial.println(val,16);
-  #endif
+    #endif
   
   // do the write
   cmdResp writeSV = RS485Bus.writeProcess(id, SV, val);
   if( (false == writeSV.retCode()) )
   {
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("writeSV fail");
+    #endif
   #ifdef __DEBUG_VIA_SERIAL__
   } else
   {
@@ -3165,11 +3129,13 @@ bool SetACUSetPointValue(uint16_t id, float temp)
   cmdResp readSV = RS485Bus.readProcess(id, SV, 2);
   if( (false == readSV.retCode()) )
   {
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.print("readSV fail");
+    #endif
   } else
   {
     retVal = htons((*(reinterpret_cast<uint16_t*>(readSV.buff()))));
-    #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("readSV success");
     Serial.print("readProcess SV from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readSV.bufflen()); Serial.println(" bytes returned");
     Serial.print(" read value is: 0x"); Serial.println(retVal, 16);
@@ -3199,15 +3165,36 @@ void resetRTDState(RTDState& rtdState)
 }
 
 
-bool AllRTDsRunning(void)
+bool checkRTDStatus(void)
 {
-
-  if( (sysStates.ASIC_RTD.fault || sysStates.ASIC_Chiller_RTD.fault || sysStates.DDR1_RTD.fault ||
-      sysStates.DDR2_RTD.fault || sysStates.DDR3_RTD.fault || sysStates.DDR_Chiller_RTD.fault) )
+  //
+  // per Rick .. return false (bad status) only if
+  // - any chiller RTD is fault
+  // - both RTDs not connected to the accuthermo are bad 'at the same time'
+  //
+  // - and if either of the chiller RTDs get above HIGH_CHILLER_TEMP, return bad status
+  //
+  if( (sysStates.ASIC_Chiller_RTD.fault || sysStates.DDR_Chiller_RTD.fault || sysStates.DDR1_RTD.fault ||
+      (sysStates.DDR2_RTD.fault && sysStates.DDR3_RTD.fault)) )
   {
-     return(false);
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("checkRTDStatus returning bad status");
+    #endif
+    return(false);
   }
 
+  if( (HIGH_CHILLER_TEMP < sysStates.ASIC_Chiller_RTD.temperature) || 
+      (HIGH_CHILLER_TEMP < sysStates.DDR_Chiller_RTD.temperature) )
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("RTD chiller temp too high returning bad status");
+    #endif
+    return(false);
+  }
+
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("checkRTDStatus returning good status");
+  #endif
   return(true);
 }
 
@@ -3216,7 +3203,7 @@ float HotRTD(void)
 {
   float hotRTD = sysStates.DDR1_RTD.temperature;
 
-  #ifdef __DEBUG_VIA_SERIAL__
+  #ifdef __DEBUG2_VIA_SERIAL__
   Serial.print("DDR1: "); Serial.print(sysStates.DDR1_RTD.temperature);
   Serial.print(" DDR2: "); Serial.print(sysStates.DDR2_RTD.temperature);
   Serial.print(" DDR3: "); Serial.println(sysStates.DDR3_RTD.temperature);
@@ -3277,9 +3264,9 @@ void handleRunningState(void)
   
   while( (RUNNING == sysStates.sysStatus) )
   {
-    if( (false == handleDDRRTD10HzSample()) )
+    if( (false == handleDDRRTDSamples()) )
       break;
-/*
+
     // increment counters
     non_ddr_rtd_chiller_cnt++; handle_menu_cnt++; handle_lcd_cnt++; get_status_cnt++;
     
@@ -3297,7 +3284,7 @@ void handleRunningState(void)
 
     if( (HANDLE_LCD_CNT == handle_lcd_cnt) )
     {
-      manageLCD();
+      manageLCD(true);
       handle_lcd_cnt = 0;
     }
 
@@ -3306,12 +3293,11 @@ void handleRunningState(void)
       getStatus();
       get_status_cnt = 0;
     }
-*/
   }
 }
 
 
-bool handleDDRRTD10HzSample(void)
+bool handleDDRRTDSamples(void)
 {
   #ifdef __DEBUG2_VIA_SERIAL__
   Serial.println("---------------------------------");
@@ -3320,9 +3306,9 @@ bool handleDDRRTD10HzSample(void)
   #endif
 
   unsigned long startTime;
+  unsigned long timeBetweenSamples  = 900/DDR_RTDS_SAMPLES_PER_SEC; // crude .. using 900 for fudge factor ..
   
-   
-  for(int i = 0; i < 10; i++)
+  for(int i = 0; i < DDR_RTDS_SAMPLES_PER_SEC; i++)
   {
     startTime = millis();
 
@@ -3332,6 +3318,11 @@ bool handleDDRRTD10HzSample(void)
     // pick the hot RTD temperature
     sysStates.highRTDTemp = HotRTD(); 
 
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.print("hotP "); Serial.println(sysStates.highRTDTemp);
+    Serial.flush();
+    #endif
+  
     //
     // write HotRTD to the PVOF of the accuthtermo for the DDRs
     // this blows .. 
@@ -3345,8 +3336,8 @@ bool handleDDRRTD10HzSample(void)
     // brutal tight loop .. don't like it
     do
     {
-      delay(0);
-    } while(millis() - startTime < PVOF_WRITE_FREQUENCY_MS);
+      delay(1);
+    } while(millis() - startTime < timeBetweenSamples);
   }
   Serial.println("+");
 

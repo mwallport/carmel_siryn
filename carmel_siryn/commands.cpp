@@ -167,7 +167,7 @@ uint8_t cmd::buildWriteCmd(uint8_t* buff, uint8_t bufflen, uint16_t data, uint8_
   *(reinterpret_cast<uint16_t*>(&buff[CTRLR_CRC_OFFSET])) = htons(calcCRC16(buff, CTRLR_WRITE_DATA_OFFSET + 2));
 
   m_paramAddr   = param_addr;
-  m_data    = data; // save the request data length ( byte count )
+  m_data        = data; // save the request data length ( byte count )
   m_cmdLength   = CTRLR_CRC_OFFSET + 2;
   return(m_cmdLength); // huh ?  this is always going to be 8
 }
