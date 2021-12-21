@@ -185,7 +185,7 @@ const uint16_t len_getStatus_t    = sizeof(getStatus_t) - sizeof(CRC) - sizeof(E
 
 typedef struct _statusReport
 {
-    uint16_t    humidityAlert;  // 0 - no ; 1 - yes
+    uint16_t    RTDsRunning;    // 0 - no enough are toast the system is shutdown ; 1 - yes
     uint16_t    ACUsRunning;    // 0 - no ; 1 - yes
     uint16_t    chillerOnLine;  // 0 - no ; 1 - yes
 } statusReport_t;

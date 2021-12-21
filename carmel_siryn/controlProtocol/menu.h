@@ -12,7 +12,7 @@ using namespace std;
 
 typedef bool (controlProtocol::*pStartUpCmd_t)(uint16_t);
 typedef bool (controlProtocol::*pShutDownCmd_t)(uint16_t);
-//typedef bool (controlProtocol::*pGetStatus_t)(uint16_t, uint16_t*, uint16_t*, uint16_t*);
+typedef bool (controlProtocol::*pGetStatus_t)(uint16_t, uint16_t*, uint16_t*, uint16_t*);
 typedef bool (controlProtocol::*pSetACUTemperature_t)(uint16_t, uint16_t, float);
 typedef bool (controlProtocol::*pGetACUTemperature_t)(uint16_t, uint16_t, uint16_t*, float*);
 typedef bool (controlProtocol::*pGetACUObjTemperature_t)(uint16_t, uint16_t, uint16_t*, float*);
@@ -102,7 +102,6 @@ class menuShutDownCmd : public menuItemBase
 
 
 // bool    GetStatus(uint16_t, uint16_t*, uint16_t*, uint16_t*);
-/*
 class menuGetStatus : public menuItemBase
 {
     public:
@@ -114,18 +113,18 @@ class menuGetStatus : public menuItemBase
 
     void execute(controlProtocol* pCP)
     {
-        if( (pCP->*m_pGetStatus)(m_destId, &humidityAlert, &ACUsRunning, &chillerRunning) )
+        if( (pCP->*m_pGetStatus)(m_destId, &RTDsRunning, &ACUsRunning, &chillerRunning) )
         {
-            cout << "\nhumidity alert: " << humidityAlert <<
-                    " ACUs running: " << ACUsRunning <<
-                    " chiller running: " << chillerRunning << endl;
+            cout << "\nRTDs running:    " << RTDsRunning << endl <<
+                    "ACUs running:    " << ACUsRunning << endl <<
+                    "chiller running: " << chillerRunning << endl;
         } else
         {
             cout << "\nunable to get status" << endl;
         }
     }
 
-    uint16_t humidityAlert;
+    uint16_t RTDsRunning;
     uint16_t ACUsRunning;
     uint16_t chillerRunning;
     
@@ -133,7 +132,6 @@ class menuGetStatus : public menuItemBase
     menuGetStatus(const menuItemBase&);
     menuGetStatus& operator=(const menuItemBase&);
 };
-*/
 
 
 // bool    SetACUTemperature(uint16_t, uint16_t, float);

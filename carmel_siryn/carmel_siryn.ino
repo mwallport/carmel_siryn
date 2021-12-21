@@ -3,9 +3,9 @@
 
 
 
+
 void setup(void)
 {
-
   //
   // start the system components and Serial port if running debug
   //
@@ -80,6 +80,22 @@ void loop(void)
 //
 void initSystem(void)
 {
+ 
+  //
+  // start the LCD and paint system initializing
+  //
+  startLCD();
+   
+  //
+  // initialize the system states /stats - these are
+  // used to hold temperatures, humidity, etc. and
+  // used in responses to getStatusCmd from control
+  // and holds the LCD messages
+  //
+  initSysStates(sysStates);
+
+
+  
   //
   // start the Serial ports
   //
@@ -129,18 +145,6 @@ void initSystem(void)
   }
 
 
-  //
-  // initialize the system states /stats - these are
-  // used to hold temperatures, humidity, etc. and
-  // used in responses to getStatusCmd from control
-  // and holds the LCD messages
-  //
-  initSysStates(sysStates);
-
-  //
-  // start the LCD and paint system initializing
-  //
-  startLCD();
 
   //
   // initialize the start/stop button
@@ -263,10 +267,10 @@ void manageLCD(bool now)
   //
   // if enough time has passed, display the current index
   //   
-  if( (now) || (MAX_MSG_DISPLAY_TIME <= (millis() - sysStates.lcd.prior_millis)) )
+  if( (now) || (MAX_MSG_DISPLAY_TIME < (millis() - sysStates.lcd.prior_millis)) )
   {
     // set up the LCD's number of columns and rows:
-    lcd.noDisplay(); lcd.begin(16, 2); lcd.noDisplay(); lcd.clear(); lcd.home();
+    lcd.noDisplay(); lcd.begin(20, 4); lcd.noDisplay(); lcd.clear(); lcd.home();
 
     //
     // update the LCD with the next message, if the next message
@@ -319,7 +323,7 @@ bool startLCD(void)
   #endif
 
   // set up the LCD's number of columns and rows:
-  lcd.begin(16, 2);
+  lcd.begin(20, 4);
   lcd.noDisplay();
   lcd.clear();
   lcd.home();
@@ -327,7 +331,13 @@ bool startLCD(void)
   lcd.print(deftDevise);
   lcd.setCursor(0,1);
   lcd.print(buildInfo);
+  lcd.setCursor(0,2);
+  lcd.print(deftDevise);
+  lcd.setCursor(0,3);
+  lcd.print(buildInfo);
   lcd.display();
+
+  delay(2000);
 
   return(true);
 }
@@ -751,13 +761,12 @@ void handleMsgs(void)
           handleShutDownCmd();
           break;
         }
-/*  
+  
         case getStatusCmd:         // fetch the status of chiller, all ACUs, and humidity sensor
         {
           handleGetStatusCmd();
           break;
         };
-*/  
   
         case setACUTemperature:      // target ACU m_address and temp
         {
@@ -862,7 +871,6 @@ void lcd_initializing(void)
   lcd.setCursor(0,1);
   lcd.print("SYS initializing");
   lcd.display();
-
 }
 
 
@@ -942,10 +950,10 @@ void lcd_shuttingDown(void)
   lcd.noDisplay();
   lcd.clear();
   lcd.home();
-  lcd.setCursor(0,0);
+  lcd.setCursor(2,1);
   lcd.print("**** SYSTEM ****");
-  lcd.setCursor(0,1);
-  lcd.print("*SHUTTING DOWN *");
+  lcd.setCursor(2,2);
+  lcd.print("**SHUTTING DOWN**");
   lcd.display();
 }
 
@@ -995,11 +1003,41 @@ void lcd_ACUsRunning(void)
   lcd.clear();
   lcd.home();
   lcd.setCursor(0,0);
-  lcd.print("ACU run     ");
-  lcd.setCursor(9,0);
-  lcd.print(sysStates.ACU[0].setpoint,1);
+  lcd.print("Temp Ctrl RUNNING");
   lcd.setCursor(0,1);
+  lcd.print("ASIC Sv      Pv     ");
+  lcd.setCursor(0,3);
+  lcd.print("DDR  Sv      Pv     ");
+
+  // if the SV is negative, scoot left one position
+  if( (sysStates.ACU[0].setpoint < 0) )
+    lcd.setCursor(7,1);
+  else
+    lcd.setCursor(8,1);
+  lcd.print(sysStates.ACU[0].setpoint,1);
+
+  // if the PV is negative, scoot left one position
+  if( (sysStates.ACU[0].temperature < 0) )
+    lcd.setCursor(15,1);
+  else
+    lcd.setCursor(16,1);
+  lcd.print(sysStates.ACU[0].temperature,1);
+    
+
+  // if the SV is negative, scoot left one position
+  if( (sysStates.ACU[1].setpoint < 0) )
+    lcd.setCursor(7,3);
+  else
+    lcd.setCursor(8,3);
   lcd.print(sysStates.ACU[1].setpoint,1);
+
+  // if the PV is negative, scoot left one position
+  if( (sysStates.ACU[1].temperature < 0) )
+    lcd.setCursor(15,3);
+  else
+    lcd.setCursor(16,3);
+  lcd.print(sysStates.ACU[1].temperature,1);
+  
   lcd.display();
 }
 
@@ -1015,11 +1053,41 @@ void lcd_ACUsStopped(void)
   lcd.clear();
   lcd.home();
   lcd.setCursor(0,0);
-  lcd.print("ACU stop    ");
-  lcd.setCursor(9,0);
-  lcd.print(sysStates.ACU[0].setpoint,1);
+  lcd.print("Temp Ctrl STOPPED");
   lcd.setCursor(0,1);
+  lcd.print("ASIC Sv      Pv     ");
+  lcd.setCursor(0,3);
+  lcd.print("DDR  Sv      Pv     ");
+
+  // if the SV is negative, scoot left one position
+  if( (sysStates.ACU[0].setpoint < 0) )
+    lcd.setCursor(7,1);
+  else
+    lcd.setCursor(8,1);
+  lcd.print(sysStates.ACU[0].setpoint,1);
+
+  // if the PV is negative, scoot left one position
+  if( (sysStates.ACU[0].temperature < 0) )
+    lcd.setCursor(15,1);
+  else
+    lcd.setCursor(16,1);
+  lcd.print(sysStates.ACU[0].temperature,1);
+    
+
+  // if the SV is negative, scoot left one position
+  if( (sysStates.ACU[1].setpoint < 0) )
+    lcd.setCursor(7,3);
+  else
+    lcd.setCursor(8,3);
   lcd.print(sysStates.ACU[1].setpoint,1);
+
+  // if the PV is negative, scoot left one position
+  if( (sysStates.ACU[1].temperature < 0) )
+    lcd.setCursor(15,3);
+  else
+    lcd.setCursor(16,3);
+  lcd.print(sysStates.ACU[1].temperature,1);
+  
   lcd.display();
 }
 
@@ -1035,9 +1103,22 @@ void lcd_ACUComFailure(void)
   lcd.clear();
   lcd.home();
   lcd.setCursor(0,0);
-  lcd.print("ACU COMM");
+  lcd.print("TMP CTRL COM FAILURE");
+
+  // print the ASIC controll status
   lcd.setCursor(0,1);
-  lcd.print("FAILURE");
+  if( (offline == sysStates.ACU[ASIC_ACU_IDX].online) )
+    lcd.print("ASIC OFFLINE");
+  else
+    lcd.print("ASIC ONLINE");
+
+  // print the DDR controller status
+  lcd.setCursor(0,3);
+  if( (offline == sysStates.ACU[DDR_ACU_IDX].online) )
+    lcd.print("DDR OFFLINE");
+  else
+    lcd.print("DDR ONLINE");
+  
   lcd.display();
 }
 
@@ -1054,14 +1135,30 @@ void lcd_ASIC_RTDs_Running(void)
   lcd.home();
   lcd.setCursor(0,0);
   lcd.print("ASIC RTDs     ");
-  lcd.setCursor(0,1);
+  lcd.setCursor(0,2);
   lcd.print("1. ");
-  lcd.setCursor(3,1);
+  lcd.setCursor(3,2);
   lcd.print(sysStates.ASIC_RTD.temperature, 1);
-  lcd.setCursor(0,3);
-  lcd.print("C. ");
-  lcd.setCursor(3,3);
+  lcd.setCursor(11, 2);
+  lcd.print("H2O");
+  lcd.setCursor(15, 2);
   lcd.print(sysStates.ASIC_Chiller_RTD.temperature,1);
+
+  //
+  // put an exclamation point if there is a fault w/ a DDR
+  //
+  if( (sysStates.ASIC_RTD.fault) )
+  {
+    lcd.setCursor(7,2);
+    lcd.print("!");
+  }
+
+  if( (sysStates.ASIC_Chiller_RTD.fault) )
+  {
+    lcd.setCursor(19,2);
+    lcd.print("!");
+  }
+
   lcd.display();
 }
 
@@ -1078,15 +1175,16 @@ void lcd_ASIC_RTDs_Failure(void)
   lcd.clear();
   lcd.home();
   lcd.setCursor(0,0);
-  lcd.print("ASIC RTDs fault");
-  lcd.setCursor(0,1);
-  lcd.print("1. ");
-  lcd.setCursor(3,1);
-  lcd.print(sysStates.ASIC_RTD.fault);
-  lcd.setCursor(0,3);
-  lcd.print("C. ");
-  lcd.setCursor(3,3);
-  lcd.print(sysStates.ASIC_Chiller_RTD.fault);
+  lcd.print("ASIC RTD FAILURE");
+  lcd.setCursor(0,2);
+  lcd.print("1. 0x");
+  lcd.setCursor(5,2);
+  lcd.print(sysStates.ASIC_RTD.fault, HEX);
+  lcd.setCursor(10, 2);
+  lcd.print("H2O 0x");
+  lcd.setCursor(16, 2);
+  lcd.print(sysStates.ASIC_Chiller_RTD.fault, HEX);
+
   lcd.display();
 }
 
@@ -1097,6 +1195,19 @@ void lcd_DDR_RTDs_Running(void)
   Serial.println("---------------------------------------");
   Serial.println(__PRETTY_FUNCTION__);
   #endif  
+
+/* from Bob . . hard to work w/ no place to put asterisk or exclamation point if there is RTD in fault
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("ASIC: CASE_50 H2O_25");
+  lcd.setCursor(0, 1);
+  lcd.print("DDR : A_-42   B_-61");
+  lcd.setCursor(0, 2);
+  lcd.print("      C_      H2O_25");
+  lcd.setCursor(0, 3);
+  lcd.print("ENABLE        FAULTS");
+  lcd.display();
+*/
 
   lcd.noDisplay();
   lcd.clear();
@@ -1109,15 +1220,15 @@ void lcd_DDR_RTDs_Running(void)
   lcd.print(sysStates.DDR1_RTD.temperature, 1);
   lcd.setCursor(10, 1);
   lcd.print("2. ");
-  lcd.setCursor(13, 1);
+  lcd.setCursor(14, 1);
   lcd.print(sysStates.DDR2_RTD.temperature, 1);
   lcd.setCursor(0,3);
   lcd.print("3. ");
   lcd.setCursor(3,3);
   lcd.print(sysStates.DDR3_RTD.temperature,1);
   lcd.setCursor(10, 3);
-  lcd.print("C. ");
-  lcd.setCursor(13, 3);
+  lcd.print("H2O");
+  lcd.setCursor(14, 3);
   lcd.print(sysStates.DDR_Chiller_RTD.temperature, 1);  
 
   //
@@ -1127,14 +1238,35 @@ void lcd_DDR_RTDs_Running(void)
   // asterisk by checking for match to the hottest in the same order
   //
   if( (sysStates.highRTDTemp == sysStates.DDR1_RTD.temperature) )
-    lcd.setCursor(8,1);
+    lcd.setCursor(7,1);
   else if( (sysStates.highRTDTemp == sysStates.DDR2_RTD.temperature) )
     lcd.setCursor(18,1);
   else // gotta be DDR3 ..
-    lcd.setCursor(8,3);
+    lcd.setCursor(7,3);
 
   lcd.print("*");
-     
+
+  //
+  // put an exclamation point if there is a fault w/ a DDR
+  //
+  if( (sysStates.DDR1_RTD.fault) )
+  {
+    lcd.setCursor(8,1);
+    lcd.print("!");
+  }
+
+  if( (sysStates.DDR2_RTD.fault) )
+  {
+    lcd.setCursor(19,1);
+    lcd.print("!");
+  }
+
+  if( (sysStates.DDR3_RTD.fault) )
+  {
+    lcd.setCursor(8,3);
+    lcd.print("!");
+  }
+
   lcd.display();
 }
 
@@ -1146,23 +1278,28 @@ void lcd_DDR_RTDs_Failure(void)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
-  lcd.print("DDR RTDs fault");
+  lcd.noDisplay();
+  lcd.clear();
+  lcd.home();
+  lcd.setCursor(0,0);
+  lcd.print("DDR RTD FAILURE");
   lcd.setCursor(0,1);
-  lcd.print("1. ");
-  lcd.setCursor(3,1);
-  lcd.print(sysStates.DDR1_RTD.fault, 1);
+  lcd.print("1. 0x");
+  lcd.setCursor(5,1);
+  lcd.print(sysStates.DDR1_RTD.fault, HEX);
   lcd.setCursor(10, 1);
-  lcd.print("2. ");
-  lcd.setCursor(13, 1);
-  lcd.print(sysStates.DDR2_RTD.fault, 1);
+  lcd.print("2. 0x");
+  lcd.setCursor(15, 1);
+  lcd.print(sysStates.DDR2_RTD.fault, HEX);
   lcd.setCursor(0,3);
-  lcd.print("3. ");
-  lcd.setCursor(3,3);
-  lcd.print(sysStates.DDR3_RTD.fault,1);
+  lcd.print("3. 0x");
+  lcd.setCursor(5,3);
+  lcd.print(sysStates.DDR3_RTD.fault, HEX);
   lcd.setCursor(10, 3);
-  lcd.print("C. ");
-  lcd.setCursor(13, 3);
-  lcd.print(sysStates.DDR_Chiller_RTD.fault, 1);  
+  lcd.print("H2O 0x");
+  lcd.setCursor(16, 3);
+  lcd.print(sysStates.DDR_Chiller_RTD.fault, HEX);  
+
   lcd.display();
 }
 
@@ -1424,7 +1561,6 @@ void handleShutDownCmd(void)
 // all message handlers expect the controlProtocol object
 // to have the received message
 //
-/*
 void handleGetStatusCmd(void)
 {
   getStatus_t*  pgetStatus = reinterpret_cast<getStatus_t*>(cp.m_buff);
@@ -1446,12 +1582,21 @@ void handleGetStatusCmd(void)
       //
       // use the sysStates conentent to respond, send back the received seqNum
       //
+      #if defined(__USING_CHILLER__)
       respLength = cp.Make_getStatusResp(cp.m_peerAddress, cp.m_buff,
-        0, // humidity alert
-        ((true == ACUsRunning()) ? 1 : 0),                  // ACUs running
-        ((running == sysStates.chiller.state) ? 1 : 0),           // chiller running
+        ((true == checkRTDStatus()) ? 1 : 0),           // enough RTDs running that have not ShutDown .. 
+        ((true == ACUsRunning()) ? 1 : 0),              // ACUs running
+        ((running == sysStates.chiller.state) ? 1 : 0), // chiller running
         pgetStatus->header.seqNum
       );
+      #else
+      respLength = cp.Make_getStatusResp(cp.m_peerAddress, cp.m_buff,
+        ((true == checkRTDStatus()) ? 1 : 0),           // enough RTDs running that have not ShutDown .. 
+        ((true == ACUsRunning()) ? 1 : 0),              // ACUs running
+        0,                                              // aint got no chiller running
+        pgetStatus->header.seqNum
+      );
+      #endif
 
       //
       // use the CP object to send the response back
@@ -1488,7 +1633,6 @@ void handleGetStatusCmd(void)
   }
 }
 
-*/
 
 void handleSetACUTemperature(void)
 {
@@ -2647,6 +2791,8 @@ void getNonDDRRTDData()
   Serial.println(__PRETTY_FUNCTION__);
   Serial.flush();
   #endif
+
+  static int non_ddr_count  = 0;
   
   //
   // reset the stats/data for each RTD - set them online and running
@@ -2661,9 +2807,18 @@ void getNonDDRRTDData()
   getAdafruitRTDData(ASIC_Chiller_RTD, sysStates.ASIC_RTD);
   getAdafruitRTDData(DDR_Chiller_RTD, sysStates.DDR_Chiller_RTD);
 */
-  sysStates.ASIC_RTD.temperature  = random(1, 10);
-  sysStates.ASIC_Chiller_RTD.temperature  = random(25,30);
+  sysStates.ASIC_RTD.temperature  = random(18, 25);
+  sysStates.ASIC_Chiller_RTD.temperature  = random(23, 30);
   sysStates.DDR_Chiller_RTD.temperature  = random(23, 30);
+
+
+  // TODO: remove this test code ..
+  if( (non_ddr_count++) == 6)
+  {
+    sysStates.ASIC_RTD.fault  = 0xdead;
+    sysStates.ASIC_Chiller_RTD.fault  = 0xbeef;
+    sysStates.DDR_Chiller_RTD.fault = 0xfeed;
+  }
 }
 
 
@@ -2675,6 +2830,9 @@ void getDDRRTDData(void)
   Serial.println(__PRETTY_FUNCTION__);
   Serial.flush();
   #endif
+
+  static int ddr_count  = 0;
+
   
   //
   // reset the stats/data for each RTD - set them online and running
@@ -2689,7 +2847,15 @@ void getDDRRTDData(void)
 /*
   getAdafruitRTDData(DDR3_RTD, sysStates.DDR3_RTD);
 */
-  sysStates.DDR3_RTD.temperature  = random(1, 10);
+  sysStates.DDR3_RTD.temperature  = random(20, 24);
+
+  // TODO: remove this test code ..
+  if( (ddr_count++) == 6)
+  {
+    sysStates.DDR1_RTD.fault  = 0xdeaf;
+    sysStates.DDR2_RTD.fault  = 0xbead;
+    sysStates.DDR3_RTD.fault  = 0xcead;
+  }
 }
 
 
@@ -3331,7 +3497,7 @@ bool handleDDRRTDSamples(void)
     // so we get to do this math 10 fucking times a second .. val = (uint16_t) ((float)temp * (float)10);
     // 0xFFFF return from writePVOF means there something is wrong, return(false)
     //
-    if( (0xFFFF == writePVOF(DDR_ID, (uint16_t)(sysStates.highRTDTemp * (float)10))) )
+    if( (0xFFFF == writePVOF(DDR_RS485_ID, (uint16_t)(sysStates.highRTDTemp * (float)10))) )
       return(false);
     // brutal tight loop .. don't like it
     do

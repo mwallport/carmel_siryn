@@ -11,11 +11,15 @@
 
 
 
+
+
+
+
 // this is for important, error condition debug output
 #define __DEBUG_VIA_SERIAL__
 
 // this is for frivilous debug output
-//#define __DEBUG2_VIA_SERIAL__
+#define __DEBUG2_VIA_SERIAL__
 
 
 // peripheral component speeds
@@ -46,8 +50,14 @@
 // these are the RS485 bus Ids of the entities on the bus
 // need to match the actual physical assignments
 //
-uint8_t   DDR_ID      = 1;
-uint8_t   ASIC_ID     = 2;
+// the RS485 for each of the accuthermos
+// assuming ASIC will be RS485 id 1, DDR will be RS485 id 2
+#define   ASIC_RS485_ID   1
+#define   DDR_RS485_ID    2
+
+// index of the accuthermo in sysState ACU array - ease of display the lcd output
+#define   ASIC_ACU_IDX    0
+#define   DDR_ACU_IDX     1
 
 
 //
@@ -56,10 +66,12 @@ uint8_t   ASIC_ID     = 2;
 // - use this as the mode for the ENAB command
 uint8_t MODE  = MPWR;
 
-//
-// variables to control the sample rate of the DDR RTDs when in running state
-//
 
+//
+// LCD display
+//
+const int rs = 8, en = 10, d4 = 11, d5 = 12, d6 = 13, d7 = 42;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 
 //
@@ -143,7 +155,7 @@ Adafruit_MAX31865 DDR2_RTD(52);
 #else
 #define MAX_LCD_MSGS      (DDR_RTD_FAIL_OFFSET + 1)
 #endif
-#define MAX_MSG_DISPLAY_TIME  1500  // 1.5 minimum seconds per message
+#define MAX_MSG_DISPLAY_TIME  4000  // 1.5 minimum seconds per message
 
 
 
@@ -245,8 +257,8 @@ typedef struct _chillerState
 {
   runningStates online;         // online or offline
   runningStates state;          // running or stopped
-  float         setpoint;       // current set point temperature
-  float         temperature;    // current temperature
+  float         setpoint;       // current set point temperature, the SV
+  float         temperature;    // current temperature, the PV
 } chillerState;
 #endif
 
@@ -315,16 +327,6 @@ bool currentButtonOnOff = false;
 volatile bool buttonOnOff = false;
 
 
-//
-// LCD display
-//
-//const int rs = 8, en = 10, d4 = 11, d5 = 12, d6 = 13, d7 = 42, rw=9;
-//LiquidCrystal lcd(rs, rw, en, d4, d5, d6, d7);
-
-// initialize the library by associating any needed LCD interface pin
-// with the arduino pin number it is connected to
-const int rs = 8, en = 10, d4 = 11, d5 = 12, d6 = 13, d7 = 42;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 
 //

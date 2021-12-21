@@ -2217,7 +2217,7 @@ uint16_t controlProtocol::Make_getStatus(uint16_t Address, uint8_t* pBuff)
 }
 
 
-uint16_t controlProtocol::Make_getStatusResp(uint16_t Address, uint8_t* pBuff, uint16_t humidityAlert,
+uint16_t controlProtocol::Make_getStatusResp(uint16_t Address, uint8_t* pBuff, uint16_t RTDsRunning,
                     uint16_t ACUsRunning, uint16_t chillerOnLine, uint16_t SeqNum)
 {
     getStatusResp_t*    msg  = reinterpret_cast<getStatusResp_t*>(pBuff);
@@ -2230,7 +2230,7 @@ uint16_t controlProtocol::Make_getStatusResp(uint16_t Address, uint8_t* pBuff, u
     msg->header.address.address = htons(Address);
     msg->header.seqNum          = SeqNum;
     msg->header.msgNum          = getStatusResp;
-    msg->status.humidityAlert   = htons(humidityAlert);
+    msg->status.RTDsRunning     = htons(RTDsRunning);
     msg->status.ACUsRunning     = htons(ACUsRunning);
     msg->status.chillerOnLine   = htons(chillerOnLine);
 
@@ -2247,7 +2247,7 @@ uint16_t controlProtocol::Make_getStatusResp(uint16_t Address, uint8_t* pBuff, u
 }
 
 
-void controlProtocol::Parse_getStatusResp(uint8_t* m_buff, uint16_t* humidityAlert,
+void controlProtocol::Parse_getStatusResp(uint8_t* m_buff, uint16_t* RTDsRunning,
         uint16_t* ACUsRunning, uint16_t* chillerOnLine, uint16_t* pSeqNum)
 {
     getStatusResp_t* pResponse = reinterpret_cast<getStatusResp_t*>(m_buff);
@@ -2255,7 +2255,7 @@ void controlProtocol::Parse_getStatusResp(uint8_t* m_buff, uint16_t* humidityAle
     //
     // fill in the pReport
     //
-    *humidityAlert  = ntohs(pResponse->status.humidityAlert);
+    *RTDsRunning    = ntohs(pResponse->status.RTDsRunning);
     *ACUsRunning    = ntohs(pResponse->status.ACUsRunning);
     *chillerOnLine  = ntohs(pResponse->status.chillerOnLine);
     *pSeqNum        = pResponse->header.seqNum;
