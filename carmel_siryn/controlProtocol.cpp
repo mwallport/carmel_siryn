@@ -2718,6 +2718,138 @@ void controlProtocol::Parse_disableACUsResp(uint8_t* m_buff, uint16_t* result, u
     *pSeqNum    = pResponse->header.seqNum;
 }
 
+
+uint16_t controlProtocol::Make_setRTCCmdResp(uint16_t Address, uint8_t* pBuff, uint16_t result, uint16_t SeqNum)
+{
+    setRTCCmdResp_t* msg  = reinterpret_cast<setRTCCmdResp_t*>(pBuff);
+    uint16_t        CRC  = 0; 
+
+
+    // create the setRTCCmdResp message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(setRTCCmdResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = setRTCCmdResp;
+
+    // set the result
+    msg->result                 = htons(result);
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff, len_setRTCCmdResp_t);
+
+    // put the CRC
+    msg->crc                = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(setRTCCmdResp_t));
+}
+
+
+uint16_t controlProtocol::Make_getRTCCmdResp(uint16_t Address, uint8_t* pBuff,
+            timeind* ltime, uint16_t result, uint16_t SeqNum)
+{
+    getRTCCmdResp_t* msg  = reinterpret_cast<getRTCCmdResp_t*>(pBuff);
+    uint16_t        CRC  = 0; 
+
+
+    // create the getRTCCmdResp message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(getRTCCmdResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = getRTCCmdResp;
+
+    // get the result
+    msg->result                 = htons(result);
+
+    msg->tv.sec    = ltime->sec;
+    msg->tv.min    = ltime->min;
+    msg->tv.hour   = ltime->hour;
+    msg->tv.mday   = ltime->mday;
+    msg->tv.mon    = ltime->mon;
+    msg->tv.year   = ltime->year;
+    msg->tv.wday   = ltime->wday;
+    msg->tv.fill   = 0x00;  // fill to keep the buff length 
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff, len_getRTCCmdResp_t);
+
+    // put the CRC
+    msg->crc                = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getRTCCmdResp_t));
+}
+
+
+uint16_t controlProtocol::Make_clrEventLogCmdResp(uint16_t Address, uint8_t* pBuff, uint16_t result, uint16_t SeqNum)
+{
+    clrEventLogCmdResp_t*  msg  = reinterpret_cast<clrEventLogCmdResp_t*>(pBuff);
+    uint16_t        CRC  = 0;
+
+
+    // create the clrEventLogCmdResp message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(clrEventLogCmdResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = clrEventLogCmdResp;
+
+    // set the result
+    msg->result             = htons(result);
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff, len_clrEventLogCmdResp_t);
+
+    // put the CRC
+    msg->crc                = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(clrEventLogCmdResp_t));
+}
+
+
+uint16_t controlProtocol::Make_getEventLogCmdResp(uint16_t Address, uint8_t* pBuff,
+                      uint16_t result, const elogentry* eventlog, uint16_t SeqNum)
+{
+    getEventLogCmdResp_t*  msg  = reinterpret_cast<getEventLogCmdResp_t*>(pBuff);
+    uint16_t        CRC  = 0;
+
+
+    // create the getEventLogCmdResp message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(getEventLogCmdResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = getEventLogCmdResp;
+
+    // set the result
+    msg->result                 = htons(result);
+
+    // set the eventlog in the message
+    for(uint8_t i = 0; i < MAX_ELOG_ENTRY; i++)
+      msg->eventlog[i] =  eventlog[i];    // can we do struct copy in Arduino ?
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff, len_getEventLogCmdResp_t);
+
+    // put the CRC
+    msg->crc                = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getEventLogCmdResp_t));
+}
+
+
 #if defined __USING_CHILLER__
 uint16_t controlProtocol::Make_startChillerMsg(uint16_t Address, uint8_t* pBuff)
 {

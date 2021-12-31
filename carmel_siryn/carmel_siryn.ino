@@ -1,8 +1,7 @@
 #include "carmel_siryn.h"
 
 
-
-
+int logEvent(uint16_t event_id, uint32_t inst = 0, uint32_t d0 = 0, uint32_t d1 = 0, uint32_t d2 = 0, uint32_t d3 = 0);
 
 void setup(void)
 {
@@ -51,14 +50,14 @@ void setup(void)
 
 void loop(void)
 {
-
-  // this has its own loop and exists when sysStates.sysStatus != RUNNING
-  handleRunningState();
-
   //
   // getStatus will update LCD and sysStats data structure
   //
   getStatus();
+
+
+  // this has its own loop and exists when sysStates.sysStatus != RUNNING
+  handleRunningState();
 
   //
   // take commands from the
@@ -523,7 +522,7 @@ bool startChiller(void)
   //
   // update the system state
   //
-  setSystemStatus();
+  //setSystemStatus();
 
   return(retVal);
 #else
@@ -581,11 +580,6 @@ bool startACUs(void)
     // let handleACUStatus() derive the ACU's status
     //
     handleACUStatus();
-
-    //
-    // update the system state
-    //
-//    setSystemStatus();
 
 #if defined (__USING_CHILLER__)
   } else
@@ -841,6 +835,29 @@ void handleMsgs(void)
           break;
         };
 #endif
+        case setRTCCmd:
+        {
+            handleSetRTCCmd();
+            break;
+        }
+
+        case getRTCCmd:
+        {
+            handleGetRTCCmd();
+            break;
+        }
+
+        case clrEventLogCmd:
+        {
+            handleClrEventLogCmd();
+            break;
+        }
+
+        case getEventLogCmd:
+        {
+            handleGetEventLogCmd();
+            break;
+        }
 
         default:
         {
@@ -1431,9 +1448,12 @@ void handleStartUpCmd(void)
         // adjust the button LED
         //
         digitalWrite(BUTTON_LED, HIGH);
-        
+/*        
       } else
+      {
         setSystemStatus();  // derive the button state
+*/
+      }
 
       respLength = cp.Make_startUpCmdResp(cp.m_peerAddress, cp.m_buff,
         result, pstartUpCmd->header.seqNum
@@ -1513,9 +1533,12 @@ void handleShutDownCmd(void)
         // adjust the button LED
         //
         digitalWrite(BUTTON_LED, LOW);
-        
+/*        
       } else
-        setSystemStatus();  // derive the button state
+      {
+        setSystemStatus();  // derive the button state\
+*/
+      }
 
       respLength = cp.Make_shutDownCmdResp(cp.m_peerAddress, cp.m_buff,
         result, pshutDownCmd->header.seqNum
@@ -2430,6 +2453,269 @@ void handleGetChillerTemperature(bool GetSetPoint)
 #endif
 
 
+void handleSetRTCCmd(void)
+{
+    setRTCCmd_t* psetRTCCmd = reinterpret_cast<setRTCCmd_t*>(cp.m_buff);
+    uint16_t    respLength;
+    uint16_t    result = 0;
+
+
+    //
+    // verify the received packet, here beause this is a setRTCCmdCmd
+    // check this is my address and the CRC is correct
+    //
+    if( (ntohs(psetRTCCmd->header.address.address)) == cp.m_myAddress)
+    {
+        //
+        // verify the CRC
+        //
+        if( (cp.verifyMessage(len_setRTCCmd_t,
+                                ntohs(psetRTCCmd->crc), ntohs(psetRTCCmd->eop))) )
+        {
+            //
+            // set the RTC - don't know if there is a 'bad' return code from this call
+            //
+   /* TODO: put the RTC we decide to use
+            Controllino_SetTimeDate(psetRTCCmd->tv.mday, psetRTCCmd->tv.wday, psetRTCCmd->tv.mon,
+              psetRTCCmd->tv.year, psetRTCCmd->tv.hour, psetRTCCmd->tv.min, psetRTCCmd->tv.sec);
+   */
+            result  = 1;
+
+            respLength = cp.Make_setRTCCmdResp(cp.m_peerAddress, cp.m_buff,
+                result, psetRTCCmd->header.seqNum
+            );
+
+            //
+            // use the CP object to send the response back
+            // this function usese the cp.m_buff created above, just
+            // need to send the lenght into the function
+            //
+            if( !(cp.doTxResponse(respLength)))
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+                Serial.flush();
+            #ifdef __DEBUG2_VIA_SERIAL__
+            } else
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+                Serial.flush();
+            #endif
+            }
+        #ifdef __DEBUG_VIA_SERIAL__
+        } else
+        {
+            Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+            Serial.println(ntohs(psetRTCCmd->crc));
+            Serial.flush();
+        #endif
+        }
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+        Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+        Serial.println(ntohs(psetRTCCmd->header.address.address));
+        Serial.flush();
+    #endif
+    }
+}
+
+
+void handleGetRTCCmd(void)
+{
+    getRTCCmd_t* pgetRTCCmd = reinterpret_cast<getRTCCmd_t*>(cp.m_buff);
+    uint16_t    respLength;
+    uint16_t    result = 0;
+    timeind     RTCTime;
+
+
+    //
+    // verify the received packet, here beause this is a getRTCCmdCmd
+    // check this is my address and the CRC is correct
+    //
+    if( (ntohs(pgetRTCCmd->header.address.address)) == cp.m_myAddress)
+    {
+        //
+        // verify the CRC
+        //
+        if( (cp.verifyMessage(len_getRTCCmd_t,
+                                ntohs(pgetRTCCmd->crc), ntohs(pgetRTCCmd->eop))) )
+        {
+            //
+            // get the RTC - don't know if there is a 'bad' return code from this call
+            //
+            /* TODO: fix this when we get the RTC figured out
+            result  = getControllinoTime(&RTCTime);
+            */
+            result = 1;
+
+            respLength = cp.Make_getRTCCmdResp(cp.m_peerAddress, cp.m_buff,
+                &RTCTime, result, pgetRTCCmd->header.seqNum
+            );
+
+            //
+            // use the CP object to send the response back
+            // this function usese the cp.m_buff created above, just
+            // need to send the lenght into the function
+            //
+            if( !(cp.doTxResponse(respLength)))
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+                Serial.flush();
+            #ifdef __DEBUG2_VIA_SERIAL__
+            } else
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+                Serial.flush();
+            #endif
+            }
+        #ifdef __DEBUG_VIA_SERIAL__
+        } else
+        {
+            Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+            Serial.println(ntohs(pgetRTCCmd->crc));
+            Serial.flush();
+        #endif
+        }
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+        Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+        Serial.println(ntohs(pgetRTCCmd->header.address.address));
+        Serial.flush();
+    #endif
+    }
+}
+
+
+void handleClrEventLogCmd(void)
+{
+    clrEventLogCmd_t* pclrEventLogCmd = reinterpret_cast<clrEventLogCmd_t*>(cp.m_buff);
+    uint16_t    respLength;
+    uint16_t    result = 1;
+
+
+    //
+    // verify the received packet, here beause this is a clrEventLogCmdCmd
+    // check this is my address and the CRC is correct
+    //
+    if( (ntohs(pclrEventLogCmd->header.address.address)) == cp.m_myAddress)
+    {
+        //
+        // verify the CRC
+        //
+        if( (cp.verifyMessage(len_clrEventLogCmd_t,
+                                ntohs(pclrEventLogCmd->crc), ntohs(pclrEventLogCmd->eop))) )
+        {
+            //
+            // get the RTC - don't know if there is a 'bad' return code from this call
+            //
+            clrEventLog();
+
+            respLength = cp.Make_clrEventLogCmdResp(cp.m_peerAddress, cp.m_buff,
+                result, pclrEventLogCmd->header.seqNum
+            );
+
+            //
+            // use the CP object to send the response back
+            // this function usese the cp.m_buff created above, just
+            // need to send the lenght into the function
+            //
+            if( !(cp.doTxResponse(respLength)))
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+                Serial.flush();
+            #ifdef __DEBUG2_VIA_SERIAL__
+            } else
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+                Serial.flush();
+           #endif
+            }
+        #ifdef __DEBUG_VIA_SERIAL__
+        } else
+        {
+            Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+            Serial.println(ntohs(pclrEventLogCmd->crc));
+            Serial.flush();
+        #endif
+        }
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+        Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+        Serial.println(ntohs(pclrEventLogCmd->header.address.address));
+        Serial.flush();
+    #endif
+    }
+}
+
+
+void handleGetEventLogCmd(void)
+{
+    getEventLogCmd_t* pgetEventLogCmd = reinterpret_cast<getEventLogCmd_t*>(cp.m_buff);
+    uint16_t    respLength;
+    uint16_t    result = 1;
+
+
+    //
+    // verify the received packet, here beause this is a getEventLogCmdCmd
+    // check this is my address and the CRC is correct
+    //
+    if( (ntohs(pgetEventLogCmd->header.address.address)) == cp.m_myAddress)
+    {
+        //
+        // verify the CRC
+        //
+        if( (cp.verifyMessage(len_getEventLogCmd_t,
+                                ntohs(pgetEventLogCmd->crc), ntohs(pgetEventLogCmd->eop))) )
+        {
+            //
+            // get the RTC - don't know if there is a 'bad' return code from this call
+            //
+            respLength = cp.Make_getEventLogCmdResp(cp.m_peerAddress, cp.m_buff,
+                result, getEventLog(), pgetEventLogCmd->header.seqNum
+            );
+
+            //
+            // use the CP object to send the response back
+            // this function usese the cp.m_buff created above, just
+            // need to send the lenght into the function
+            //
+
+            if( !(cp.doTxResponse(respLength)))
+            {
+                Serial.print(__PRETTY_FUNCTION__); Serial.println(" ERROR: failed to send response");
+                Serial.flush();
+            #ifdef __DEBUG2_VIA_SERIAL__
+            } else
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+                Serial.flush();
+            #endif
+            }
+        #ifdef __DEBUG_VIA_SERIAL__
+        } else
+        {
+            Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+            Serial.println(ntohs(pgetEventLogCmd->crc));
+            Serial.flush();
+        #endif
+        }
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+        Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+        Serial.println(ntohs(pgetEventLogCmd->header.address.address));
+        Serial.flush();
+    #endif
+    }
+}
+
+
 void sendNACK(void)
 {
   msgHeader_t*  pmsgHeader = reinterpret_cast<msgHeader_t*>(cp.m_buff);
@@ -2457,6 +2743,7 @@ void sendNACK(void)
 }
 
 
+// don't log events here, those are handled in setSystemStatus
 bool ACUsRunning(void)
 {
   bool retVal = true;
@@ -2654,7 +2941,7 @@ bool getACUInfo(uint8_t acu_address, uint32_t* deviceType, uint32_t* hwVersion,
 }
 
 
-void handleRTDStatus(void)
+void handleRTDStatus()
 {
   bool  NON_DDR_RTDsRunning  = true;  // becomes false is at least one RTD has fault
   bool  DDR_RTDsRunning   = true;  // becomes false is at least one RTD has fault
@@ -2696,7 +2983,10 @@ void handleRTDStatus(void)
   {
     sysStates.ASIC_RTD.online  = offline;
     sysStates.ASIC_RTD.state   = stopped;    
-    NON_DDR_RTDsRunning  = false;  
+    NON_DDR_RTDsRunning  = false;
+  } else
+  {
+    sysStates.ASIC_RTD.prior_fault  = 0; 
   }
 
   if( (sysStates.ASIC_Chiller_RTD.fault) )
@@ -2704,6 +2994,9 @@ void handleRTDStatus(void)
     sysStates.ASIC_Chiller_RTD.online  = offline;
     sysStates.ASIC_Chiller_RTD.state   = stopped;
     NON_DDR_RTDsRunning  = false;  
+  } else
+  {
+    sysStates.ASIC_Chiller_RTD.prior_fault = 0;
   }
 
   if( (sysStates.DDR_Chiller_RTD.fault) )
@@ -2711,6 +3004,9 @@ void handleRTDStatus(void)
     sysStates.DDR_Chiller_RTD.online  = offline;
     sysStates.DDR_Chiller_RTD.state   = stopped;    
     NON_DDR_RTDsRunning  = false;  
+  } else
+  {
+    sysStates.DDR_Chiller_RTD.prior_fault = 0;
   }
 
   // 
@@ -2721,6 +3017,9 @@ void handleRTDStatus(void)
     sysStates.DDR1_RTD.online  = offline;
     sysStates.DDR1_RTD.state   = stopped;    
     DDR_RTDsRunning  = false;  
+  } else
+  {
+    sysStates.DDR1_RTD.prior_fault = 0;
   }
 
   if( (sysStates.DDR2_RTD.fault) )
@@ -2728,6 +3027,9 @@ void handleRTDStatus(void)
     sysStates.DDR2_RTD.online  = offline;
     sysStates.DDR2_RTD.state   = stopped;    
     DDR_RTDsRunning  = false;  
+  } else
+  {
+    sysStates.DDR2_RTD.prior_fault = 0;
   }
 
   if( (sysStates.DDR3_RTD.fault) )
@@ -2735,21 +3037,20 @@ void handleRTDStatus(void)
     sysStates.DDR3_RTD.online  = offline;
     sysStates.DDR3_RTD.state   = stopped;    
     DDR_RTDsRunning  = false;  
+  } else
+  {
+    sysStates.DDR3_RTD.prior_fault = 0;
   }
 
-
-
-  //
-  // if one RTD is down or bad, the overall status is bad
-  //
 
   //
   // update the LCD face for ASIC RTDs
   //
   if( !(NON_DDR_RTDsRunning) )
   {
+    // TODO: fix this for NON_DDR_RTDs vs DDR_RTDs
     sysStates.lcd.lcdFacesIndex[ASIC_RTD_NRML_OFFSET]   = no_Status;
-    sysStates.lcd.lcdFacesIndex[ASIC_RTD_FAIL_OFFSET]   = ASIC_RTD_Failure;  // TODO: fix this
+    sysStates.lcd.lcdFacesIndex[ASIC_RTD_FAIL_OFFSET]   = ASIC_RTD_Failure;
   }
   else
   {
@@ -2859,9 +3160,8 @@ void getDDRRTDData(void)
 }
 
 
-//
+
 // this data is processed in the LCD and setSystemStatus functions - only getting it here
-//
 void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state)
 {
   
@@ -2882,6 +3182,7 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state)
 }
 
 
+// only called by getSatus() - keep it that way !
 systemStatus setSystemStatus(void)
 {
   systemStatus  retVal      = RUNNING;
@@ -2890,16 +3191,43 @@ systemStatus setSystemStatus(void)
   bool      ACUMismatch     = false;
   bool      RTDsRunning     = true;  
 
+
+  //
+  // ACUs
   //
   // accumulate the ACUs status' - if one ACU is bad, they are all bad
   //
   for(int i = MIN_ACU_ADDRESS; i <= MAX_ACU_ADDRESS; i++)
   {
     if( (offline == sysStates.ACU[(i - MIN_ACU_ADDRESS)].online) )
+    {
       ACUsOnline = false;
 
+      // if sysStatus is SHUTDOWN, would have already logged this
+      if( (SHUTDOWN != sysStates.sysStatus) )
+      {
+        logEvent(ACUNotOnLine, i);
+
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.println("logging ACU not online");
+        #endif
+      }
+    }
+
     if( (stopped == sysStates.ACU[(i - MIN_ACU_ADDRESS)].state) )
+    {
       ACUsRunning = false;
+
+      // if RUNNING, log this event, about to change state because ACUsRunning is false
+      if( (RUNNING == sysStates.sysStatus) )
+      {
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.println("logging ACU not running");
+        #endif
+        
+        logEvent(ACUNotRunning, i);
+      }
+    }
 
     //
     // check for ACU on/off line or running mismatch, shutdown if present
@@ -2911,16 +3239,161 @@ systemStatus setSystemStatus(void)
       (sysStates.ACU[(i - MIN_ACU_ADDRESS)].state != sysStates.ACU[0].state) )
     {
       ACUMismatch = true;
+
+      if( (SHUTDOWN != sysStates.sysStatus) )
+      {
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.println("logging ACU is mismatch");
+        #endif
+
+        logEvent(ACUIsMismatch);
+      }
     }
   }
 
 
+  // RTDs
   //
-  // accumulate the RTD's status - if one RTD is bad, they are all bad
+  //
+  // accumulate the RTD's status - return 'bad' status according to Rick's instruction
   //
   if( !(checkRTDStatus()) )
     RTDsRunning = false;
+
+  //
+  // log any RTS faults if new fault is not same as prior fault
+  //
+  // check the non DDR RTDs
+  //
+  if( (sysStates.ASIC_RTD.fault) )
+  {
+    sysStates.ASIC_RTD.online  = offline;
+    sysStates.ASIC_RTD.state   = stopped;    
+
+    // if this fault is not the same as the prior fault, log it and
+    // update prior_fault
+    if( (sysStates.ASIC_RTD.fault != sysStates.ASIC_RTD.prior_fault) )
+    {
+      sysStates.ASIC_RTD.prior_fault = sysStates.ASIC_RTD.fault;
+      logEvent(ASIC_RTDFault, 0, sysStates.ASIC_RTD.fault);
+    }
+  } else
+  {
+    sysStates.ASIC_RTD.prior_fault  = 0; 
+  }
+
+  if( (sysStates.ASIC_Chiller_RTD.fault) )
+  {
+    sysStates.ASIC_Chiller_RTD.online  = offline;
+    sysStates.ASIC_Chiller_RTD.state   = stopped;
+
+    // if this fault is not the same as the prior fault, log it and
+    // update prior_fault
+    if( (sysStates.ASIC_Chiller_RTD.fault != sysStates.ASIC_Chiller_RTD.prior_fault) )
+    {
+      sysStates.ASIC_Chiller_RTD.prior_fault = sysStates.ASIC_Chiller_RTD.fault;
+      logEvent(ASIC_Chiller_RTDFault, 0, sysStates.ASIC_Chiller_RTD.fault);
+    }
+  } else
+  {
+    sysStates.ASIC_Chiller_RTD.prior_fault = 0;
+  }
+
+  if( (sysStates.DDR_Chiller_RTD.fault) )
+  {
+    sysStates.DDR_Chiller_RTD.online  = offline;
+    sysStates.DDR_Chiller_RTD.state   = stopped;    
+
+    // if this fault is not the same as the prior fault, log it and
+    // update prior_fault
+    if( (sysStates.DDR_Chiller_RTD.fault != sysStates.DDR_Chiller_RTD.prior_fault) )
+    {
+      sysStates.DDR_Chiller_RTD.prior_fault = sysStates.DDR_Chiller_RTD.fault;
+      logEvent(DDR_Chiller_RTDFault, 0, sysStates.DDR_Chiller_RTD.fault);
+    }
+  } else
+  {
+    sysStates.DDR_Chiller_RTD.prior_fault = 0;
+  }
+
+  // 
+  // check the DDR RTDs
+  //
+  if( (sysStates.DDR1_RTD.fault) )
+  {
+    sysStates.DDR1_RTD.online  = offline;
+    sysStates.DDR1_RTD.state   = stopped;    
+
+    // if this fault is not the same as the prior fault, log it and
+    // update prior_fault
+    if( (sysStates.DDR1_RTD.fault != sysStates.DDR1_RTD.prior_fault) )
+    {
+      sysStates.DDR1_RTD.prior_fault = sysStates.DDR1_RTD.fault;
+      logEvent(DDR_RTDFault, 1, sysStates.DDR1_RTD.fault);
+    }
+  } else
+  {
+    sysStates.DDR1_RTD.prior_fault = 0;
+  }
+
+  if( (sysStates.DDR2_RTD.fault) )
+  {
+    sysStates.DDR2_RTD.online  = offline;
+    sysStates.DDR2_RTD.state   = stopped;    
+
+    // if this fault is not the same as the prior fault, log it and
+    // update prior_fault
+    if( (sysStates.DDR2_RTD.fault != sysStates.DDR2_RTD.prior_fault) )
+    {
+      sysStates.DDR2_RTD.prior_fault = sysStates.DDR2_RTD.fault;
+      logEvent(DDR_RTDFault, 2, sysStates.DDR2_RTD.fault);
+    }
+  } else
+  {
+    sysStates.DDR2_RTD.prior_fault = 0;
+  }
+
+  if( (sysStates.DDR3_RTD.fault) )
+  {
+    sysStates.DDR3_RTD.online  = offline;
+    sysStates.DDR3_RTD.state   = stopped;    
+
+    // if this fault is not the same as the prior fault, log it and
+    // update prior_fault
+    if( (sysStates.DDR3_RTD.fault != sysStates.DDR3_RTD.prior_fault) )
+    {
+      sysStates.DDR3_RTD.prior_fault = sysStates.DDR3_RTD.fault;
+      logEvent(DDR_RTDFault, 3, sysStates.DDR3_RTD.fault);
+    }
+  } else
+  {
+    sysStates.DDR3_RTD.prior_fault = 0;
+  }
+
+  // check the ASIC RTD chiller temperatures - log event if needed
+  // if temp is high and not already in SHUTDOWN, log the event as we are
+  // about to go into SHUTDOWN
+  if( (HIGH_CHILLER_TEMP < sysStates.ASIC_Chiller_RTD.temperature) )
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("ASIC RTD chiller temp too high logging event");
+    #endif
     
+    logEvent(ASIC_Chiller_RTDHot, 0, sysStates.ASIC_Chiller_RTD.temperature);
+  }
+
+  // check the ASIC RTD chiller temperatures - log event if needed
+  // if temp is high and not already in SHUTDOWN, log the event as we are
+  // about to go into SHUTDOWN
+  if( (HIGH_CHILLER_TEMP < sysStates.DDR_Chiller_RTD.temperature) &&
+      (SHUTDOWN != sysStates.sysStatus) )
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("DDR RTD chiller temp too high logging event");
+    #endif
+    
+    logEvent(DDR_Chiller_RTDHot, 0, sysStates.DDR_Chiller_RTD.temperature);
+  }
 
   //
   // special case check - if the chiller is not running and the ACUs are running, shutdown the ACUs
@@ -3331,8 +3804,12 @@ void resetRTDState(RTDState& rtdState)
 }
 
 
+// don't log events here, those are handled in setSystemStatus
 bool checkRTDStatus(void)
 {
+  bool retVal = true;
+
+  
   //
   // per Rick .. return false (bad status) only if
   // - any chiller RTD is fault
@@ -3346,7 +3823,8 @@ bool checkRTDStatus(void)
     #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("checkRTDStatus returning bad status");
     #endif
-    return(false);
+    
+    retVal = false;
   }
 
   if( (HIGH_CHILLER_TEMP < sysStates.ASIC_Chiller_RTD.temperature) || 
@@ -3355,13 +3833,11 @@ bool checkRTDStatus(void)
     #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("RTD chiller temp too high returning bad status");
     #endif
-    return(false);
+
+    retVal = false;
   }
 
-  #ifdef __DEBUG2_VIA_SERIAL__
-  Serial.println("checkRTDStatus returning good status");
-  #endif
-  return(true);
+  return(retVal);
 }
 
 
@@ -3508,4 +3984,64 @@ bool handleDDRRTDSamples(void)
   Serial.println("+");
 
   return(true);
+}
+
+
+int logEvent(uint16_t event_id, uint32_t inst, uint32_t d0, uint32_t d1, uint32_t d2, uint32_t d3)
+{
+  timeind   tstamp;
+  elogentry event;
+
+
+  // get the time
+  getRTCTime(tstamp);
+
+  // set up the eventlog record
+  clrEventLogEntry(&event);
+  event.id  = inst << 16 | event_id;
+  event.ts  = tstamp;
+  event.data[0] = d0;
+  event.data[1] = d1;
+  event.data[2] = d2;
+  event.data[3] = d3;
+  addEventLogEntry(&event);
+}
+
+
+uint16_t getRTCTime(timeind& rtcTime)
+{
+/*
+    rtcTime->sec    = Controllino_GetSecond();
+    rtcTime->min    = Controllino_GetMinute();
+    rtcTime->hour   = Controllino_GetHour();
+    rtcTime->mday   = Controllino_GetDay();
+    rtcTime->mon    = Controllino_GetMonth();
+    rtcTime->year   = Controllino_GetYear();
+    rtcTime->wday   = Controllino_GetWeekDay();
+    rtcTime->fill = 0x00; // fill to keep the buff length 
+
+    // if any of them are 0xff (-1) the get failed
+    if( (0xff == RTCTime->sec) || (0xff == RTCTime->min) || (0xff == RTCTime->hour) ||
+      (0xff == RTCTime->mday) || (0xff == RTCTime->mon) || (0xff == RTCTime->year) ||
+      (0xff == RTCTime->wday) )
+    {    
+      return(0);  // bad
+    }    
+
+    return(1);    // good
+*/
+
+// TODO: fix after the RTC decision has been made
+
+    rtcTime.sec    = 0;
+    rtcTime.min    = 0;
+    rtcTime.hour   = 0;
+    rtcTime.mday   = 0;
+    rtcTime.mon    = 0;
+    rtcTime.year   = 0;
+    rtcTime.wday   = 0;
+    rtcTime.fill = 0x00; // fill to keep the buff length 
+
+  
+  return(1);
 }

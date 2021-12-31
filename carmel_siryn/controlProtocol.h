@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "eventlog.h"
 
 
 #ifdef __RUNNING_ON_CONTROLLINO__
@@ -149,6 +150,14 @@ typedef enum _msgID
     startUpCmdResp,             // reponse
     shutDownCmd,                // shutdown
     shutDownCmdResp,            // shutdown response
+    setRTCCmd,                  // set RTC clock command
+    setRTCCmdResp,              // set RTC clock response
+    getRTCCmd,                  // get the RTC clock 
+    getRTCCmdResp,              // get the RTC clock response
+    clrEventLogCmd,             // clear the event log
+    clrEventLogCmdResp,         // clear the event log response
+    getEventLogCmd,             // get the eventlog
+    getEventLogCmdResp,         // get the eventlog response
     NACK                        // command not supported
 } msgID;
 
@@ -486,6 +495,84 @@ typedef struct _shutDownCmdResp
 const uint16_t len_shutDownCmdResp_t = sizeof(shutDownCmdResp_t) - sizeof(CRC) - sizeof(EOP);
 
 
+typedef struct _setRTCCmd
+{
+    msgHeader_t header;
+    timeind  tv;       // the timeval payload to set the RTC on the Controllino
+    CRC     crc;      // 16 bit CRC over the packet
+    EOP     eop;      // end of transmission character/byte
+} setRTCCmd_t;
+const uint16_t len_setRTCCmd_t = sizeof(setRTCCmd_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _setRTCCmdResp
+{
+    msgHeader_t header;
+    uint16_t    result;         // 0 - failed to set; 1 - successfully set
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} setRTCCmdResp_t;
+const uint16_t len_setRTCCmdResp_t = sizeof(setRTCCmdResp_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _getRTCCmd
+{
+    msgHeader_t header;
+    CRC     crc;      // 16 bit CRC over the packet
+    EOP     eop;      // end of transmission character/byte
+} getRTCCmd_t;
+const uint16_t len_getRTCCmd_t = sizeof(getRTCCmd_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _getRTCCmdResp
+{
+    msgHeader_t header;
+    uint16_t    result; // 0 - failed to get; 1 - successfully get
+    timeind     tv;     // the timeval payload to get the RTC on the Controllino
+    CRC         crc;    // 16 bit CRC over the packet
+    EOP         eop;    // end of transmission character/byte
+} getRTCCmdResp_t;
+const uint16_t len_getRTCCmdResp_t = sizeof(getRTCCmdResp_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _clrEventLogCmd
+{
+    msgHeader_t header;
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} clrEventLogCmd_t;
+const uint16_t len_clrEventLogCmd_t = sizeof(clrEventLogCmd_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _clrEventLogCmdResp
+{
+    msgHeader_t header;
+    uint16_t    result;         // 0 - failed to set; 1 - successfully set
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} clrEventLogCmdResp_t;
+const uint16_t len_clrEventLogCmdResp_t = sizeof(clrEventLogCmdResp_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _getEventLogCmd
+{
+    msgHeader_t header;
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getEventLogCmd_t;
+const uint16_t len_getEventLogCmd_t = sizeof(getEventLogCmd_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _getEventLogCmdResp
+{
+    msgHeader_t header;
+    uint16_t    result;         // 0 - failed to set; 1 - successfully set
+    elogentry   eventlog[MAX_ELOG_ENTRY];       // the whole event log !
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getEventLogCmdResp_t;
+const uint16_t len_getEventLogCmdResp_t = sizeof(getEventLogCmdResp_t) - sizeof(CRC) - sizeof(EOP);
+
 typedef struct _NACK
 {
     msgHeader_t header;
@@ -537,6 +624,12 @@ class controlProtocol
     bool    EnableACUs(uint16_t);
     bool    DisableACUs(uint16_t);
     bool    GetACUInfo(uint16_t, uint16_t, uint32_t*, uint32_t*, uint32_t*, uint32_t*);
+    bool    SetRTCCmd(uint16_t);
+    bool    GetRTCCmd(uint16_t, struct tm*);
+    bool    ClrEventLogCmd(uint16_t);
+    bool    GetEventLogCmd(uint16_t, elogentry*);
+    bool    GetTempCmd(uint16_t, uint16_t*);
+
 
     // master - control/test PC USB or serial interface
     bool        TxCommandUSB(uint16_t);    // uses m_buff and m_seqNum
@@ -634,6 +727,11 @@ class controlProtocol
     uint16_t    Make_getChillerObjTemperature(uint16_t, uint8_t*);
     uint16_t    Make_getChillerObjTemperatureResp(uint16_t, uint8_t*, float, uint16_t);
     void        Parse_getChillerObjTemperatureResp(uint8_t*, float*, uint16_t*);
+
+    uint16_t    Make_setRTCCmdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    uint16_t    Make_getRTCCmdResp(uint16_t, uint8_t*, timeind*, uint16_t, uint16_t);
+    uint16_t    Make_clrEventLogCmdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    uint16_t    Make_getEventLogCmdResp(uint16_t, uint8_t*, uint16_t, const elogentry*, uint16_t);
 
     uint16_t    Make_NACK(uint16_t, uint8_t*, uint16_t);    // always for command not supported/recognized
 };

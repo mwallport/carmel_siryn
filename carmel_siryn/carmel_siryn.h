@@ -3,15 +3,13 @@
 #include <LiquidCrystal.h>    // LCD interface library
 #include <Adafruit_MAX31865.h>
 #include "controlProtocol.h"
-#include <polySci.h>        // polySci chiller communication library
+#include "polySci.h"        // polySci chiller communication library
 #include "common.h"
 #include "handler.h"
 #include "ctrlr_commands.h"
 #include "deviceHandler.h"
-
-
-
-
+#include "eventlog.h"
+#include "events.h"
 
 
 
@@ -40,7 +38,7 @@
 
 // high RTD chiller temperature, if hit this, go to SHUTDOWN state
 // and don't start if RTD chiller temperature is this
-#define HIGH_CHILLER_TEMP       30
+#define HIGH_CHILLER_TEMP       40
 
 // uncomment for the siryn project as it will use chiller
 //#define __USING_CHILLER__
@@ -274,6 +272,7 @@ typedef struct _RTDState
 {
   runningStates   online;       // online or offline
   runningStates   state;        // running or stopped
+  uint8_t         prior_fault;  // tightly coupled to adafruit .. boo .. can display on the LCD fault face which could be good-ish ..?
   uint8_t         fault;        // tightly coupled to adafruit .. boo .. can display on the LCD fault face which could be good-ish ..?
   uint16_t        rtd;          // same same - tightly coupled
   float           temperature;  // current temperature
@@ -325,8 +324,6 @@ const int BUTTON_PIN = 3;
 const int BUTTON_LED = 7;
 bool currentButtonOnOff = false;
 volatile bool buttonOnOff = false;
-
-
 
 
 //

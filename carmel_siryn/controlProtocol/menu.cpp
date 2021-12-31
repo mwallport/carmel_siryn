@@ -109,6 +109,18 @@ void createMenu(void)
 
     p_menuItem  = new menuDisableACUs;
     menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
+
+    p_menuItem  = new menuSetRTCCmd;
+    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
+
+    p_menuItem  = new menuGetRTCCmd;
+    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
+
+    p_menuItem  = new menuClrEventLogCmd;
+    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
+
+    p_menuItem  = new menuGetEventLogCmd;
+    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
 }
 
 

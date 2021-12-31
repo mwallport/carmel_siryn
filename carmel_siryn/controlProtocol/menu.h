@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdint>
 #include "controlProtocol.h"
+#include "events.h"
 
     
 
@@ -25,6 +26,10 @@ typedef bool (controlProtocol::*pGetChillerObjTemperature_t)(uint16_t, float*);
 typedef bool (controlProtocol::*pEnableACUs_t)(uint16_t);
 typedef bool (controlProtocol::*pDisableACUs_t)(uint16_t);
 typedef bool (controlProtocol::*pGetACUInfo_t)(uint16_t, uint16_t, uint32_t*, uint32_t*, uint32_t*, uint32_t*);
+typedef bool (controlProtocol::*pSetRTCCmd_t)(uint16_t);
+typedef bool (controlProtocol::*pGetRTCCmd_t)(uint16_t, struct tm*);
+typedef bool (controlProtocol::*pClrEventLogCmd_t)(uint16_t);
+typedef bool (controlProtocol::*pGetEventLogCmd_t)(uint16_t, elogentry*);
 
 
 class menuItemBase
@@ -479,5 +484,245 @@ class menuGetACUInfo : public menuItemBase
     menuGetACUInfo(const menuItemBase&);
     menuGetACUInfo& operator=(const menuItemBase&);
 };
+
+
+class menuSetRTCCmd : public menuItemBase
+{
+    public:
+    pSetRTCCmd_t m_pSetRTCCmd;
+
+    menuSetRTCCmd()
+        :   menuItemBase("set clock", "set the clock"),
+            m_pSetRTCCmd(&controlProtocol::SetRTCCmd) {}
+
+    void execute(controlProtocol* pCP)
+    {   
+        if( (pCP->*m_pSetRTCCmd)(m_destId) )
+            cout << "\nset RTC successful" << endl;
+        else
+            cout << "\nset RTC failed" << endl;
+    }   
+    
+    private:
+    menuSetRTCCmd(const menuItemBase&);
+    menuSetRTCCmd& operator=(const menuItemBase&);
+};
+
+
+// bool    GetRTCCmd(uint16_t);
+class menuGetRTCCmd : public menuItemBase
+{
+    public:
+    pGetRTCCmd_t m_pGetRTCCmd;
+
+    menuGetRTCCmd()
+        :   menuItemBase("get clock", "get the clock"),
+            m_pGetRTCCmd(&controlProtocol::GetRTCCmd) {}
+
+    void execute(controlProtocol* pCP)
+    {   
+        if( (pCP->*m_pGetRTCCmd)(m_destId, &ltime) )
+        {
+            // output the time 
+            cout << "time : " << asctime(&ltime) << endl;
+        }
+        else
+            cout << "\nget RTC failed" << endl;
+    }   
+    
+    private:
+    struct tm ltime;
+
+
+    menuGetRTCCmd(const menuItemBase&);
+    menuGetRTCCmd& operator=(const menuItemBase&);
+};
+
+
+// bool    CleEventLogCmd(uint16_t);
+class menuClrEventLogCmd : public menuItemBase
+{
+    public:
+    pClrEventLogCmd_t m_pClrEventLogCmd  = &controlProtocol::ClrEventLogCmd;
+
+    menuClrEventLogCmd()
+        :   menuItemBase("clear eventlog", "clear the eventlog"),
+            m_pClrEventLogCmd(&controlProtocol::ClrEventLogCmd) {}
+
+    void execute(controlProtocol* pCP)
+    {
+        if( (pCP->*m_pClrEventLogCmd)(m_destId) )
+            cout << "\nclear event log  successful" << endl;
+        else
+            cout << "\nclear event log failed" << endl;
+    }
+
+    private:
+    menuClrEventLogCmd(const menuItemBase&);
+    menuClrEventLogCmd& operator=(const menuItemBase&);
+};
+
+
+class menuGetEventLogCmd : public menuItemBase
+{
+    public:
+    pGetEventLogCmd_t m_pGetEventLogCmd  = &controlProtocol::GetEventLogCmd;
+
+    menuGetEventLogCmd()
+        :   menuItemBase("get eventlog", "get the eventlog"),
+            m_pGetEventLogCmd(&controlProtocol::GetEventLogCmd) {}
+
+    void execute(controlProtocol* pCP)
+    {
+      memset(&eventlog, '\0', sizeof(eventlog));
+
+      if( (pCP->*m_pGetEventLogCmd)(m_destId, &eventlog[0]) )
+      {
+        for(int i = 0; i < MAX_ELOG_ENTRY; i++)
+        {
+          // get the time stamp
+          memset(&ltime, '\0', sizeof(ltime));
+          ltime.tm_sec  = eventlog[i].ts.sec;
+          ltime.tm_min  = eventlog[i].ts.min;
+          ltime.tm_hour = eventlog[i].ts.hour + 1;
+          ltime.tm_mon  = eventlog[i].ts.mon;
+          ltime.tm_year = eventlog[i].ts.year + 101;
+          ltime.tm_wday = eventlog[i].ts.wday;
+          ltime.tm_mday = eventlog[i].ts.mday;
+
+          // get the id and the instance
+          id  = eventlog[i].id & 0x0000ffff;
+          inst  = (eventlog[i].id  >> 16) & 0x0000ffff;
+          memset(time_buff, '\0', sizeof(time_buff));
+          if( (0 == asctime_r(&ltime, time_buff)) )
+          {
+            snprintf(time_buff, 30, "no event time");
+          } else
+          {
+            time_buff[strlen(time_buff) - 1] = 0; // rid of the \n at the end
+          }
+          switch(id)
+          {
+            case ACUNotOnLine:
+            {
+              printf("%-26s : %-18s ACU %u not on line\n",
+                time_buff, "ACUNotOnLine", inst);
+                //asctime(&ltime), "TCUNotOnLine", inst);
+              break;
+            }
+            case ACUNotRunning:
+            {
+              printf("%-26s : %-18s TCU %u not running\n",
+                time_buff, "ACUNotRunning", inst);
+                //asctime(&ltime), "TCUNotRunning", inst);
+              break;
+            }
+            case ACUIsMismatch:
+            {
+              printf("%-26s : %-18s TCU %u state mismatch\n",
+                time_buff, "ACUIsMismatch", inst);
+                //asctime(&ltime), "TCUIsMismatch", inst);
+
+              break;
+            }
+            case ASIC_RTDFault:
+            {
+              printf("%-26s : %-18s ASCI RTD fault\n",
+                time_buff, "ASIC_RTDFault");
+                //asctime(&ltime), "ChillerOffline");
+
+              break;
+            }
+            case ASIC_Chiller_RTDFault:
+            {
+              printf("%-26s : %-18s ASCIC chiller RTD fault\n",
+                time_buff, "ASIC_Chiller_RTDFault");
+                //asctime(&ltime), "ChillerOffline");
+
+              break;
+            }
+            case DDR_RTDFault: // TODO: add the instance to the output
+            {
+              printf("%-26s : %-18s DDR RTD fault\n",
+                time_buff, "DDR_RTDFault");
+                //asctime(&ltime), "ChillerOffline");
+
+              break;
+            }
+            case DDR_Chiller_RTDFault: // TODO: add the instance to the output
+            {
+              printf("%-26s : %-18s DDR chiller RTD fault\n",
+                time_buff, "DDR_Chiller_RTDFault");
+                //asctime(&ltime), "ChillerOffline");
+
+              break;
+            }
+            case ASIC_Chiller_RTDHot: // TODO: add the temp to the output
+            {
+              printf("%-26s : %-18s ASIC chiller RTD hot\n",
+                time_buff, "ASIC_Chiller_RTDHot");
+                //asctime(&ltime), "ChillerOffline");
+
+              break;
+            }
+            case DDR_Chiller_RTDHot: // TODO: add the temp to the output
+            {
+              printf("%-26s : %-18s DDR chiller RTD hot\n",
+                time_buff, "DDR_Chiller_RTDHot");
+                //asctime(&ltime), "ChillerOffline");
+
+              break;
+            }
+            case ChillerOffline:
+            {
+              printf("%-26s : %-18s chiller offline\n",
+                time_buff, "ChillerOffline");
+                //asctime(&ltime), "ChillerOffline");
+
+              break;
+            }
+            case ChillerNotRunning:
+            {
+              printf("%-26s : %-18s chiller not running\n",
+                time_buff, "ChillerNotRunning");
+                //asctime(&ltime), "ChillerNotRunning");
+
+              break;
+            }
+            default:
+            {
+              // show the bytes
+              printf("%-26s : %-18s Id: %zu data[0] %zu data[1] %zu data[2] %zu data[3] %zu data[4] %zu\n",
+                time_buff, "no event", inst, htons(eventlog[i].data[0]),
+                //asctime(&ltime), "no event", inst, htons(eventlog[i].data[0]),
+                htons(eventlog[i].data[1]), htons(eventlog[i].data[2]),
+                htons(eventlog[i].data[3]), htons(eventlog[i].data[4]));
+              break;
+            }
+          }
+        }
+
+      }
+      else
+        cout << "\nfailed to get event log" << endl;
+    }
+
+    private:
+    elogentry eventlog[MAX_ELOG_ENTRY];
+    timeind*  pTimeStamp;
+    struct tm ltime;
+    uint16_t  id;       // chiller, TCU, humidity sensor
+    uint16_t  inst;     // in case of TCU is the TCU number
+    char      time_buff[30];
+
+
+
+    menuGetEventLogCmd(const menuItemBase&);
+    menuGetEventLogCmd& operator=(const menuItemBase&);
+};
+
+
+
+
 #endif
 
