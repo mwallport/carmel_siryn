@@ -27,10 +27,15 @@
 
 
 // timeout for wait for menu command
-#define CTRL_TIMEOUT          5
+#define CTRL_TIMEOUT_RUNNING_STATE  3
+#define CTRL_TIMEOUT                3000
+
+
+// millis() between DDR RTD samples while in RUNNING state
+unsigned long timeBetweenSamples;
 
 // loop counts for handleRunningState
-#define DDR_RTDS_SAMPLES_PER_SEC  2
+#define DDR_RTDS_SAMPLES_PER_SEC  4
 #define NON_DDR_RTD_CHILLER_CNT   2
 #define HANDLE_MENU_CNT           3
 #define HANDLE_LCD_CNT            4
@@ -38,7 +43,7 @@
 
 // high RTD chiller temperature, if hit this, go to SHUTDOWN state
 // and don't start if RTD chiller temperature is this
-#define HIGH_CHILLER_TEMP       40
+#define HIGH_CHILLER_TEMP       1000
 
 // uncomment for the siryn project as it will use chiller
 //#define __USING_CHILLER__
@@ -62,13 +67,13 @@
 // TODO: add menu command to set mode, or just keep it as SPON ?
 // - set this global variable to the value from the 'new' menu command
 // - use this as the mode for the ENAB command
-uint8_t MODE  = MPWR;
+uint8_t MODE  = SPON;
 
 
 //
 // LCD display
 //
-const int rs = 8, en = 10, d4 = 11, d5 = 12, d6 = 13, d7 = 42;
+const int rs = 8, en = 7, d4 = 11, d5 = 12, d6 = 13, d7 = 42;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 
@@ -101,18 +106,10 @@ deviceHandler RS485Bus(Serial3, tx_buff, MAX_BUFF_LENGTH_MODBUS, rx_buff, MAX_BU
 //
 // Adafruit RTDs - do we have enough pins for all these ?
 //
-// TODO: set these up w/ the correct pins
-//
-// TODO: put this back .. or some thing like it
-//
-
-
-//Adafruit_MAX31865 ASIC_RTD(x);
-//Adafruit_MAX31865 ASIC_Chiller_RTD(x);
-Adafruit_MAX31865 DDR1_RTD(4);          // TODO: THIS ONE IS CONNECTED TO ACCUTHERMO
-Adafruit_MAX31865 DDR2_RTD(52);
-//Adafruit_MAX31865 DDR3_RTD(x);
-//Adafruit_MAX31865 DDR_Chiller_RTD(x);
+Adafruit_MAX31865 DDR1_RTD(4);                      // #1
+Adafruit_MAX31865 DDR2_RTD(52);                     // #2
+Adafruit_MAX31865 ASIC_Chiller_RTD(10);             // #3
+Adafruit_MAX31865 DDR_Chiller_RTD(26, 24, 22, 34);  // #4 - not on the SPI bus
 
 // The value of the Rref resistor. Use 430.0 for PT100 and 4300.0 for PT1000
 #define RREF      430.0
@@ -120,15 +117,26 @@ Adafruit_MAX31865 DDR2_RTD(52);
 // 100.0 for PT100, 1000.0 for PT1000
 #define RNOMINAL  100.0
 
+// for #1
+#define RTD_DDR1_ISR_PIN          32
+// for #2
+#define RTD_DDR2_ISR_PIN          2   
+// for #3
+#define ASIC_Chiller_RTD_ISR_PIN  30
+// for #4
+#define DDR_Chiller_RTD_ISR_PIN   28
+
+bool RTD_DDR1_DRDY          = false;
+bool RTD_DDR2_DRDY          = false;
+bool ASIC_Chiller_RTD_DRDY  = false;
+bool DDR_Chiller_RTD_DRDY   = false;
+
 
 //
 // constants - using #define - have limited space on Arduino
 //
-#define GET_STATUS_INTERVAL   10000
-#define GET_HUMIDITY_INTERVAL 2500
+#define GET_STATUS_INTERVAL   5000
 #define BUTTON_PERIOD         5000
-#define HUMIDITY_THRESHOLD    80
-#define HUMIDITY_BUFFER       10
 #define PIN_HW_ENABLE_n       8
 #define SWITCH_PIN            9
 #define MAX_BUFF_LENGHT       10
@@ -264,8 +272,8 @@ typedef struct _ACUState
 {
   runningStates   online;       // online or offline
   runningStates   state;        // running or stopped
-  float           setpoint;     // current set point temperature
-  float           temperature;  // current temperature
+  float           setpoint;     // current set point temperature ( SV )
+  float           temperature;  // current temperature ( PV )
 } ACUState;
 
 typedef struct _RTDState
@@ -291,11 +299,11 @@ typedef struct _systemState
   chillerState  chiller;
 #endif
   ACUState    ACU[MAX_ACU_ADDRESS];
-  RTDState    ASIC_RTD;             // ASIC chip temp
+  RTDState    ASIC_RTD;             // ASIC chip temp - this RTD is connected to ASIC Accutermo
   RTDState    ASIC_Chiller_RTD;     // ASIC chiller temp
-  RTDState    DDR1_RTD;             // 1st DDR chip temp
-  RTDState    DDR2_RTD;             // 2nd DDR chip temp
-  RTDState    DDR3_RTD;             // 3rd DDR chip temp
+  RTDState    DDR_RTD;              // DDR chip temp - this RTD is connected to the DDR Accuthermo
+  RTDState    DDR1_RTD;             // 2rd DDR chip temp
+  RTDState    DDR2_RTD;             // 2rd DDR chip temp
   RTDState    DDR_Chiller_RTD;      // DDR chiller temp
   float       highRTDTemp;          // will be the temperature of the hottest RTD in the DDR group
   LCDState    lcd;
@@ -312,7 +320,7 @@ systemState sysStates;
 //
 // configure the fault/no-fault LED
 //
-const int FAULT_LED   = 4;
+const int FAULT_LED     = 4;
 const int NO_FAULT_LED  = 6;
 
 
