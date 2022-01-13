@@ -19,6 +19,7 @@
 // this is for frivilous debug output
 #define __DEBUG2_VIA_SERIAL__
 
+//#define __DEBUG_RTD_READS__
 
 // peripheral component speeds
 #define CONTROL_PROTO_SPEED   19200
@@ -27,8 +28,7 @@
 
 
 // timeout for wait for menu command
-#define CTRL_TIMEOUT_RUNNING_STATE  3
-#define CTRL_TIMEOUT                3000
+#define CTRL_TIMEOUT          250
 
 
 // millis() between DDR RTD samples while in RUNNING state
@@ -43,7 +43,7 @@ unsigned long timeBetweenSamples;
 
 // high RTD chiller temperature, if hit this, go to SHUTDOWN state
 // and don't start if RTD chiller temperature is this
-#define HIGH_CHILLER_TEMP       1000
+#define HIGH_CHILLER_TEMP       40
 
 // uncomment for the siryn project as it will use chiller
 //#define __USING_CHILLER__
@@ -126,19 +126,22 @@ Adafruit_MAX31865 DDR_Chiller_RTD(26, 24, 22, 34);  // #4 - not on the SPI bus
 // for #4
 #define DDR_Chiller_RTD_ISR_PIN   28
 
-bool RTD_DDR1_DRDY          = false;
-bool RTD_DDR2_DRDY          = false;
-bool ASIC_Chiller_RTD_DRDY  = false;
-bool DDR_Chiller_RTD_DRDY   = false;
-
-
+volatile bool RTD_DDR1_DRDY          = false;
+volatile bool RTD_DDR2_DRDY          = false;
+volatile bool ASIC_Chiller_RTD_DRDY  = false;
+volatile bool DDR_Chiller_RTD_DRDY   = false;
+volatile unsigned long  RTD_DDR1_DRDY_StartTime = 0;
+volatile unsigned long  RTD_DDR2_DRDY_StartTime = 0;
+volatile unsigned long  ASIC_Chiller_RTD_StartTime   = 0;
+volatile unsigned long  DDR_Chiller_RTD_StartTime    = 0;
+unsigned long MS_REQ_FOR_60HZ_READ  = 500; //52;
 //
 // constants - using #define - have limited space on Arduino
 //
 #define GET_STATUS_INTERVAL   5000
 #define BUTTON_PERIOD         5000
-#define PIN_HW_ENABLE_n       8
-#define SWITCH_PIN            9
+//#define PIN_HW_ENABLE_n       8
+//#define SWITCH_PIN            9
 #define MAX_BUFF_LENGHT       10
 #define MAX_ACU_ADDRESS       2
 #define MIN_ACU_ADDRESS       1
@@ -320,16 +323,16 @@ systemState sysStates;
 //
 // configure the fault/no-fault LED
 //
-const int FAULT_LED     = 4;
-const int NO_FAULT_LED  = 6;
+//const int FAULT_LED     = 4;
+//const int NO_FAULT_LED  = 6;
 
 
 //
 // configure the start/stop button
 //
 // The pin number attached to the button.
-const int BUTTON_PIN = 3;
-const int BUTTON_LED = 7;
+//const int BUTTON_PIN = 3;
+//const int BUTTON_LED = 7;
 bool currentButtonOnOff = false;
 volatile bool buttonOnOff = false;
 
