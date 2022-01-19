@@ -4,11 +4,12 @@
 #include <stdint.h>
 
 
+
 #define MAX_DATA        5   // number of data elements in each log entry, is 5
                             // to keep overall size of the elogentry struct on
                             // an even 32bit boundry
 
-#define MAX_ELOG_ENTRY  3   // max number of eventlog entrys
+#define MAX_ELOG_ENTRY  5   // max number of eventlog entrys
 
 //
 // data type to hold time stamp - and used w/ Controllino RTC
@@ -44,6 +45,7 @@ typedef struct _elogentry
 //
 // APIs to work on the event log
 //
+int         logEvent(uint16_t event_id, uint32_t inst = 0, uint32_t d0 = 0, uint32_t d1 = 0, uint32_t d2 = 0, uint32_t d3 = 0);
 uint8_t     addEventLogEntry(elogentry*); // returns 0 if no wrap around, 1 if wrap around
 elogentry   getEventLogEntry(uint8_t);    // return a pointer to the elogentry at given index
 void        clrEventLog(void);            // clear all events in the eventlog

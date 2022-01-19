@@ -121,7 +121,7 @@ uint16_t calcCRC16(uint8_t* pBuff, uint16_t length);
 const   uint8_t     MAX_CHILLER_TEMP_LENGH  = 8;    // i.e "-21.5"  or "+100.1" - sign and a float number
 const   uint8_t     MAX_ACU_TEMP_LENGH      = 8;    // i.e "-21.5"  or "+100.1" - sign and a float number
 const   uint8_t     MAX_HUMIDITY_LENGTH     = 8;    // "34.37" interpreted as percent
-const   uint8_t     MAX_BUFF_LENGTH_CP      = 64;   // size of the work m_buffer
+const   uint8_t     MAX_BUFF_LENGTH_CP      = 200;  // size of the work m_buffer
 const   uint8_t     MAX_CHILLER_INFO_LENGTH = 20;   // same size as the name in the huber protocol
 const   uint8_t     COMMAND                 = '#';  // start packet byte for commands
 const   uint8_t     RESPONSE                = '!';  // start packet byte for responses

@@ -270,7 +270,7 @@ bool controlProtocol::doTxResponse(uint16_t length)
 bool controlProtocol::TxCommandUSB(uint16_t length)
 {
     #ifdef __DEBUG_CTRL_PROTO__
-    printf(__PRETTY_FUNCTION__);
+    printf("%s", __PRETTY_FUNCTION__);
     printf("\n");
     printf("writing %u bytes: ", length);
     for(int i = 0; i < length; i++)

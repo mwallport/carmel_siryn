@@ -17,7 +17,7 @@
 #define __DEBUG_VIA_SERIAL__
 
 // this is for frivilous debug output
-#define __DEBUG2_VIA_SERIAL__
+//#define __DEBUG2_VIA_SERIAL__
 
 //#define __DEBUG_RTD_READS__
 
@@ -34,20 +34,12 @@
 // millis() between DDR RTD samples while in RUNNING state
 unsigned long timeBetweenSamples;
 
-// loop counts for handleRunningState
-#define DDR_RTDS_SAMPLES_PER_SEC  4
-#define NON_DDR_RTD_CHILLER_CNT   2
-#define HANDLE_MENU_CNT           3
-#define HANDLE_LCD_CNT            4
-#define GET_STATUS_CNT            10
-
 // high RTD chiller temperature, if hit this, go to SHUTDOWN state
 // and don't start if RTD chiller temperature is this
 #define HIGH_CHILLER_TEMP       40
 
 // uncomment for the siryn project as it will use chiller
 //#define __USING_CHILLER__
-
 
 //
 // these are the RS485 bus Ids of the entities on the bus
@@ -102,7 +94,6 @@ uint8_t rx_buff[MAX_BUFF_LENGTH_MODBUS];
 deviceHandler RS485Bus(Serial3, tx_buff, MAX_BUFF_LENGTH_MODBUS, rx_buff, MAX_BUFF_LENGTH_MODBUS);
 
 
-
 //
 // Adafruit RTDs - do we have enough pins for all these ?
 //
@@ -120,20 +111,20 @@ Adafruit_MAX31865 DDR_Chiller_RTD(26, 24, 22, 34);  // #4 - not on the SPI bus
 // for #1
 #define RTD_DDR1_ISR_PIN          32
 // for #2
-#define RTD_DDR2_ISR_PIN          2   
+//#define RTD_DDR2_ISR_PIN          2   
 // for #3
-#define ASIC_Chiller_RTD_ISR_PIN  30
+//#define ASIC_Chiller_RTD_ISR_PIN  30
 // for #4
-#define DDR_Chiller_RTD_ISR_PIN   28
+//#define DDR_Chiller_RTD_ISR_PIN   28
 
 volatile bool RTD_DDR1_DRDY          = false;
-volatile bool RTD_DDR2_DRDY          = false;
-volatile bool ASIC_Chiller_RTD_DRDY  = false;
-volatile bool DDR_Chiller_RTD_DRDY   = false;
+//volatile bool RTD_DDR2_DRDY          = false;
+//volatile bool ASIC_Chiller_RTD_DRDY  = false;
+//volatile bool DDR_Chiller_RTD_DRDY   = false;
 volatile unsigned long  RTD_DDR1_DRDY_StartTime = 0;
-volatile unsigned long  RTD_DDR2_DRDY_StartTime = 0;
-volatile unsigned long  ASIC_Chiller_RTD_StartTime   = 0;
-volatile unsigned long  DDR_Chiller_RTD_StartTime    = 0;
+//volatile unsigned long  RTD_DDR2_DRDY_StartTime = 0;
+//volatile unsigned long  ASIC_Chiller_RTD_StartTime   = 0;
+//volatile unsigned long  DDR_Chiller_RTD_StartTime    = 0;
 unsigned long MS_REQ_FOR_60HZ_READ  = 500; //52;
 //
 // constants - using #define - have limited space on Arduino
@@ -142,11 +133,11 @@ unsigned long MS_REQ_FOR_60HZ_READ  = 500; //52;
 #define BUTTON_PERIOD         5000
 //#define PIN_HW_ENABLE_n       8
 //#define SWITCH_PIN            9
-#define MAX_BUFF_LENGHT       10
+//#define MAX_BUFF_LENGHT       10
 #define MAX_ACU_ADDRESS       2
 #define MIN_ACU_ADDRESS       1
 #define MAX_SHUTDOWN_ATTEMPTS 1
-#define MAX_RTD_ADDRESS       7
+//#define MAX_RTD_ADDRESS       7
 
 
 #define SYSTEM_NRML_OFFSET    0   // 2 msgs, good and bad
@@ -331,8 +322,8 @@ systemState sysStates;
 // configure the start/stop button
 //
 // The pin number attached to the button.
-//const int BUTTON_PIN = 3;
-//const int BUTTON_LED = 7;
+const int BUTTON_PIN = 5;
+const int BUTTON_LED = 6;
 bool currentButtonOnOff = false;
 volatile bool buttonOnOff = false;
 
@@ -341,6 +332,6 @@ volatile bool buttonOnOff = false;
 // splash screen conents - shown during boot while the system is coming on-line
 //
 const char deftDevise[16] = "deftDevise   ";
-const char buildInfo[16]  = "210103       ";
+const char buildInfo[16]  = "220117       ";
 
 #endif

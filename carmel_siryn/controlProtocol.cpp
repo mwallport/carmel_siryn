@@ -538,7 +538,7 @@ bool controlProtocol::TxResponseSerial(uint16_t length)
 
     if( (lenWritten != length) )
     {
-        #ifdef __DEBUG_HUBER_ERROR__
+        #ifdef __DEBUG_CONTROL_PKT_TX__
         Serial.flush();
         Serial.println("TxCommand failed");
         #endif
@@ -2822,7 +2822,6 @@ uint16_t controlProtocol::Make_getEventLogCmdResp(uint16_t Address, uint8_t* pBu
     getEventLogCmdResp_t*  msg  = reinterpret_cast<getEventLogCmdResp_t*>(pBuff);
     uint16_t        CRC  = 0;
 
-
     // create the getEventLogCmdResp message in pBuff and CRC16 checksum it
     msg->header.control         = RESPONSE;
     msg->header.length          = sizeof(getEventLogCmdResp_t);
@@ -2835,7 +2834,10 @@ uint16_t controlProtocol::Make_getEventLogCmdResp(uint16_t Address, uint8_t* pBu
 
     // set the eventlog in the message
     for(uint8_t i = 0; i < MAX_ELOG_ENTRY; i++)
-      msg->eventlog[i] =  eventlog[i];    // can we do struct copy in Arduino ?
+    {
+      memcpy(&msg->eventlog[i], &eventlog[i], sizeof(msg->eventlog[i]));
+      msg->eventlog[i].id=0xdeadbeef;
+    }
 
     // calculate the CRC
     CRC = calcCRC16(pBuff, len_getEventLogCmdResp_t);
