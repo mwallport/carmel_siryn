@@ -4,8 +4,8 @@
 //
 // eventlog implementation
 //
-static uint8_t elogindex = 0; // this is the current event log index - points to
-                              // last entry made
+static uint8_t elogindex = MAX_ELOG_ENTRY - 1;  // this is the current event log index - points to
+                                                // last entry made
 
 static elogentry  eventlog[MAX_ELOG_ENTRY];
 
@@ -24,6 +24,8 @@ void clrEventLog(void)
   {
     clrEventLogEntry(&eventlog[i]);
   }
+
+  elogindex = MAX_ELOG_ENTRY - 1;
 }
 
 

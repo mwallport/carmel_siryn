@@ -126,11 +126,14 @@ volatile unsigned long  RTD_DDR1_DRDY_StartTime = 0;
 //volatile unsigned long  ASIC_Chiller_RTD_StartTime   = 0;
 //volatile unsigned long  DDR_Chiller_RTD_StartTime    = 0;
 unsigned long MS_REQ_FOR_60HZ_READ  = 500; //52;
+
+
 //
-// constants - using #define - have limited space on Arduino
+// contants
 //
 #define GET_STATUS_INTERVAL   5000
-#define BUTTON_PERIOD         5000
+#define BUTTON_PERIOD         200
+#define BUTTON_COUNT_FOR_AT1  5000
 //#define PIN_HW_ENABLE_n       8
 //#define SWITCH_PIN            9
 //#define MAX_BUFF_LENGHT       10
@@ -326,6 +329,8 @@ const int BUTTON_PIN = 5;
 const int BUTTON_LED = 6;
 bool currentButtonOnOff = false;
 volatile bool buttonOnOff = false;
+volatile unsigned long  bp1;  // button press 1
+volatile unsigned long  bp2;  // button press 2
 
 
 //

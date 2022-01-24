@@ -1755,13 +1755,13 @@ bool controlProtocol::DisableACUs(uint16_t destAddress)
 
 
 bool controlProtocol::GetACUInfo(uint16_t destAddress, uint16_t acu_address,
-                    uint32_t* deviceType, uint32_t* hwVersion, uint32_t* fwVersion, uint32_t* serialNum)
+                    uint32_t* OutL, uint32_t* WkErno, uint32_t* Ver, uint32_t* SerialNo)
 {
-    bool                retVal  = false;
-    uint16_t            seqNum;
-    uint16_t            result;
-    msgHeader_t*        pMsgHeader;
-    getACUInfoMsgResp_t*    pgetACUInfoMsgResp;
+    bool                  retVal  = false;
+    uint16_t              seqNum;
+    uint16_t              result;
+    msgHeader_t*          pMsgHeader;
+    getACUInfoMsgResp_t*  pgetACUInfoMsgResp;
 
 
     //
@@ -1831,11 +1831,11 @@ bool controlProtocol::GetACUInfo(uint16_t destAddress, uint16_t acu_address,
             //
             // report the health
             //
-            Parse_getACUInfoMsgResp(m_buff, &result, deviceType, hwVersion, fwVersion, serialNum, &seqNum);
+            Parse_getACUInfoMsgResp(m_buff, &result, OutL, WkErno, Ver, SerialNo, &seqNum);
 
             #ifdef __DEBUG_CTRL_PROTO__
-            printf("found in packet result %d, deviceType 0x%02X, hwVersion 0x%02X, fwVersion 0x%02X, \
-                serialNum 0x%02X seqNumer 0x%02x\n", result, *deviceType, *hwVersion, *fwVersion, *serialNum, seqNum);
+            printf("found in packet result %d, OutL 0x%02X, WkErno 0x%02X, Ver 0x%02X, \
+                SerialNo 0x%02X seqNumer 0x%02x\n", result, *OutL, *WkErno, *Ver, *SerialNo, seqNum);
             #endif
 
             if( (result) )
@@ -2965,8 +2965,8 @@ uint16_t controlProtocol::Make_getACUInfoMsg(uint16_t Address, uint8_t* pBuff, u
 
 
 uint16_t controlProtocol::Make_getACUInfoMsgResp(uint16_t Address, uint8_t* pBuff, uint16_t acu_address,
-        uint16_t result, uint32_t deviceType, uint32_t hwVersion, uint32_t fwVersion,
-        uint32_t serialNumber, uint16_t SeqNum)
+        uint16_t result, uint32_t OutL, uint32_t WkErno, uint32_t Ver,
+        uint32_t SerialNo, uint16_t SeqNum)
 {
     getACUInfoMsgResp_t* msg = reinterpret_cast<getACUInfoMsgResp_t*>(pBuff);
     uint16_t CRC = 0;
@@ -2979,10 +2979,10 @@ uint16_t controlProtocol::Make_getACUInfoMsgResp(uint16_t Address, uint8_t* pBuf
     msg->header.msgNum          = getACUInfoMsgResp;
     msg->result                 = htons(result);
     msg->acu_address            = htons(acu_address);
-    msg->deviceType             = htonl(deviceType);
-    msg->hwVersion              = htonl(hwVersion);
-    msg->fwVersion              = htonl(fwVersion);
-    msg->serialNumber           = htonl(serialNumber);
+    msg->OutL             = htonl(OutL);
+    msg->WkErno              = htonl(WkErno);
+    msg->Ver              = htonl(Ver);
+    msg->SerialNo           = htonl(SerialNo);
 
     // calculate the CRC
     CRC = calcCRC16(pBuff,  len_getACUInfoMsgResp_t);
@@ -2998,17 +2998,17 @@ uint16_t controlProtocol::Make_getACUInfoMsgResp(uint16_t Address, uint8_t* pBuf
 }
 
 
-void controlProtocol::Parse_getACUInfoMsgResp(uint8_t* m_buff, uint16_t* result, uint32_t* deviceType,
-        uint32_t* hwVersion, uint32_t* fwVersion, uint32_t* serialNumber, uint16_t* pSeqNum)
+void controlProtocol::Parse_getACUInfoMsgResp(uint8_t* m_buff, uint16_t* result, uint32_t* OutL,
+        uint32_t* WkErno, uint32_t* Ver, uint32_t* SerialNo, uint16_t* pSeqNum)
 {
     getACUInfoMsgResp_t* pResponse = reinterpret_cast<getACUInfoMsgResp_t*>(m_buff);
 
 
     *result         = ntohs(pResponse->result);
-    *deviceType     = pResponse->deviceType;
-    *hwVersion      = pResponse->hwVersion;
-    *fwVersion      = pResponse->fwVersion;
-    *serialNumber   = pResponse->serialNumber;
+    *OutL           = pResponse->OutL;
+    *WkErno         = pResponse->WkErno;
+    *Ver            = pResponse->Ver;
+    *SerialNo       = pResponse->SerialNo;
     *pSeqNum        = pResponse->header.seqNum;
 }
 

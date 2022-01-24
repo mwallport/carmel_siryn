@@ -31,8 +31,8 @@
 //
 // debug defines
 //
-//#define __DEBUG_MODBUS_CMDS__
-//#define __DEBUG_MODBUS_TXRX__
+#define __DEBUG_MODBUS_CMDS__
+#define __DEBUG_MODBUS_TXRX__
 
 
 #endif

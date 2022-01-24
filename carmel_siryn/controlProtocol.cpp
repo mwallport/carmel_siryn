@@ -2544,8 +2544,8 @@ uint16_t controlProtocol::Make_getACUInfoMsg(uint16_t Address, uint8_t* pBuff, u
 
 
 uint16_t controlProtocol::Make_getACUInfoMsgResp(uint16_t Address, uint8_t* pBuff, uint16_t acu_address,
-        uint16_t result, uint32_t deviceType, uint32_t hwVersion, uint32_t fwVersion,
-        uint32_t serialNumber, uint16_t SeqNum)
+        uint16_t result, uint32_t OutL, uint32_t WkErno, uint32_t Ver,
+        uint32_t SerialNo, uint16_t SeqNum)
 {
     getACUInfoMsgResp_t* msg = reinterpret_cast<getACUInfoMsgResp_t*>(pBuff);
     uint16_t CRC = 0;
@@ -2558,10 +2558,10 @@ uint16_t controlProtocol::Make_getACUInfoMsgResp(uint16_t Address, uint8_t* pBuf
     msg->header.msgNum          = getACUInfoMsgResp;
     msg->result                 = htons(result);
     msg->acu_address            = htons(acu_address);
-    msg->deviceType             = htonl(deviceType);
-    msg->hwVersion              = htonl(hwVersion);
-    msg->fwVersion              = htonl(fwVersion);
-    msg->serialNumber           = htonl(serialNumber);
+    msg->OutL                   = htonl(OutL);
+    msg->WkErno                 = htonl(WkErno);
+    msg->Ver                    = htonl(Ver);
+    msg->SerialNo               = htonl(SerialNo);
 
     // calculate the CRC
     CRC = calcCRC16(pBuff,  len_getACUInfoMsgResp_t);
@@ -2584,10 +2584,10 @@ void controlProtocol::Parse_getACUInfoMsgResp(uint8_t* m_buff, uint16_t* result,
 
 
     *result         = ntohs(pResponse->result);
-    *deviceType     = pResponse->deviceType;
-    *hwVersion      = pResponse->hwVersion;
-    *fwVersion      = pResponse->fwVersion;
-    *serialNumber   = pResponse->serialNumber;
+    *deviceType     = pResponse->OutL;
+    *hwVersion      = pResponse->WkErno;
+    *fwVersion      = pResponse->Ver;
+    *serialNumber   = pResponse->SerialNo;
     *pSeqNum        = pResponse->header.seqNum;
 }
 
@@ -2836,7 +2836,6 @@ uint16_t controlProtocol::Make_getEventLogCmdResp(uint16_t Address, uint8_t* pBu
     for(uint8_t i = 0; i < MAX_ELOG_ENTRY; i++)
     {
       memcpy(&msg->eventlog[i], &eventlog[i], sizeof(msg->eventlog[i]));
-      msg->eventlog[i].id=0xdeadbeef;
     }
 
     // calculate the CRC

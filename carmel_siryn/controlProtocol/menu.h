@@ -461,13 +461,13 @@ class menuGetACUInfo : public menuItemBase
 
     void execute(controlProtocol* pCP)
     {
-        if( (pCP->*m_pGetACUInfo)(m_destId, acu_address, &deviceType, &hwVersion,
-                                &fwVersion, &serialNum) )
+        if( (pCP->*m_pGetACUInfo)(m_destId, acu_address, &OutL, &WkErno,
+                                &Ver, &SerialNo) )
         {
-            cout << "\ndeviceType: " << deviceType <<
-                    " hwVersion: " << hwVersion <<
-                    " fwVersion: " << fwVersion <<
-                    " serialNum: " << serialNum << endl;
+            cout << "\nOutL: " << OutL <<
+                    " WkErno: " << WkErno <<
+                    " fwVersion: " << Ver <<
+                    " serialNum: " << SerialNo << endl;
         } else
         {
             cout << "\nget ACU info failed" << endl;
@@ -475,10 +475,10 @@ class menuGetACUInfo : public menuItemBase
     }
 
     uint16_t acu_address;
-    uint32_t deviceType;
-    uint32_t hwVersion;
-    uint32_t fwVersion;
-    uint32_t serialNum;
+    uint32_t OutL;
+    uint32_t WkErno;
+    uint32_t Ver;
+    uint32_t SerialNo;
     
     private:
     menuGetACUInfo(const menuItemBase&);
@@ -612,14 +612,14 @@ class menuGetEventLogCmd : public menuItemBase
             }
             case ACUNotRunning:
             {
-              printf("%-26s : %-18s TCU %u not running\n",
+              printf("%-26s : %-18s ACU %u not running\n",
                 time_buff, "ACUNotRunning", inst);
                 //asctime(&ltime), "TCUNotRunning", inst);
               break;
             }
             case ACUIsMismatch:
             {
-              printf("%-26s : %-18s TCU %u state mismatch\n",
+              printf("%-26s : %-18s ACU %u state mismatch\n",
                 time_buff, "ACUIsMismatch", inst);
                 //asctime(&ltime), "TCUIsMismatch", inst);
 
@@ -712,7 +712,7 @@ class menuGetEventLogCmd : public menuItemBase
     timeind*  pTimeStamp;
     struct tm ltime;
     uint16_t  id;       // chiller, TCU, humidity sensor
-    uint16_t  inst;     // in case of TCU is the TCU number
+    uint16_t  inst;     // in case of ACU is the ACU number
     char      time_buff[30];
 
 

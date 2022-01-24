@@ -458,13 +458,13 @@ typedef struct _getACUInfoMsgResp
     msgHeader_t header;
     uint16_t    result;         // 0 - failed to get; 1 - successfully set
     uint16_t    acu_address;    // uint16_6 - ACU address
-    uint32_t    deviceType;     // meerstetter device type, see MeCom Protocol Specification 5117C.pdf
-    uint32_t    hwVersion;      // meerstetter h/w version
-    uint32_t    fwVersion;      // meerstetter f/w version
+    uint32_t    OutL;     // meerstetter device type, see MeCom Protocol Specification 5117C.pdf
+    uint32_t    WkErno;      // meerstetter h/w version
+    uint32_t    Ver;      // meerstetter f/w version
     #ifdef __RUNNING_ON_CONTROLLINO__
     uint16_t    pad;            // some Arduino black magic here
     #endif
-    uint32_t    serialNumber;   // meerstetter serial number
+    uint32_t    SerialNo;   // meerstetter serial number
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
 } getACUInfoMsgResp_t;

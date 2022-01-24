@@ -1,7 +1,5 @@
 #include "carmel_siryn.h"
 
-
-
 void setup(void)
 {
   //
@@ -413,19 +411,6 @@ void getStatus(void)
     // determine the hot RTD temperature
     //
     setHotRTD();
-
-    //
-    // if there are RTD faults or RTD chiller reporting too high temp
-    // kill the enable button
-    //
-    if( !(checkRTDStatus()) )
-    {
-//      digitalWrite(FAULT_LED, HIGH);
-      //disableButtonISR();
-    } else
-    {
-      //enableButtonISR();
-    }
   
 
   } else if( (RUNNING == sysStates.sysStatus) )
@@ -748,12 +733,12 @@ void handleMsgs(uint16_t tmo)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
-
+   
   if( (currentButtonOnOff != buttonOnOff) )
   {
     currentButtonOnOff = buttonOnOff;
       
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.print("button press happened, switching ");
     if( (true == currentButtonOnOff) ) Serial.println("on"); else Serial.println("off");
     Serial.flush();
@@ -1905,10 +1890,10 @@ void handlGetACUInfo(void)
   getACUInfoMsg_t*   pgetACUInfo = reinterpret_cast<getACUInfoMsg_t*>(cp.m_buff);
   uint16_t    respLength;
   uint16_t    result = 0;
-  uint32_t    deviceType  = 0;
-  uint32_t    hwVersion   = 0;
-  uint32_t    fwVersion   = 0;
-  uint32_t    serialNumber= 0;
+  uint32_t    OutL      = 0;  // OUTL - a bunch of stuff ..
+  uint32_t    WkErno    = 0;  // WKERNO - some program control and/or error no ..  
+  uint32_t    Ver       = 0;  // VER - h/w and f/w version
+  uint32_t    SerialNo  = 0;  // SERIAL_NH and SERIAL_NL - serial number
 
 
   if( (ntohs(pgetACUInfo->header.address.address)) == cp.m_myAddress)
@@ -1919,24 +1904,21 @@ void handlGetACUInfo(void)
     if( (cp.verifyMessage(len_getACUInfoMsg_t,
                 ntohs(pgetACUInfo->crc), ntohs(pgetACUInfo->eop))) )
     {
-      //
-      // chiller informaion is gotton during getStatus
-      //
-      if( (getACUInfo(ntohs(pgetACUInfo->acu_address), &deviceType,
-                &hwVersion, &fwVersion, &serialNumber)) )
+      if( (getACUInfo(ntohs(pgetACUInfo->acu_address), &OutL,
+                &WkErno, &Ver, &SerialNo)) )
       {
         result  = 1;
       } else
       {
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to startACUs");
+        Serial.println(__PRETTY_FUNCTION__); Serial.println(" ERROR: failed to getACUInfo");
         Serial.flush();
         #endif
         result  = 0;
       }
 
       respLength = cp.Make_getACUInfoMsgResp(cp.m_peerAddress, cp.m_buff, htons(pgetACUInfo->acu_address), result,
-                deviceType, hwVersion, fwVersion, serialNumber, pgetACUInfo->header.seqNum);
+                OutL, WkErno, Ver, SerialNo, pgetACUInfo->header.seqNum);
 
       //
       // use the CP object to send the response back
@@ -2002,7 +1984,7 @@ void handleEnableACUs(void)
       } else
       {
         #ifdef __DEBUG_VIA_SERIAL__
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to startACUs");
+        Serial.println(__PRETTY_FUNCTION__); Serial.println(" ERROR: failed to startACUs");
         Serial.flush();
         #endif
         result  = 0;
@@ -3079,20 +3061,32 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
 
 
 /* this will be replaces w/ a get info for the accuthermo */
-bool getACUInfo(uint8_t acu_address, uint32_t* deviceType, uint32_t* hwVersion,
-                    uint32_t* fwVersion, uint32_t* serialNumber)
+bool getACUInfo(uint8_t acu_address, uint32_t* OutL, uint32_t* WkErno,
+                    uint32_t* Ver, uint32_t* SerialNo)
 {
-  bool retVal = true;
+  bool retVal = false;
 
-/* TODO: put this back <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-  if( !(ms.GetACUInfo(acu_address, deviceType, hwVersion, fwVersion, serialNumber)) )
-  {
-    retVal  = false;
-    #ifdef __DEBUG_VIA_SERIAL__
-    Serial.println(__PRETTY_FUNCTION__); Serial.println(" getACUInfo failed");
-    #endif
-  }
-*/
+
+  Serial.println("EAT A BIG GIANT DICK !!!! ");
+
+
+  if( ((ASIC_RS485_ID != acu_address) && (DDR_RS485_ID != acu_address)) )
+    return(false);
+
+
+  // attempt to get the data from the input address - if can't communicate with
+  // target accuthermo, just return false
+  *OutL = readOUTL(acu_address);
+  *WkErno = readWKERNO(acu_address);
+  *Ver    = readVER(acu_address);
+  *SerialNo = readSERIAL_NH(acu_address);
+  *SerialNo = readSERIAL_NL(acu_address);
+
+  // the SerialNo high and low are returning succesful packets, but the reported 
+  // serial no is -1 .. so can't do this check . . 
+//  if( (0 == (-1 == *OutL) || (-1 == *WkErno) || (-1 == *Ver) || (-1 == *SerialNo)) )
+    retVal  = true;
+
   return(retVal);
 }
 
@@ -3571,15 +3565,19 @@ systemStatus setSystemStatus(void)
   //
 #if defined(__USING_CHILLER__)
   if( (sysStates.chiller.state != running && ACUsRunning == true) ||
-    (ACUMismatch || offline == sysStates.chiller.online || false== ACUsOnline) || false == RTDsRunning) {
+    (ACUMismatch || offline == sysStates.chiller.online || false== ACUsOnline) || false == RTDsRunning)
 #else
-  if( (ACUMismatch || false== ACUsOnline || false == RTDsRunning) ) {
+  if( (ACUMismatch || false== ACUsOnline || false == RTDsRunning) )
 #endif
+  {
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Shutdown;
     retVal  = SHUTDOWN;
 
     if( (SHUTDOWN != sysStates.sysStatus) )
     {
+//      digitalWrite(FAULT_LED, HIGH);
+      disableButtonISR();
+
       // disable the MAX31865 ISRs
       configureAdafruitsBySysteState(SHUTDOWN);
       
@@ -3629,6 +3627,8 @@ systemStatus setSystemStatus(void)
 
     if( (READY != sysStates.sysStatus) )
     {
+      enableButtonISR();
+      
       // disable the MAX31865 ISRs
       configureAdafruitsBySysteState(READY);
 
@@ -3708,34 +3708,36 @@ void enableButtonISR(void)
   #endif
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);  // is FALLING, RISING, HIGH, CHANGE and LOW stalls system
 }
 
 
 void disableButtonISR(void)
-{
-  #ifdef __DEBUG2_VIA_SERIAL__
-  Serial.println("---------------------------------------");
-  Serial.println(__PRETTY_FUNCTION__);
-  #endif
-
-  detachInterrupt(digitalPinToInterrupt(BUTTON_PIN));
-  pinMode(BUTTON_PIN, OUTPUT);
-}
-
-
-void buttonISR(void)
 {
 //  #ifdef __DEBUG2_VIA_SERIAL__
   Serial.println("---------------------------------------");
   Serial.println(__PRETTY_FUNCTION__);
 //  #endif
 
+  detachInterrupt(digitalPinToInterrupt(BUTTON_PIN));
+  pinMode(BUTTON_PIN, OUTPUT);
+}
+
+
+//-----------------------------------------
+// increment holdCount 
+//
+void buttonISR(void)
+{
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("---------------------------------------");
+  Serial.println(__PRETTY_FUNCTION__);
+  #endif
+
+ // de-bounce .. does this even work in ISR, millis() is not supposed to work in ISR !
   static unsigned long  buttonLastInterruptTime = 0;
-  unsigned long     interruptTime   = millis();
+  unsigned long         interruptTime   = millis();
 
-
-    
   if( (BUTTON_PERIOD < (interruptTime - buttonLastInterruptTime)) )
   {
     buttonOnOff = !buttonOnOff;
@@ -3767,7 +3769,7 @@ uint16_t writePVOF(uint8_t id, uint16_t val)
     #endif
     return(0xFFFF);
     
-  #ifdef __DEBUG_VIA_SERIAL__
+  #ifdef __DEBUG_RTD_READS__
   } else
   {
     Serial.print("writePVOF success to id: "); Serial.println(id);
@@ -3832,6 +3834,121 @@ uint16_t writeUNIT(uint8_t id, uint16_t val)
 
   return(retVal);
 }
+
+
+uint16_t readOUTL(uint8_t id)
+{
+  cmdResp readOUTL = RS485Bus.readProcess(id, OUTL, 2);
+  
+  if( ((true == readOUTL.retCode()) && (0 < readOUTL.bufflen())) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.print("ACU: "); Serial.print(id); Serial.print(" returns OUTL 0x"); Serial.println(readOUTL.buff()[0], 16);
+    #endif
+  
+    return(ntohs(*(reinterpret_cast<uint16_t*>(&(readOUTL.buff()[0])))));
+    
+  } else
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("readOUTL fail from id: "); Serial.println(id);
+    #endif
+
+    return(0xFFFF);
+  }
+}
+
+uint16_t readWKERNO(uint8_t id)
+{
+  cmdResp readWKERNO = RS485Bus.readProcess(id, WKERNO, 2);
+  
+  if( ((true == readWKERNO.retCode()) && (0 < readWKERNO.bufflen())) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.print("ACU: "); Serial.print(id); Serial.print(" returns WKERNO 0x"); Serial.println(readWKERNO.buff()[0], 16);
+    #endif
+  
+    return(ntohs(*(reinterpret_cast<uint16_t*>(&(readWKERNO.buff()[0])))));
+    
+  } else
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("readWKERNO fail from id: "); Serial.println(id);
+    #endif
+
+    return(0xFFFF);
+  }
+}
+
+
+uint16_t readVER(uint8_t id)
+{
+  cmdResp readVER = RS485Bus.readProcess(id, VER, 2);
+  
+  if( ((true == readVER.retCode()) && (0 < readVER.bufflen())) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.print("ACU: "); Serial.print(id); Serial.print(" returns VER 0x"); Serial.println(readVER.buff()[0], 16);
+    #endif
+  
+    return(ntohs(*(reinterpret_cast<uint16_t*>(&(readVER.buff()[0])))));
+    
+  } else
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("readVER fail from id: "); Serial.println(id);
+    #endif
+
+    return(0xFFFF);
+  }
+}
+
+
+uint16_t readSERIAL_NH(uint8_t id)
+{
+  cmdResp readSERIAL_NH = RS485Bus.readProcess(id, SERIAL_NH, 2);
+  
+  if( ((true == readSERIAL_NH.retCode()) && (0 < readSERIAL_NH.bufflen())) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.print("ACU: "); Serial.print(id); Serial.print(" returns SERIAL_NH 0x"); Serial.println(readSERIAL_NH.buff()[0], 16);
+    #endif
+  
+    return(ntohs(*(reinterpret_cast<uint16_t*>(&(readSERIAL_NH.buff()[0])))));
+    
+  } else
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("readSERIAL_NH fail from id: "); Serial.println(id);
+    #endif
+
+    return(0xFFFF);
+  }
+}
+
+
+uint16_t readSERIAL_NL(uint8_t id)
+{
+  cmdResp readSERIAL_NL = RS485Bus.readProcess(id, SERIAL_NL, 2);
+  
+  if( ((true == readSERIAL_NL.retCode()) && (0 < readSERIAL_NL.bufflen())) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.print("ACU: "); Serial.print(id); Serial.print(" returns SERIAL_NL 0x"); Serial.println(readSERIAL_NL.buff()[0], 16);
+    #endif
+  
+    return(ntohs(*(reinterpret_cast<uint16_t*>(&(readSERIAL_NL.buff()[0])))));
+    
+  } else
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("readSERIAL_NL fail from id: "); Serial.println(id);
+    #endif
+
+    return(0xFFFF);
+  }
+}
+
 
 //-------------------------------------------------------------
 //
@@ -4178,6 +4295,8 @@ int logEvent(uint16_t event_id, uint32_t inst, uint32_t d0, uint32_t d1, uint32_
   event.data[2] = d2;
   event.data[3] = d3;
   addEventLogEntry(&event);
+
+  Serial.print("added event.id: "); Serial.println(event.id, 16);
 }
 
 
@@ -4330,18 +4449,9 @@ void handleRTDISRs(bool on)
 
 void configureAdafruitsBySysteState(systemStatus sysStatus)
 {
-  uint8_t t;
-
-
   // disable the MAX31865 ISRs
   handleRTDISRs(false);
 
-  // always clear the one shot - is self-clearing
-/*  DDR1_RTD.clearOneShot_dd();
-  DDR2_RTD.clearOneShot_dd();
-  ASIC_Chiller_RTD.clearOneShot_dd();
-  DDR_Chiller_RTD.clearOneShot_dd();
-*/
   if( (RUNNING == sysStatus) )
   {
     #ifdef __DEBUG_RTD_READS__
