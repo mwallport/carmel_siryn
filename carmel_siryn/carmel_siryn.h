@@ -56,13 +56,6 @@ unsigned long timeBetweenSamples;
 
 
 //
-// TODO: add menu command to set mode, or just keep it as SPON ?
-// - set this global variable to the value from the 'new' menu command
-// - use this as the mode for the ENAB command
-uint8_t MODE  = SPON;
-
-
-//
 // LCD display
 //
 const int rs = 8, en = 7, d4 = 11, d5 = 12, d6 = 13, d7 = 42;
@@ -132,7 +125,7 @@ unsigned long MS_REQ_FOR_60HZ_READ  = 500; //52;
 // contants
 //
 #define GET_STATUS_INTERVAL   5000
-#define BUTTON_PERIOD         200
+#define BUTTON_PERIOD         250
 #define BUTTON_COUNT_FOR_AT1  5000
 //#define PIN_HW_ENABLE_n       8
 //#define SWITCH_PIN            9
@@ -329,8 +322,8 @@ const int BUTTON_PIN = 5;
 const int BUTTON_LED = 6;
 bool currentButtonOnOff = false;
 volatile bool buttonOnOff = false;
-volatile unsigned long  bp1;  // button press 1
-volatile unsigned long  bp2;  // button press 2
+volatile int bp_count = -2;  // button press 1
+#define   LONG_PRESS_BP_COUNT   1500000
 
 
 //

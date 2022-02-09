@@ -15,7 +15,8 @@ void setup(void)
   Serial.println(" -------------------------> setup() <-----------------------"); Serial.flush();
   Serial.println(" -----------------------------------------------------------"); Serial.flush();
   #endif
-
+ 
+  
   //
   // shutdown on boot up, get to a known state
   //
@@ -42,7 +43,7 @@ void setup(void)
   handleChillerStatus();
   #endif
   handleACUStatus();
-  handleRTDStatus(true, false); // true get fautls too, false get all RTDs temps  
+  handleRTDStatus(true, false); // true get fautls too, false get all RTDs temps
 }
 
 
@@ -162,6 +163,12 @@ void initSystem(void)
   //
   writeUNIT(ASIC_RS485_ID, 0x001C);
   writeUNIT(DDR_RS485_ID, 0x001C);
+
+  //
+  // clear PVOF
+  //
+  writePVOF(ASIC_RS485_ID, 0);
+  writePVOF(DDR_RS485_ID, 0);
 }
 
 
@@ -346,7 +353,7 @@ bool startLCD(void)
 // - Meersteters are up
 // - chiller is running
 //
-bool startUp(void)
+bool startUp(bool startAT)
 {
   bool retVal = true;
 
@@ -360,7 +367,13 @@ bool startUp(void)
   //
   // paint 'Starting' on LCD
   //
-  lcd_starting();
+  if( (true == startAT) )
+    lcd_starting_AT();
+  else
+    lcd_starting();
+
+  // allow the LCD to show what is starting for at least 3 seconds
+  delay(3000);
 
   //
   // start the chiller and the ACUs
@@ -369,7 +382,7 @@ bool startUp(void)
     retVal  = false;
 
   // only start the ACUs is the chiller is running
-  else if( !(startACUs()) )
+  else if( !(startACUs(startAT)) )
     retVal = false;
 
   if( (true == retVal) )
@@ -565,7 +578,7 @@ bool startChiller(void)
 // - turn them 'on'
 // return true if all these things happen
 //
-bool startACUs(void)
+bool startACUs(bool startAT)
 {
   bool  retVal    = true;
 
@@ -591,7 +604,7 @@ bool startACUs(void)
     // initialize the ACU LCD state
     for(uint8_t Address = MIN_ACU_ADDRESS; Address <= MAX_ACU_ADDRESS; Address++)
     {
-      if( !(StartACU(Address)) )
+      if( !(StartACU(Address, startAT)) )
       {
         retVal = false;
         
@@ -750,7 +763,13 @@ void handleMsgs(uint16_t tmo)
       // adjust the button LED
       //
       digitalWrite(BUTTON_LED, HIGH);
-      startUp();
+
+      if( (LONG_PRESS_BP_COUNT < bp_count) )
+        startUp(true);
+      else
+        startUp(false);
+        
+      bp_count = 0;
     } else
     {
       //
@@ -758,6 +777,7 @@ void handleMsgs(uint16_t tmo)
       //
       digitalWrite(BUTTON_LED, LOW);
       shutDownSys(false);
+      bp_count = 0;
     }
   } else
   {
@@ -934,6 +954,23 @@ void lcd_starting(void)
   lcd.display();
 }
 
+void lcd_starting_AT(void)
+{
+  #ifdef __DEBUG2_VIA_SERIAL__
+  Serial.println("---------------------------------------");
+  Serial.println(__PRETTY_FUNCTION__);
+  #endif
+
+  lcd.noDisplay();
+  lcd.clear();
+  lcd.home();
+  lcd.setCursor(2,1);
+  lcd.print("***** SYSTEM *****");
+  lcd.setCursor(2,2);
+  lcd.print("*** STARTING AT ***");
+  lcd.display();
+}
+
 
 void lcd_ready(void)
 {
@@ -1046,7 +1083,7 @@ void lcd_ACUsRunning(void)
   lcd.clear();
   lcd.home();
   lcd.setCursor(0,0);
-  lcd.print("Temp Ctrl RUNNING");
+  lcd.print("Sys Comms ONLINE");
   lcd.setCursor(0,1);
   lcd.print("ASIC Sv      Pv     ");
   lcd.setCursor(0,3);
@@ -1096,7 +1133,7 @@ void lcd_ACUsStopped(void)
   lcd.clear();
   lcd.home();
   lcd.setCursor(0,0);
-  lcd.print("Temp Ctrl STOPPED");
+  lcd.print("Sys Comms OFFLINE");
   lcd.setCursor(0,1);
   lcd.print("ASIC Sv      Pv     ");
   lcd.setCursor(0,3);
@@ -1447,7 +1484,7 @@ void handleStartUpCmd(void)
       //
       // start the ACUs, chiller, sensor ...
       //
-      if( (startUp()) )
+      if( (startUp(false)) )
       {
         result  = 1;
         
@@ -1978,7 +2015,7 @@ void handleEnableACUs(void)
       //
       // TODO: make the MODE some in the menu command
       //
-      if( (startACUs()) )
+      if( (startACUs(false)) )
       {
         result  = 1;
       } else
@@ -3067,18 +3104,15 @@ bool getACUInfo(uint8_t acu_address, uint32_t* OutL, uint32_t* WkErno,
   bool retVal = false;
 
 
-  Serial.println("EAT A BIG GIANT DICK !!!! ");
-
-
   if( ((ASIC_RS485_ID != acu_address) && (DDR_RS485_ID != acu_address)) )
     return(false);
 
 
   // attempt to get the data from the input address - if can't communicate with
   // target accuthermo, just return false
-  *OutL = readOUTL(acu_address);
-  *WkErno = readWKERNO(acu_address);
-  *Ver    = readVER(acu_address);
+  *OutL     = readOUTL(acu_address);
+  *WkErno   = readWKERNO(acu_address);
+  *Ver      = readVER(acu_address);
   *SerialNo = readSERIAL_NH(acu_address);
   *SerialNo = readSERIAL_NL(acu_address);
 
@@ -3580,6 +3614,12 @@ systemStatus setSystemStatus(void)
 
       // disable the MAX31865 ISRs
       configureAdafruitsBySysteState(SHUTDOWN);
+
+      //
+      // clear PVOF
+      //
+      writePVOF(ASIC_RS485_ID, 0);
+      writePVOF(DDR_RS485_ID, 0);
       
       buttonOnOff         = false;
       currentButtonOnOff  = buttonOnOff;
@@ -3632,6 +3672,12 @@ systemStatus setSystemStatus(void)
       // disable the MAX31865 ISRs
       configureAdafruitsBySysteState(READY);
 
+      //
+      // clear PVOF
+      //
+      writePVOF(ASIC_RS485_ID, 0);
+      writePVOF(DDR_RS485_ID, 0);
+
       buttonOnOff         = false;
       currentButtonOnOff  = buttonOnOff;
 
@@ -3662,6 +3708,12 @@ systemStatus setSystemStatus(void)
     {
       // disable the MAX31865 ISRs
       configureAdafruitsBySysteState(RUNNING);
+
+      //
+      // clear PVOF
+      //
+      writePVOF(ASIC_RS485_ID, 0);
+      writePVOF(DDR_RS485_ID, 0);
 
       buttonOnOff     = true;
       currentButtonOnOff  = buttonOnOff;
@@ -3702,22 +3754,25 @@ void configureButton(void)
 
 void enableButtonISR(void)
 {
-  #ifdef __DEBUG2_VIA_SERIAL__
+  #ifdef __DEBUG_VIA_SERIAL__
   Serial.println("---------------------------------------");
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);  // is FALLING, RISING, HIGH, CHANGE and LOW stalls system
+//  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);  // FALLING good for single press is FALLING, RISING, HIGH, CHANGE and LOW stalls system
+//  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, CHANGE);  // no
+//  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, HIGH);  // one button press and the ISR is continuously hit - i.e. system freeze
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, LOW);  // one button press and the ISR is continuously hit - i.e. system freeze
 }
 
 
 void disableButtonISR(void)
 {
-//  #ifdef __DEBUG2_VIA_SERIAL__
+  #ifdef __DEBUG_VIA_SERIAL__
   Serial.println("---------------------------------------");
   Serial.println(__PRETTY_FUNCTION__);
-//  #endif
+  #endif
 
   detachInterrupt(digitalPinToInterrupt(BUTTON_PIN));
   pinMode(BUTTON_PIN, OUTPUT);
@@ -3737,6 +3792,8 @@ void buttonISR(void)
  // de-bounce .. does this even work in ISR, millis() is not supposed to work in ISR !
   static unsigned long  buttonLastInterruptTime = 0;
   unsigned long         interruptTime   = millis();
+
+  bp_count += 1;
 
   if( (BUTTON_PERIOD < (interruptTime - buttonLastInterruptTime)) )
   {
@@ -3953,9 +4010,15 @@ uint16_t readSERIAL_NL(uint8_t id)
 //-------------------------------------------------------------
 //
 //
-bool StartACU(uint8_t id)
+bool StartACU(uint8_t id, bool startAT)
 {
-  cmdResp writeENAB = RS485Bus.writeProcess(id, ENAB, MODE);
+  cmdResp writeENAB;
+  
+  
+  if( (true == startAT) )
+    writeENAB = RS485Bus.writeProcess(id, ENAB, AT1);
+  else
+    writeENAB = RS485Bus.writeProcess(id, ENAB, SPON);
 
   if( (true == writeENAB.retCode()) )
   {
@@ -4072,32 +4135,81 @@ bool GetACUTemp(uint8_t id, float* sv, float* pv)
 
 //-------------------------------------------------------------
 //
+// Rick says !
+// - we don't need to pump in the PVOF real quick
+// - we can take some time here to calculate the true PV
+// - the crap software on them accuthermos is allegedly capable of reporting
+//    just the PV via PV0 - but that don't work, that cmd returns the SV !
+// - no kidding I totally checked the bytes
+// - so because we have more processing time on our hands, going to
+//    get the PV+PVOF, get the PVOF, do the math of PV = PV+PVOF - PVOF
+//    and convert that number to float and return 'it'.
+// - lame.
 //
 bool GetACUTempPV(uint8_t id, float* pv)
 {
-  uint16_t  temp  = 0x0000;
-
+  uint16_t  pvpvof  = 0;
+  uint32_t  pvof    = 0;
 
   // do the read, request 2 bytes back
-  cmdResp readPVPVOF = RS485Bus.readProcess(id, PVPVOF, 2); // get response w/ PV and PVOF
+  //cmdResp readPVPVOF = RS485Bus.readProcess(id, PV0, 2); // PV0 returns the SV .. WTF ?
+  //cmdResp readPVPVOF = RS485Bus.readProcess(id, PV1, 2); // returns SV PV+PVOF
+  //cmdResp readPVPVOF = RS485Bus.readProcess(id, PV2, 2);   // returns SV PV+PVOF
+  //cmdResp readPVPVOF = RS485Bus.readProcess(id, ET0, 2);   // returns SV SV ..or.. PV+PVOF PV+PVOF for ID2 .. ? WTF ?
+  //cmdResp readPVPVOF = RS485Bus.readProcess(id, PVPVOF, 2);   // returns PV+PVOF and SV
+  //cmdResp readPVPVOF = RS485Bus.readProcess(id, SVSVOF, 2);   // returns SV
+  //cmdResp readPVPVOF = RS485Bus.readProcess(id, SV0, 2);   // returns 0
+  //cmdResp readPVPVOF = RS485Bus.readProcess(id, SV, 2);   // returns the SV
+  //cmdResp readPVPVOF = RS485Bus.readProcess(id, PVOF, 2);   // 
+
+
+  // get the pv+pvof - this returns 2 bytes of PVPVOF
+  cmdResp readPVPVOF = RS485Bus.readProcess(id, PVPVOF, 2);
 
   if( (false == readPVPVOF.retCode()) )
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_RTD_READS__
     Serial.println("readPVPVOF fail");
     #endif
+    
     return(false);
+    
   } else
   {
-    *pv = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
-    *pv = (float)*pv / (float)10;
+    pvpvof = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
     
-    #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.println("readPVPVOF ONLY a success");
-    //Serial.print("readProcess PVPVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readPVPVOF.bufflen()); Serial.println(" bytes returned");
-    //Serial.print("read value is: 0x"); Serial.print(*pv); Serial.print(", "); Serial.println(htons((*(reinterpret_cast<uint16_t*>(readPVPVOF.buff()[1])))));
+    #ifdef __DEBUG_RTD_READS__
+    Serial.println("readPVPVOF a success");
+    Serial.print("readProcess PVPVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readPVPVOF.bufflen()); Serial.println(" bytes returned");
+    Serial.print("read value is: 0x"); Serial.print(pvpvof, 16); Serial.print(", "); Serial.println(htons((*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])))));
     #endif
   }
+
+
+  // get the pvof - this returns 4 bytes of PVOF ( whether you request 2 or 4 bytes )
+  cmdResp readPVOF = RS485Bus.readProcess(id, PVOF, 2);
+
+  if( (false == readPVOF.retCode()) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.println("readPVOF fail");
+    #endif
+    
+    return(false);
+    
+  } else
+  {
+    pvof = htons(*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])));
+    
+    #ifdef __DEBUG_RTD_READS__
+    Serial.println("readPVOF a success");
+    Serial.print("readProcess PVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readPVOF.bufflen()); Serial.println(" bytes returned");
+    Serial.print("read value is: 0x"); Serial.print(pvof, 16); Serial.print(", "); Serial.println(htons((*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])))));
+    #endif
+  }
+
+  *pv = pvpvof - pvof;
+  *pv = (float)*pv / (float)10;
 
   return(true);
 }
@@ -4353,41 +4465,41 @@ bool calculateAndWritePVOF(void)
     //
     if( (sysStates.highRTDTemp != sysStates.DDR_RTD.temperature) )
     {
-      #ifdef __DEBUG2_VIA_SERIAL__
+      #ifdef __DEBUG_RTD_READS__
       Serial.println("DOING writePVOF----------------");
       #endif
       
       // calculate the PV offset as the (hight temp RTD) - (DDR-Accuthermo-PV)
       pvof  = (uint16_t)(10 * (sysStates.highRTDTemp - sysStates.DDR_RTD.temperature));
-      
-      #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.print("highRTDTemp is: "); Serial.print(sysStates.highRTDTemp, 1);
-      Serial.print(" DDR_RTD PV is : "); Serial.println(sysStates.DDR_RTD.temperature, 1);
-      Serial.print("pvof to write is : "); Serial.println(pvof, 1);
-      #endif
-
-      if( (0xffff == writePVOF(DDR_RS485_ID, pvof)) )
-      {
-        #ifdef __DEBUG_VIA_SERIAL__
-        Serial.print("FAILED to writePVOF of "); Serial.println(pvof, 16);
-        #endif
-
-        return(false);
-      }
-
-      #ifdef __DEBUG_RTD_READS__
-      //Serial.print("SUCCESS writePVOF of "); Serial.print(pvof); Serial.println("-------------------");
-      Serial.println("SUCCESS writePVOF");
-      #endif
     } else
     {
-      #ifdef __DEBUG_RTD_READS__
-      Serial.println("no need to write PVOF, hot RTD is the accuthermo RTD");
-      #endif
+      // clear a prior pvof - we have time
+      pvof = 0;
     }
+      
+    #ifdef __DEBUG_RTD_READS__
+    Serial.print("highRTDTemp is: "); Serial.print(sysStates.highRTDTemp, 1);
+    Serial.print(" DDR_RTD PV is : "); Serial.println(sysStates.DDR_RTD.temperature, 1);
+    Serial.print("pvof to write is : "); Serial.println(pvof, 1);
+    #endif
+
+    if( (0xffff == writePVOF(DDR_RS485_ID, pvof)) )
+    {
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print("FAILED to writePVOF of "); Serial.println(pvof, 16);
+      #endif
+
+      return(false);
+    }
+
+    #ifdef __DEBUG_RTD_READS__
+    //Serial.print("SUCCESS writePVOF of "); Serial.print(pvof); Serial.println("-------------------");
+    Serial.println("SUCCESS writePVOF");
+    #endif
+
   } else
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_RTD_READS__
     Serial.println("not in RUNNING state, not writing PVOF");
     #endif
   }
