@@ -12,6 +12,7 @@
 using namespace std;
 
 typedef bool (controlProtocol::*pStartUpCmd_t)(uint16_t);
+typedef bool (controlProtocol::*pStartUpATCmd_t)(uint16_t);
 typedef bool (controlProtocol::*pShutDownCmd_t)(uint16_t);
 typedef bool (controlProtocol::*pGetStatus_t)(uint16_t, uint16_t*, uint16_t*, uint16_t*);
 typedef bool (controlProtocol::*pSetACUTemperature_t)(uint16_t, uint16_t, float);
@@ -79,6 +80,30 @@ class menuStartUpCmd : public menuItemBase
     private:
     menuStartUpCmd(const menuItemBase&);
     menuStartUpCmd& operator=(const menuItemBase&);
+};
+
+
+// bool    StartUpCmd(uint16_t);
+class menuStartUpATCmd : public menuItemBase
+{
+    public:
+    pStartUpATCmd_t m_pStartUpATCmd  = &controlProtocol::StartUpATCmd;
+
+    menuStartUpATCmd()
+        :   menuItemBase("autotune", "autotune ASIC and DDR temp control"),     // TODO: add chiller back for other
+            m_pStartUpATCmd(&controlProtocol::StartUpATCmd) {}
+
+    void execute(controlProtocol* pCP)
+    {
+        if( (pCP->*m_pStartUpATCmd)(m_destId) )
+            cout << "\nautotune successful" << endl;
+        else
+            cout << "\nautotune failed" << endl;
+    }
+    
+    private:
+    menuStartUpATCmd(const menuItemBase&);
+    menuStartUpATCmd& operator=(const menuItemBase&);
 };
 
 

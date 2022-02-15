@@ -1957,6 +1957,106 @@ bool controlProtocol::StartUpCmd(uint16_t destAddress)
 }
 
 
+bool controlProtocol::StartUpATCmd(uint16_t destAddress)
+{
+    bool                retVal  = false;
+    uint16_t            seqNum;
+    uint16_t            result;
+    msgHeader_t*        pMsgHeader;
+    startUpATCmdResp_t* pstartUpATCmdResp;
+
+
+    //
+    // increment the sequence number for this transaction
+    //
+    ++m_seqNum;
+
+    if( (doTxCommand(Make_startUpATCmd(destAddress, m_buff))) )
+    {
+        //
+        // save the seqNum
+        //
+        pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+        seqNum  = pMsgHeader->seqNum;
+
+        // get the return packet
+        if( (doRxResponse(COMM_TIMEOUT)) )
+        {
+            #ifdef __DEBUG_CTRL_PROTO__
+            //
+            // dump out what we got
+            //
+            for(uint16_t i = 0; i < sizeof(startUpATCmdResp_t); i++)
+            {
+                printf("0x%02X ", m_buff[i]);
+            }
+            printf("\n");
+            #endif
+
+            //
+            // check got the expected message number
+            //
+            pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+            if( (startUpATCmdResp != pMsgHeader->msgNum) )
+            {
+                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+            //
+            // cast into the buffer, pick up the CRC
+            //
+            pstartUpATCmdResp = reinterpret_cast<startUpATCmdResp_t*>(m_buff);
+
+            //
+            // verify seqNum and CRC
+            //
+            if( !(verifyMessage(len_startUpATCmdResp_t, ntohs(pstartUpATCmdResp->crc),
+                                        seqNum, ntohs(pstartUpATCmdResp->eop))) )
+            {
+                // TODO: drop the packet
+                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
+                        __PRETTY_FUNCTION__);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+
+            //
+            // report the health
+            //
+            Parse_startUpATCmdResp(m_buff, &result, &seqNum);
+
+            #ifdef __DEBUG_CTRL_PROTO__
+            printf("found in packet result %d seqNumer 0x%02x\n", result, seqNum);
+            #endif
+
+            if( (result) )
+                retVal  = true;
+            else
+                retVal  = false;
+        } else
+        {
+            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+        }
+
+    } else
+    {
+        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+    }
+
+    return(retVal);
+}
+
+
 bool controlProtocol::ShutDownCmd(uint16_t destAddress)
 {
     bool                retVal  = false;
@@ -2477,6 +2577,398 @@ bool controlProtocol::GetEventLogCmd(uint16_t destAddress, elogentry* eventlog)
 }
 
 
+bool controlProtocol::SetH20AlarmASIC(uint16_t destAddress, float temperature)
+{
+    bool                retVal  = false;
+    uint16_t            seqNum;
+    uint16_t            result;
+    msgHeader_t*        pMsgHeader;
+    setH20AlarmASICResp_t*    psetH20AlarmASICResp;
+
+
+    //
+    // increment the sequence number for this transaction
+    //
+    ++m_seqNum;
+
+    if( (doTxCommand(Make_setH20AlarmASIC(destAddress, m_buff, temperature))) )
+    {
+        //
+        // save the seqNum
+        //
+        pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+        seqNum  = pMsgHeader->seqNum;
+
+        // get the return packet
+        if( (doRxResponse(COMM_TIMEOUT)) )
+        {
+            #ifdef __DEBUG_CTRL_PROTO__
+            //
+            // dump out what we got
+            //
+            for(uint16_t i = 0; i < sizeof(setH20AlarmASICResp_t); i++)
+            {
+                printf("0x%02X ", m_buff[i]);
+            }
+            printf("\n");
+            #endif
+
+            //
+            // check got the expected message number
+            //
+            pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+            if( (setH20AlarmASICResp != pMsgHeader->msgNum) )
+            {
+                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+            //
+            // cast into the buffer, pick up the CRC
+            //
+            psetH20AlarmASICResp = reinterpret_cast<setH20AlarmASICResp_t*>(m_buff);
+
+            //
+            // verify seqNum and CRC
+            //
+            if( !(verifyMessage(len_setH20AlarmASICResp_t, ntohs(psetH20AlarmASICResp->crc),
+                                            seqNum, ntohs(psetH20AlarmASICResp->eop))) )
+            {
+                // TODO: drop the packet
+                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
+                        __PRETTY_FUNCTION__);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+
+            //
+            // report the health
+            //
+            Parse_setH20AlarmASICResp(m_buff, &result, &seqNum);
+
+            #ifdef __DEBUG_CTRL_PROTO__
+            printf("found in packet result %d seqNumer 0x%02x\n", result, seqNum);
+            #endif
+
+            if( (result) )
+                retVal  = true;
+            else
+                retVal  = false;
+        } else
+        {
+            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+        }
+
+    } else
+    {
+        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+    }
+
+    return(retVal);
+}
+
+
+bool controlProtocol::GetH20AlarmASIC(uint16_t destAddress, float* temperature)
+{
+    bool                retVal  = false;
+    uint16_t            seqNum;
+    msgHeader_t*        pMsgHeader;
+    getH20AlarmASICResp_t*    pgetH20AlarmASICResp;
+
+
+    //
+    // increment the sequence number for this transaction
+    //
+    ++m_seqNum;
+
+    if( (doTxCommand(Make_getH20AlarmASIC(destAddress, m_buff))) )
+    {
+        //
+        // save the seqNum
+        //
+        pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+        seqNum  = pMsgHeader->seqNum;
+
+        // get the return packet
+        if( (doRxResponse(COMM_TIMEOUT)) )
+        {
+            #ifdef __DEBUG_CTRL_PROTO__
+            //
+            // dump out what we got
+            //
+            for(uint16_t i = 0; i < sizeof(getH20AlarmASICResp_t); i++)
+            {
+                printf("0x%02X ", m_buff[i]);
+            }
+            printf("\n");
+            #endif
+
+            //
+            // check got the expected message number
+            //
+            pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+            if( (getH20AlarmASICResp != pMsgHeader->msgNum) )
+            {
+                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+            //
+            // cast into the buffer, pick up the CRC
+            //
+            pgetH20AlarmASICResp = reinterpret_cast<getH20AlarmASICResp_t*>(m_buff);
+
+            //
+            // verify seqNum and CRC
+            //
+            if( !(verifyMessage(len_getH20AlarmASICResp_t, ntohs(pgetH20AlarmASICResp->crc),
+                                            seqNum, ntohs(pgetH20AlarmASICResp->eop))) )
+            {
+                // TODO: drop the packet
+                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
+                        __PRETTY_FUNCTION__);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+
+            //
+            // report the health
+            //
+            Parse_getH20AlarmASICResp(m_buff, temperature, &seqNum);
+
+            #ifdef __DEBUG_CTRL_PROTO__
+            printf("found in packet temperature %lf seqNumer 0x%02x\n", *temperature, seqNum);
+            #endif
+
+            retVal  = true;
+        } else
+        {
+            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+        }
+
+    } else
+    {
+        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+    }
+
+    return(retVal);
+}
+
+
+bool controlProtocol::SetH20AlarmDDR(uint16_t destAddress, float temperature)
+{
+    bool                retVal  = false;
+    uint16_t            seqNum;
+    uint16_t            result;
+    msgHeader_t*        pMsgHeader;
+    setH20AlarmDDRResp_t*    psetH20AlarmDDRResp;
+
+
+    //
+    // increment the sequence number for this transaction
+    //
+    ++m_seqNum;
+
+    if( (doTxCommand(Make_setH20AlarmDDR(destAddress, m_buff, temperature))) )
+    {
+        //
+        // save the seqNum
+        //
+        pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+        seqNum  = pMsgHeader->seqNum;
+
+        // get the return packet
+        if( (doRxResponse(COMM_TIMEOUT)) )
+        {
+            #ifdef __DEBUG_CTRL_PROTO__
+            //
+            // dump out what we got
+            //
+            for(uint16_t i = 0; i < sizeof(setH20AlarmDDRResp_t); i++)
+            {
+                printf("0x%02X ", m_buff[i]);
+            }
+            printf("\n");
+            #endif
+
+            //
+            // check got the expected message number
+            //
+            pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+            if( (setH20AlarmDDRResp != pMsgHeader->msgNum) )
+            {
+                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+            //
+            // cast into the buffer, pick up the CRC
+            //
+            psetH20AlarmDDRResp = reinterpret_cast<setH20AlarmDDRResp_t*>(m_buff);
+
+            //
+            // verify seqNum and CRC
+            //
+            if( !(verifyMessage(len_setH20AlarmDDRResp_t, ntohs(psetH20AlarmDDRResp->crc),
+                                            seqNum, ntohs(psetH20AlarmDDRResp->eop))) )
+            {
+                // TODO: drop the packet
+                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
+                        __PRETTY_FUNCTION__);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+
+            //
+            // report the health
+            //
+            Parse_setH20AlarmDDRResp(m_buff, &result, &seqNum);
+
+            #ifdef __DEBUG_CTRL_PROTO__
+            printf("found in packet result %d seqNumer 0x%02x\n", result, seqNum);
+            #endif
+
+            if( (result) )
+                retVal  = true;
+            else
+                retVal  = false;
+        } else
+        {
+            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+        }
+
+    } else
+    {
+        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+    }
+
+    return(retVal);
+}
+
+
+bool controlProtocol::GetH20AlarmDDR(uint16_t destAddress, float* temperature)
+{
+    bool                retVal  = false;
+    uint16_t            seqNum;
+    msgHeader_t*        pMsgHeader;
+    getH20AlarmDDRResp_t*    pgetH20AlarmDDRResp;
+
+
+    //
+    // increment the sequence number for this transaction
+    //
+    ++m_seqNum;
+
+    if( (doTxCommand(Make_getH20AlarmDDR(destAddress, m_buff))) )
+    {
+        //
+        // save the seqNum
+        //
+        pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+        seqNum  = pMsgHeader->seqNum;
+
+        // get the return packet
+        if( (doRxResponse(COMM_TIMEOUT)) )
+        {
+            #ifdef __DEBUG_CTRL_PROTO__
+            //
+            // dump out what we got
+            //
+            for(uint16_t i = 0; i < sizeof(getH20AlarmDDRResp_t); i++)
+            {
+                printf("0x%02X ", m_buff[i]);
+            }
+            printf("\n");
+            #endif
+
+            //
+            // check got the expected message number
+            //
+            pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+            if( (getH20AlarmDDRResp != pMsgHeader->msgNum) )
+            {
+                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+            //
+            // cast into the buffer, pick up the CRC
+            //
+            pgetH20AlarmDDRResp = reinterpret_cast<getH20AlarmDDRResp_t*>(m_buff);
+
+            //
+            // verify seqNum and CRC
+            //
+            if( !(verifyMessage(len_getH20AlarmDDRResp_t, ntohs(pgetH20AlarmDDRResp->crc),
+                                            seqNum, ntohs(pgetH20AlarmDDRResp->eop))) )
+            {
+                // TODO: drop the packet
+                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
+                        __PRETTY_FUNCTION__);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+
+            //
+            // report the health
+            //
+            Parse_getH20AlarmDDRResp(m_buff, temperature, &seqNum);
+
+            #ifdef __DEBUG_CTRL_PROTO__
+            printf("found in packet temperature %lf seqNumer 0x%02x\n", *temperature, seqNum);
+            #endif
+
+            retVal  = true;
+        } else
+        {
+            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+        }
+
+    } else
+    {
+        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+    }
+
+    return(retVal);
+}
+
+
 uint16_t controlProtocol::Make_startUpCmd(uint16_t Address, uint8_t* pBuff)
 {
     startUpCmd_t*    msg  = reinterpret_cast<startUpCmd_t*>(pBuff);
@@ -2536,6 +3028,72 @@ uint16_t controlProtocol::Make_startUpCmdResp(uint16_t Address, uint8_t* pBuff, 
 void controlProtocol::Parse_startUpCmdResp(uint8_t* m_buff, uint16_t* result, uint16_t* pSeqNum)
 {
     startUpCmdResp_t* pResponse = reinterpret_cast<startUpCmdResp_t*>(m_buff);
+
+
+    *result     = ntohs(pResponse->result);
+    *pSeqNum    = pResponse->header.seqNum;
+}
+
+
+uint16_t controlProtocol::Make_startUpATCmd(uint16_t Address, uint8_t* pBuff)
+{
+    startUpATCmd_t*    msg  = reinterpret_cast<startUpATCmd_t*>(pBuff);
+    uint16_t      CRC  = 0;
+
+
+    memset(m_buff, '\0', MAX_BUFF_LENGTH_CP + 1);
+    // create the startUpATCmd message in pBuff and CRC16 checksum it
+    msg->header.control         = COMMAND;
+    msg->header.length          = sizeof(startUpATCmd_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = m_seqNum;
+    msg->header.msgNum          = startUpATCmd;
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_startUpATCmd_t);
+
+    // put the CRC
+    msg->crc                = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(startUpATCmd_t));
+}
+
+
+uint16_t controlProtocol::Make_startUpATCmdResp(uint16_t Address, uint8_t* pBuff, uint16_t result, uint16_t SeqNum)
+{
+    startUpATCmdResp_t*  msg  = reinterpret_cast<startUpATCmdResp_t*>(pBuff);
+    uint16_t        CRC  = 0;
+
+
+    // create the startUpATCmdResp message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(startUpATCmdResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = startUpATCmdResp;
+
+    // set the result
+    msg->result             = htons(result);
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff, len_startUpATCmdResp_t);
+
+    // put the CRC
+    msg->crc                = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(startUpATCmdResp_t));
+}
+
+
+void controlProtocol::Parse_startUpATCmdResp(uint8_t* m_buff, uint16_t* result, uint16_t* pSeqNum)
+{
+    startUpATCmdResp_t* pResponse = reinterpret_cast<startUpATCmdResp_t*>(m_buff);
 
 
     *result     = ntohs(pResponse->result);
@@ -3893,6 +4451,318 @@ void controlProtocol::Parse_getChillerInfoResp(uint8_t* m_buff, uint16_t* result
     *pSeqNum    = pResponse->header.seqNum;
 }
 #endif
+
+
+uint16_t controlProtocol::Make_setH20AlarmASIC(uint16_t Address, uint8_t* pBuff, float temperature)
+{
+    setH20AlarmASIC_t* msg = reinterpret_cast<setH20AlarmASIC_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = COMMAND;
+    msg->header.length          = sizeof(setH20AlarmASIC_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = m_seqNum;
+    msg->header.msgNum          = setH20AlarmASIC;
+    #ifdef __RUNNING_ON_CONTROLLINO__
+    //
+    // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
+    //
+    //dtostrf(temperature, -(MAX_CHILLER_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
+    #else
+    //
+    // use the snprintf function, 
+    //
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
+    #endif
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_setH20AlarmASIC_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(setH20AlarmASIC_t));
+}
+
+
+uint16_t controlProtocol::Make_setH20AlarmASICResp(uint16_t Address, uint8_t* pBuff, uint16_t result, uint16_t SeqNum)
+{
+    setH20AlarmASICResp_t* msg = reinterpret_cast<setH20AlarmASICResp_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(setH20AlarmASICResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = setH20AlarmASICResp;
+    msg->result                 = htons(result);
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_setH20AlarmASICResp_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(setH20AlarmASICResp_t));
+}
+
+
+void controlProtocol::Parse_setH20AlarmASICResp(uint8_t* m_buff, uint16_t* result, uint16_t* pSeqNum)
+{
+    setH20AlarmASICResp_t* pResponse = reinterpret_cast<setH20AlarmASICResp_t*>(m_buff);
+
+
+    *result     = ntohs(pResponse->result);
+    *pSeqNum    = pResponse->header.seqNum;
+}
+
+
+uint16_t controlProtocol::Make_getH20AlarmASIC(uint16_t Address, uint8_t* pBuff)
+{
+    getH20AlarmASIC_t* msg = reinterpret_cast<getH20AlarmASIC_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = COMMAND;
+    msg->header.length          = sizeof(getH20AlarmASIC_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = m_seqNum;
+    msg->header.msgNum          = getH20AlarmASIC;
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_getH20AlarmASIC_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getH20AlarmASIC_t));
+}
+
+uint16_t controlProtocol::Make_getH20AlarmASICResp(uint16_t Address, uint8_t* pBuff, float temperature, uint16_t SeqNum)
+{
+    getH20AlarmASICResp_t* msg = reinterpret_cast<getH20AlarmASICResp_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(getH20AlarmASICResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = getH20AlarmASICResp;
+    #ifdef __RUNNING_ON_CONTROLLINO__
+    //
+    // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
+    //
+    //dtostrf(temperature, -(MAX_CHILLER_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
+    #else
+    //
+    // use the snprintf function, 
+    //
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
+    #endif
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_getH20AlarmASICResp_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getH20AlarmASICResp_t));
+}
+
+void controlProtocol::Parse_getH20AlarmASICResp(uint8_t* m_buff, float* temperature, uint16_t* pSeqNum)
+{
+    getH20AlarmASICResp_t* pResponse = reinterpret_cast<getH20AlarmASICResp_t*>(m_buff);
+
+
+    #ifdef __RUNNING_ON_CONTROLLINO__
+    //
+    // on uC use atof, sscanf support is dodgy
+    //
+    *temperature = atof(reinterpret_cast<char*>(pResponse->temperature));
+    #else
+    sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+    #endif
+
+    *pSeqNum    = pResponse->header.seqNum;
+}
+
+uint16_t controlProtocol::Make_setH20AlarmDDR(uint16_t Address, uint8_t* pBuff, float temperature)
+{
+    setH20AlarmDDR_t* msg = reinterpret_cast<setH20AlarmDDR_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = COMMAND;
+    msg->header.length          = sizeof(setH20AlarmDDR_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = m_seqNum;
+    msg->header.msgNum          = setH20AlarmDDR;
+    #ifdef __RUNNING_ON_CONTROLLINO__
+    //
+    // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
+    //
+    //dtostrf(temperature, -(MAX_CHILLER_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
+    #else
+    //
+    // use the snprintf function, 
+    //
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
+    #endif
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_setH20AlarmDDR_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(setH20AlarmDDR_t));
+}
+
+
+uint16_t controlProtocol::Make_setH20AlarmDDRResp(uint16_t Address, uint8_t* pBuff, uint16_t result, uint16_t SeqNum)
+{
+    setH20AlarmDDRResp_t* msg = reinterpret_cast<setH20AlarmDDRResp_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(setH20AlarmDDRResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = setH20AlarmDDRResp;
+    msg->result                 = htons(result);
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_setH20AlarmDDRResp_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(setH20AlarmDDRResp_t));
+}
+
+
+void controlProtocol::Parse_setH20AlarmDDRResp(uint8_t* m_buff, uint16_t* result, uint16_t* pSeqNum)
+{
+    setH20AlarmDDRResp_t* pResponse = reinterpret_cast<setH20AlarmDDRResp_t*>(m_buff);
+
+
+    *result     = ntohs(pResponse->result);
+    *pSeqNum    = pResponse->header.seqNum;
+}
+
+
+uint16_t controlProtocol::Make_getH20AlarmDDR(uint16_t Address, uint8_t* pBuff)
+{
+    getH20AlarmDDR_t* msg = reinterpret_cast<getH20AlarmDDR_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = COMMAND;
+    msg->header.length          = sizeof(getH20AlarmDDR_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = m_seqNum;
+    msg->header.msgNum          = getH20AlarmDDR;
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_getH20AlarmDDR_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getH20AlarmDDR_t));
+}
+
+uint16_t controlProtocol::Make_getH20AlarmDDRResp(uint16_t Address, uint8_t* pBuff, float temperature, uint16_t SeqNum)
+{
+    getH20AlarmDDRResp_t* msg = reinterpret_cast<getH20AlarmDDRResp_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(getH20AlarmDDRResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = getH20AlarmDDRResp;
+    #ifdef __RUNNING_ON_CONTROLLINO__
+    //
+    // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
+    //
+    //dtostrf(temperature, -(MAX_CHILLER_TEMP_LENGH), 2, reinterpret_cast<char*>(msg->temperature));
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
+    #else
+    //
+    // use the snprintf function, 
+    //
+    snprintf(reinterpret_cast<char*>(msg->temperature), MAX_CHILLER_TEMP_LENGH, "%-+3.2f", temperature);
+    #endif
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_getH20AlarmDDRResp_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getH20AlarmDDRResp_t));
+}
+
+void controlProtocol::Parse_getH20AlarmDDRResp(uint8_t* m_buff, float* temperature, uint16_t* pSeqNum)
+{
+    getH20AlarmDDRResp_t* pResponse = reinterpret_cast<getH20AlarmDDRResp_t*>(m_buff);
+
+
+    #ifdef __RUNNING_ON_CONTROLLINO__
+    //
+    // on uC use atof, sscanf support is dodgy
+    //
+    *temperature = atof(reinterpret_cast<char*>(pResponse->temperature));
+    #else
+    sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+    #endif
+
+    *pSeqNum    = pResponse->header.seqNum;
+}
+
 
 
 uint16_t controlProtocol::Make_NACK(uint16_t Address, uint8_t* pBuff, uint16_t SeqNum)

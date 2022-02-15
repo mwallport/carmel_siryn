@@ -12,6 +12,10 @@
 #include "events.h"
 
 
+// move this
+float ASIC_HIGH   = 35.5;
+float DDR_HIGH    = 35.5;
+
 
 // this is for important, error condition debug output
 #define __DEBUG_VIA_SERIAL__

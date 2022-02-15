@@ -798,6 +798,12 @@ void handleMsgs(uint16_t tmo)
           break;
         }
   
+        case startUpATCmd:        // start the chiller if present, and ACUs
+        {
+          handleStartUpATCmd();
+          break;
+        }
+  
         case shutDownCmd:         // shutdown the chiller, ACUs, and sensor
         {
           handleShutDownCmd();
@@ -907,6 +913,30 @@ void handleMsgs(uint16_t tmo)
             break;
         }
 
+        case setH20AlarmASIC:
+        {
+            handleSetH20AlarmASIC();
+            break;
+        }
+        
+        case setH20AlarmDDR:
+        {
+            handleSetH20AlarmDDR();
+            break;
+        }
+        
+        case getH20AlarmASIC:
+        {
+            handleGetH20AlarmASIC();
+            break;
+        }
+        
+        case getH20AlarmDDR:
+        {
+            handleGetH20AlarmDDR();
+            break;
+        }
+
         default:
         {
           // send NACK
@@ -948,10 +978,10 @@ void lcd_starting(void)
   lcd.noDisplay();
   lcd.clear();
   lcd.home();
-  lcd.setCursor(2,1);
-  lcd.print("**** SYSTEM ****");
-  lcd.setCursor(2,2);
-  lcd.print("*** STARTING ***");
+  lcd.setCursor(1,1);
+  lcd.print("***** SYSTEM *****");
+  lcd.setCursor(1,2);
+  lcd.print("**** STARTING ****");
   lcd.display();
 }
 
@@ -965,9 +995,9 @@ void lcd_starting_AT(void)
   lcd.noDisplay();
   lcd.clear();
   lcd.home();
-  lcd.setCursor(2,1);
+  lcd.setCursor(1,1);
   lcd.print("***** SYSTEM *****");
-  lcd.setCursor(2,2);
+  lcd.setCursor(1,2);
   lcd.print("*** STARTING AT ***");
   lcd.display();
 }
@@ -1541,6 +1571,90 @@ void handleStartUpCmd(void)
   {
     Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
     Serial.println(ntohs(pstartUpCmd->header.address.address));
+    Serial.flush();
+  #endif
+  }
+}
+
+
+void handleStartUpATCmd(void)
+{
+  startUpATCmd_t* pstartUpATCmd = reinterpret_cast<startUpATCmd_t*>(cp.m_buff);
+  uint16_t  respLength; 
+  uint16_t  result = 0;
+
+
+  //
+  // verify the received packet, here beause this is a startUpATCmdCmd
+  // check this is my address and the CRC is correct
+  //
+  if( (ntohs(pstartUpATCmd->header.address.address)) == cp.m_myAddress)
+  {
+    //
+    // verify the CRC
+    //
+    if( (cp.verifyMessage(len_startUpATCmd_t,
+          ntohs(pstartUpATCmd->crc), ntohs(pstartUpATCmd->eop))) )
+    {
+      //
+      // start the ACUs, chiller, sensor ...
+      //
+      if( (startUp(true)) )
+      {
+        result  = 1;
+        
+        //
+        // adjust the button
+        //
+        buttonOnOff         = true;
+        currentButtonOnOff  = buttonOnOff;
+
+        //
+        // adjust the button LED
+        //
+        digitalWrite(BUTTON_LED, HIGH);
+
+      } else
+      {
+        setSystemStatus();  // derive the button state
+      }
+
+      respLength = cp.Make_startUpATCmdResp(cp.m_peerAddress, cp.m_buff,
+        result, pstartUpATCmd->header.seqNum
+      );
+
+      //
+      // use the CP object to send the response back
+      // this function usese the cp.m_buff created above, just
+      // need to send the lenght into the function
+      //
+      if( !(cp.doTxResponse(respLength)))
+      {
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+        Serial.flush();
+        #endif
+      #ifdef __DEBUG2_VIA_SERIAL__
+      } else
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.println(" sent response");
+        Serial.flush();
+      #endif
+      }
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+      Serial.println(ntohs(pstartUpATCmd->crc));
+      Serial.flush();
+    #endif
+    }
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  } else
+  {
+    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+    Serial.println(ntohs(pstartUpATCmd->header.address.address));
     Serial.flush();
   #endif
   }
@@ -4652,4 +4766,256 @@ void configureAdafruitsBySysteState(systemStatus sysStatus)
     DDR2_RTD.autoConvert(false);
     ASIC_Chiller_RTD.autoConvert(false);
     DDR_Chiller_RTD.autoConvert(false);  }
+}
+
+
+void handleSetH20AlarmASIC(void)
+{
+  setH20AlarmASIC_t* psetH20AlarmASIC = reinterpret_cast<setH20AlarmASIC_t*>(cp.m_buff);
+  uint16_t  respLength; 
+  uint16_t  result = 0;
+
+
+  //
+  // verify the received packet, here beause this is a setH20AlarmASICCmd
+  // check this is my address and the CRC is correct
+  //
+  if( (ntohs(psetH20AlarmASIC->header.address.address)) == cp.m_myAddress)
+  {
+    //
+    // verify the CRC
+    //
+    if( (cp.verifyMessage(len_setH20AlarmASIC_t,
+                ntohs(psetH20AlarmASIC->crc), ntohs(psetH20AlarmASIC->eop))) )
+    {
+      //
+      // set the new H20 alarm ASIC
+      //
+      sscanf(psetH20AlarmASIC->temperature, "%3.2f", &ASIC_HIGH);
+      Serial.print("ASIC_HIGH: "); Serial.println(ASIC_HIGH, 2);
+
+      respLength = cp.Make_setH20AlarmASICResp(cp.m_peerAddress, cp.m_buff,
+        1, psetH20AlarmASIC->header.seqNum
+      );
+
+      //
+      // use the CP object to send the response back
+      // this function usese the cp.m_buff created above, just
+      // need to send the lenght into the function
+      //
+      if( !(cp.doTxResponse(respLength)))
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+        Serial.flush();
+      #ifdef __DEBUG2_VIA_SERIAL__
+      } else
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+        Serial.flush();
+      #endif
+      }
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+      Serial.println(ntohs(psetH20AlarmASIC->crc));
+      Serial.flush();
+    #endif
+    }
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  } else
+  {
+    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+    Serial.println(ntohs(psetH20AlarmASIC->header.address.address));
+    Serial.flush();
+  #endif
+  }
+}
+
+
+void handleGetH20AlarmASIC()
+{
+  getH20AlarmASIC_t* pgetH20AlarmASIC = reinterpret_cast<getH20AlarmASIC_t*>(cp.m_buff);
+  uint16_t  respLength; 
+
+
+  //
+  // verify the received packet, here beause this is a getH20AlarmASICCmd
+  // check this is my address and the CRC is correct
+  //
+  if( (ntohs(pgetH20AlarmASIC->header.address.address)) == cp.m_myAddress)
+  {
+    //
+    // verify the CRC
+    //
+    if( (cp.verifyMessage(len_getH20AlarmASIC_t,
+                ntohs(pgetH20AlarmASIC->crc), ntohs(pgetH20AlarmASIC->eop))) )
+    {
+      //
+      // chiller informaion is gotton during getStatus
+      //
+      respLength = cp.Make_getH20AlarmASICResp(cp.m_peerAddress, cp.m_buff,
+        ASIC_HIGH, pgetH20AlarmASIC->header.seqNum);
+
+      //
+      // use the CP object to send the response back
+      // this function usese the cp.m_buff created above, just
+      // need to send the lenght into the function
+      //
+      if( !(cp.doTxResponse(respLength)))
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+        Serial.flush();
+      #ifdef __DEBUG2_VIA_SERIAL__
+      } else
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+        Serial.flush();
+      #endif
+      }
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+      Serial.println(ntohs(pgetH20AlarmASIC->crc));
+      Serial.flush();
+    #endif
+    }
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  } else
+  {
+    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+    Serial.println(ntohs(pgetH20AlarmASIC->header.address.address));
+    Serial.flush();
+  #endif
+  }
+}
+
+
+
+
+void handleSetH20AlarmDDR(void)
+{
+  setH20AlarmDDR_t* psetH20AlarmDDR = reinterpret_cast<setH20AlarmDDR_t*>(cp.m_buff);
+  uint16_t  respLength; 
+  uint16_t  result = 0;
+
+
+  //
+  // verify the received packet, here beause this is a setH20AlarmDDRCmd
+  // check this is my address and the CRC is correct
+  //
+  if( (ntohs(psetH20AlarmDDR->header.address.address)) == cp.m_myAddress)
+  {
+    //
+    // verify the CRC
+    //
+    if( (cp.verifyMessage(len_setH20AlarmDDR_t,
+                ntohs(psetH20AlarmDDR->crc), ntohs(psetH20AlarmDDR->eop))) )
+    {
+      //
+      // set the new H20 alarm DDR
+      //
+      sscanf(psetH20AlarmDDR->temperature, "%3.2f", &DDR_HIGH);
+      Serial.print("DDR_HIGH: "); Serial.println(DDR_HIGH, 2);
+
+      respLength = cp.Make_setH20AlarmDDRResp(cp.m_peerAddress, cp.m_buff,
+        1, psetH20AlarmDDR->header.seqNum
+      );
+
+      //
+      // use the CP object to send the response back
+      // this function usese the cp.m_buff created above, just
+      // need to send the lenght into the function
+      //
+      if( !(cp.doTxResponse(respLength)))
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+        Serial.flush();
+      #ifdef __DEBUG2_VIA_SERIAL__
+      } else
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+        Serial.flush();
+      #endif
+      }
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+      Serial.println(ntohs(psetH20AlarmDDR->crc));
+      Serial.flush();
+    #endif
+    }
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  } else
+  {
+    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+    Serial.println(ntohs(psetH20AlarmDDR->header.address.address));
+    Serial.flush();
+  #endif
+  }
+}
+
+
+void handleGetH20AlarmDDR()
+{
+  getH20AlarmDDR_t* pgetH20AlarmDDR = reinterpret_cast<getH20AlarmDDR_t*>(cp.m_buff);
+  uint16_t  respLength; 
+
+
+  //
+  // verify the received packet, here beause this is a getH20AlarmDDRCmd
+  // check this is my address and the CRC is correct
+  //
+  if( (ntohs(pgetH20AlarmDDR->header.address.address)) == cp.m_myAddress)
+  {
+    //
+    // verify the CRC
+    //
+    if( (cp.verifyMessage(len_getH20AlarmDDR_t,
+                ntohs(pgetH20AlarmDDR->crc), ntohs(pgetH20AlarmDDR->eop))) )
+    {
+      //
+      // chiller informaion is gotton during getStatus
+      //
+      respLength = cp.Make_getH20AlarmDDRResp(cp.m_peerAddress, cp.m_buff,
+        DDR_HIGH, pgetH20AlarmDDR->header.seqNum);
+
+      //
+      // use the CP object to send the response back
+      // this function usese the cp.m_buff created above, just
+      // need to send the lenght into the function
+      //
+      if( !(cp.doTxResponse(respLength)))
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+        Serial.flush();
+      #ifdef __DEBUG2_VIA_SERIAL__
+      } else
+      {
+        Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+        Serial.flush();
+      #endif
+      }
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+      Serial.println(ntohs(pgetH20AlarmDDR->crc));
+      Serial.flush();
+    #endif
+    }
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  } else
+  {
+    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+    Serial.println(ntohs(pgetH20AlarmDDR->header.address.address));
+    Serial.flush();
+  #endif
+  }
 }

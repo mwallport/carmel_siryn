@@ -66,6 +66,9 @@ void createMenu(void)
     p_menuItem  = new menuStartUpCmd;
     menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
 
+    p_menuItem  = new menuStartUpATCmd;
+    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
+
     p_menuItem  = new menuShutDownCmd;
     menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
 

@@ -162,6 +162,8 @@ typedef enum _msgID
 #endif
     startUpCmd,                 // start up
     startUpCmdResp,             // reponse
+    startUpATCmd,               // start up
+    startUpATCmdResp,           // reponse
     shutDownCmd,                // shutdown
     shutDownCmdResp,            // shutdown response
     setRTCCmd,                  // set RTC clock command
@@ -172,6 +174,14 @@ typedef enum _msgID
     clrEventLogCmdResp,         // clear the event log response
     getEventLogCmd,             // get the eventlog
     getEventLogCmdResp,         // get the eventlog response
+    setH20AlarmASIC,            // 
+    setH20AlarmASICResp,        //
+    setH20AlarmDDR,             // 
+    setH20AlarmDDRResp,         //
+    getH20AlarmASIC,            // 
+    getH20AlarmASICResp,        //
+    getH20AlarmDDR,             // 
+    getH20AlarmDDRResp,         //
     NACK                        // command not supported
 } msgID;
 
@@ -490,6 +500,25 @@ typedef struct _startUpCmdResp
 const uint16_t len_startUpCmdResp_t = sizeof(startUpCmdResp_t) - sizeof(CRC) - sizeof(EOP);
 
 
+typedef struct _startUpATCmd
+{
+    msgHeader_t header;
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} startUpATCmd_t;
+const uint16_t len_startUpATCmd_t = sizeof(startUpATCmd_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _startUpATCmdResp
+{
+    msgHeader_t header;
+    uint16_t    result;         // 0 - failed to set; 1 - successfully set
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} startUpATCmdResp_t;
+const uint16_t len_startUpATCmdResp_t = sizeof(startUpATCmdResp_t) - sizeof(CRC) - sizeof(EOP);
+
+
 typedef struct _shutDownCmd
 {
     msgHeader_t header;
@@ -587,6 +616,85 @@ typedef struct _getEventLogCmdResp
 } getEventLogCmdResp_t;
 const uint16_t len_getEventLogCmdResp_t = sizeof(getEventLogCmdResp_t) - sizeof(CRC) - sizeof(EOP);
 
+
+typedef struct _setH20AlarmASIC
+{
+    msgHeader_t header;
+    uint16_t    temperature[MAX_CHILLER_TEMP_LENGH];    // float in 32 bits
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} setH20AlarmASIC_t;
+const uint16_t len_setH20AlarmASIC_t    = sizeof(setH20AlarmASIC_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _setH20AlarmASICResp
+{
+    msgHeader_t header;
+    uint16_t    result;         // 0 - fail ; 1 - success
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} setH20AlarmASICResp_t;
+const uint16_t len_setH20AlarmASICResp_t = sizeof(setH20AlarmASICResp_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _setH20AlarmDDR
+{
+    msgHeader_t header;
+    uint16_t    temperature[MAX_CHILLER_TEMP_LENGH];    // float in 32 bits
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} setH20AlarmDDR_t;
+const uint16_t len_setH20AlarmDDR_t    = sizeof(setH20AlarmDDR_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _setH20AlarmDDRResp
+{
+    msgHeader_t header;
+    uint16_t    result;         // 0 - fail ; 1 - success
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} setH20AlarmDDRResp_t;
+const uint16_t len_setH20AlarmDDRResp_t = sizeof(setH20AlarmDDRResp_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _getH20AlarmASIC
+{
+    msgHeader_t header;
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getH20AlarmASIC_t;
+const uint16_t len_getH20AlarmASIC_t = sizeof(getH20AlarmASIC_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _getH20AlarmASICResp
+{
+    msgHeader_t header;
+    uint8_t     temperature[MAX_CHILLER_TEMP_LENGH];    // float in 32 bits
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getH20AlarmASICResp_t;
+const uint16_t len_getH20AlarmASICResp_t = sizeof(getH20AlarmASICResp_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _getH20AlarmDDR
+{
+    msgHeader_t header;
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getH20AlarmDDR_t;
+const uint16_t len_getH20AlarmDDR_t = sizeof(getH20AlarmDDR_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _getH20AlarmDDRResp
+{
+    msgHeader_t header;
+    uint8_t     temperature[MAX_CHILLER_TEMP_LENGH];    // float in 32 bits
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getH20AlarmDDRResp_t;
+const uint16_t len_getH20AlarmDDRResp_t = sizeof(getH20AlarmDDRResp_t) - sizeof(CRC) - sizeof(EOP);
+
+
 typedef struct _NACK
 {
     msgHeader_t header;
@@ -624,6 +732,7 @@ class controlProtocol
     ~controlProtocol();
     
     bool    StartUpCmd(uint16_t);
+    bool    StartUpATCmd(uint16_t);
     bool    ShutDownCmd(uint16_t);
     bool    GetStatus(uint16_t, uint16_t*, uint16_t*, uint16_t*);
     bool    SetACUTemperature(uint16_t, uint16_t, float);
@@ -642,6 +751,10 @@ class controlProtocol
     bool    GetRTCCmd(uint16_t, struct tm*);
     bool    ClrEventLogCmd(uint16_t);
     bool    GetEventLogCmd(uint16_t, elogentry*);
+    bool    SetH20AlarmASIC(uint16_t, float);
+    bool    GetH20AlarmASIC(uint16_t, float*);
+    bool    SetH20AlarmDDR(uint16_t, float);
+    bool    GetH20AlarmDDR(uint16_t, float*);
 
 
     // master - control/test PC USB or serial interface
@@ -682,6 +795,10 @@ class controlProtocol
     uint16_t    Make_startUpCmd(uint16_t, uint8_t*);
     uint16_t    Make_startUpCmdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
     void        Parse_startUpCmdResp(uint8_t*, uint16_t*, uint16_t*);
+
+    uint16_t    Make_startUpATCmd(uint16_t, uint8_t*);
+    uint16_t    Make_startUpATCmdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    void        Parse_startUpATCmdResp(uint8_t*, uint16_t*, uint16_t*);
 
     uint16_t    Make_shutDownCmd(uint16_t, uint8_t*);
     uint16_t    Make_shutDownCmdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
@@ -756,6 +873,22 @@ class controlProtocol
     uint16_t    Make_getEventLogCmd(uint16_t, uint8_t*);
     uint16_t    Make_getEventLogCmdResp(uint16_t, uint8_t*, uint16_t, const elogentry*, uint16_t);
     void        Parse_getEventLogCmdResp(uint8_t*, uint16_t*, elogentry*, uint16_t*);
+
+    uint16_t    Make_setH20AlarmASIC(uint16_t, uint8_t*, float);
+    uint16_t    Make_setH20AlarmASICResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    void        Parse_setH20AlarmASICResp(uint8_t*, uint16_t*, uint16_t*);
+
+    uint16_t    Make_setH20AlarmDDR(uint16_t, uint8_t*, float);
+    uint16_t    Make_setH20AlarmDDRResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    void        Parse_setH20AlarmDDRResp(uint8_t*, uint16_t*, uint16_t*);
+
+    uint16_t    Make_getH20AlarmASIC(uint16_t, uint8_t*);
+    uint16_t    Make_getH20AlarmASICResp(uint16_t, uint8_t*, float, uint16_t);
+    void        Parse_getH20AlarmASICResp(uint8_t*, float*, uint16_t*);
+
+    uint16_t    Make_getH20AlarmDDR(uint16_t, uint8_t*);
+    uint16_t    Make_getH20AlarmDDRResp(uint16_t, uint8_t*, float, uint16_t);
+    void        Parse_getH20AlarmDDRResp(uint8_t*, float*, uint16_t*);
 
     uint16_t    Make_NACK(uint16_t, uint8_t*, uint16_t);    // always for command not supported/recognized
 };
