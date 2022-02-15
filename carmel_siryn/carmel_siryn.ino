@@ -1,3 +1,4 @@
+
 #include "carmel_siryn.h"
 
 void setup(void)
@@ -103,7 +104,7 @@ void initSystem(void)
 
   // chiller protocol uses Serial2
   #if defined(__USING_CHILLER__)
-  Serial2.begin(CHILLER_PROTO_SPEED
+  Serial2.begin(CHILLER_PROTO_SPEED);
   #endif
 
   // RS485 uses Serial3
@@ -1654,16 +1655,16 @@ void handleGetStatusCmd(void)
       //
       #if defined(__USING_CHILLER__)
       respLength = cp.Make_getStatusResp(cp.m_peerAddress, cp.m_buff,
-        ((true == checkRTDStatus()) ? 1 : 0),           // enough RTDs running that have not ShutDown .. 
-        ((true == ACUsRunning()) ? 1 : 0),              // ACUs running
+        getRTDErrors(),            // return bit map of RTDErrors
+        getACUErrorsAndRunState(), // ACUs running and errors
         ((running == sysStates.chiller.state) ? 1 : 0), // chiller running
         pgetStatus->header.seqNum
       );
       #else
       respLength = cp.Make_getStatusResp(cp.m_peerAddress, cp.m_buff,
-        ((true == checkRTDStatus()) ? 1 : 0),           // enough RTDs running that have not ShutDown .. 
-        ((true == ACUsRunning()) ? 1 : 0),              // ACUs running
-        0,                                              // aint got no chiller running
+        getRTDErrors(),            // return bit map of RTDErrors 
+        getACUErrorsAndRunState(), // ACUs running
+        0,                         // aint got no chiller running
         pgetStatus->header.seqNum
       );
       #endif
@@ -2873,13 +2874,13 @@ void handleChillerStatus(void)
 //--------------------------------
 // get all data for all ACUs
 //
-void handleACUStatus()
+void handleACUStatus(void)
 {
   // initialize to running and online
   sysStates.ACU[ASIC_ACU_IDX].state      = running;
   sysStates.ACU[ASIC_ACU_IDX].online     = online;
-  sysStates.ACU[DDR_ACU_IDX].state     = running;
-  sysStates.ACU[DDR_ACU_IDX].online    = online;
+  sysStates.ACU[DDR_ACU_IDX].state       = running;
+  sysStates.ACU[DDR_ACU_IDX].online      = online;
 
 
   // always get the running status
@@ -3056,7 +3057,6 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
 
     if( (offline == sysStates.ACU[idx].online) )
     {
-      Serial.println("WHAT THE FUCK IS THIS !!!");
       sysStates.ASIC_RTD.online = offline;
       sysStates.ASIC_RTD.state  = stopped;    
       sysStates.ASIC_RTD.fault  = 0xFF;
@@ -3161,6 +3161,7 @@ bool handleRTDStatus(bool getFaults, bool getDDROnly)
     sysStates.ASIC_RTD.online  = offline;
     sysStates.ASIC_RTD.state   = stopped;    
     NON_DDR_RTDsRunning  = false;
+    
   } else
   {
     sysStates.ASIC_RTD.prior_fault  = 0; 
@@ -4359,6 +4360,57 @@ bool checkRTDStatus(void)
   }
 
   return(retVal);
+}
+
+
+uint16_t getRTDErrors(void)
+{
+  uint16_t  rtd_error_map = 0;
+  
+  //
+  // RTDErrorMap is uint16
+  // we have 4 RTDs, each RTD gets 4 bits
+  // for now, just setting 1 bit for fail for an RTD
+  //
+  // the getStatus() accumulates the RTD faults
+  // the event log has those faults
+  // all we're doing here is indicating whether a fault is present 'now' by
+  //  setting a bit for an RTD
+  //
+
+  rtd_error_map |= ( 0 == sysStates.ASIC_Chiller_RTD.fault  ? 0 : 1 << 12 ); // high
+  rtd_error_map |= ( 0 == sysStates.DDR1_RTD.fault          ? 0 : 1 << 8 );
+  rtd_error_map |= ( 0 == sysStates.DDR2_RTD.fault          ? 0 : 1 << 4 );
+  rtd_error_map |= ( 0 == sysStates.DDR_Chiller_RTD.fault   ? 0 : 1 );
+
+  return(rtd_error_map);
+}
+
+
+uint16_t getACUErrorsAndRunState(void)
+{
+  uint16_t  acu_error_run_state_map = 0;
+  
+  //
+  // have two ACUs and 16 bits, each ACU gets 8 bits
+  //  4 bits for run state
+  //  4 bits for error state
+  // 
+  // check if the ACUs are offline - set that bit
+  if( (offline == sysStates.ACU[ASIC_ACU_IDX].online) )
+    acu_error_run_state_map |= (1 << 12); // high
+
+  if( (running != sysStates.ACU[ASIC_ACU_IDX].state) )
+    acu_error_run_state_map |= (1 << 8);
+    
+  if( (offline == sysStates.ACU[DDR_ACU_IDX].online) )
+    acu_error_run_state_map |= (1 << 4); // high
+
+  if( (running != sysStates.ACU[DDR_ACU_IDX].state) )
+    acu_error_run_state_map |= 1;
+    
+
+  return(acu_error_run_state_map);
 }
 
 

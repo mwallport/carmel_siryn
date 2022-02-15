@@ -36,7 +36,7 @@ unsigned long timeBetweenSamples;
 
 // high RTD chiller temperature, if hit this, go to SHUTDOWN state
 // and don't start if RTD chiller temperature is this
-#define HIGH_CHILLER_TEMP       40
+#define HIGH_CHILLER_TEMP       30
 
 // uncomment for the siryn project as it will use chiller
 //#define __USING_CHILLER__
@@ -100,6 +100,9 @@ Adafruit_MAX31865 DDR_Chiller_RTD(26, 24, 22, 34);  // #4 - not on the SPI bus
 // The 'nominal' 0-degrees-C resistance of the sensor
 // 100.0 for PT100, 1000.0 for PT1000
 #define RNOMINAL  100.0
+
+
+#define HZ_POWER_SWITCHPIN        38
 
 // for #1
 #define RTD_DDR1_ISR_PIN          32
@@ -289,12 +292,12 @@ typedef struct _systemState
   chillerState  chiller;
 #endif
   ACUState    ACU[MAX_ACU_ADDRESS];
-  RTDState    ASIC_RTD;             // ASIC chip temp - this RTD is connected to ASIC Accutermo
-  RTDState    ASIC_Chiller_RTD;     // ASIC chiller temp
-  RTDState    DDR_RTD;              // DDR chip temp - this RTD is connected to the DDR Accuthermo
-  RTDState    DDR1_RTD;             // 2rd DDR chip temp
-  RTDState    DDR2_RTD;             // 2rd DDR chip temp
-  RTDState    DDR_Chiller_RTD;      // DDR chiller temp
+  RTDState    ASIC_RTD;             // ASIC chip temp - this RTD is connected to ASIC Accutermo - can't get fault
+  RTDState    ASIC_Chiller_RTD;     // ASIC chiller temp - fault is reflected in status menu cmd
+  RTDState    DDR_RTD;              // DDR chip temp - this RTD is connected to the DDR Accuthermo - can't get fault
+  RTDState    DDR1_RTD;             // 2rd DDR chip temp - fault is reflected in status menu cmd
+  RTDState    DDR2_RTD;             // 2rd DDR chip temp - fault is reflected in status menu cmd
+  RTDState    DDR_Chiller_RTD;      // DDR chiller temp - fault is reflected in status menu cmd
   float       highRTDTemp;          // will be the temperature of the hottest RTD in the DDR group
   LCDState    lcd;
   systemStatus  sysStatus;
@@ -310,8 +313,8 @@ systemState sysStates;
 //
 // configure the fault/no-fault LED
 //
-//const int FAULT_LED     = 4;
-//const int NO_FAULT_LED  = 6;
+//const int FAULT_LED     = 36;
+//const int NO_FAULT_LED  = 37;
 
 
 //

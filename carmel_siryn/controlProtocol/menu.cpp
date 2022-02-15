@@ -92,9 +92,6 @@ void createMenu(void)
     menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
 #endif
 
-    p_menuItem  = new menuGetACUInfo;
-    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
-
     p_menuItem  = new menuSetACUTemperature;
     menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
 

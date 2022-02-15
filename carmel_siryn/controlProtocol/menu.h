@@ -65,7 +65,7 @@ class menuStartUpCmd : public menuItemBase
     pStartUpCmd_t m_pStartUpCmd  = &controlProtocol::StartUpCmd;
 
     menuStartUpCmd()
-        :   menuItemBase("startup system", "start TCUs and chiller"),
+        :   menuItemBase("startup system", "start ACUs"),     // TODO: add chiller back for other
             m_pStartUpCmd(&controlProtocol::StartUpCmd) {}
 
     void execute(controlProtocol* pCP)
@@ -89,7 +89,7 @@ class menuShutDownCmd : public menuItemBase
     pShutDownCmd_t m_pShutDownCmd;
 
     menuShutDownCmd()
-        :   menuItemBase("shutdown system", "stop TCUs, chiller not affected"),
+        :   menuItemBase("shutdown system", "stop ACUs"), // TODO : add back 'chiller not affected'
             m_pShutDownCmd(&controlProtocol::ShutDownCmd) {}
 
     void execute(controlProtocol* pCP)
@@ -113,25 +113,70 @@ class menuGetStatus : public menuItemBase
     pGetStatus_t m_pGetStatus;
 
     menuGetStatus()
-        :   menuItemBase("get status", "report humidity alert, ACU states, chiller state"),
+        :   menuItemBase("get status", "report TCU and RTD states"), // TODO add back 'humidity and chiller state'
             m_pGetStatus(&controlProtocol::GetStatus) {}
 
     void execute(controlProtocol* pCP)
     {
-        if( (pCP->*m_pGetStatus)(m_destId, &RTDsRunning, &ACUsRunning, &chillerRunning) )
+        if( (pCP->*m_pGetStatus)(m_destId, &RTDErrors, &ACUsRunning, &chillerRunning) )
         {
-            cout << "\nRTDs running:    " << RTDsRunning << endl <<
-                    "ACUs running:    " << ACUsRunning << endl <<
-                    "chiller running: " << chillerRunning << endl;
+          cout << endl;
+
+          // ACUs output first 
+          if( (ACUsRunning & (1 << 12)) )  // lame, but works
+            cout << "ASIC ACU is OFFLINE";
+          else
+            cout << "ASIC ACU is ONLINE";
+
+          if( (ACUsRunning & (1 << 8)) )
+            cout << " and NOT RUNNING" << endl;
+          else
+            cout << " and RUNNING" << endl;
+
+          if( (ACUsRunning & (1 << 4)) )  // lame, but works
+            cout << "DDR ACU is OFFLINE";
+          else
+            cout << "DDR ACU is ONLINE";
+
+          if( (ACUsRunning & (1)) )
+            cout << " and NOT RUNNING" << endl;
+          else
+            cout << " and RUNNING" << endl;
+
+          // RTD ouput next
+          cout << "ASIC Chiller RTD";
+          if( (RTDErrors & (1 << 12)) )
+            cout << " has faults" << endl;
+          else
+            cout << " has no faults" << endl;
+
+          cout << "DDR1 RTD";
+          if( (RTDErrors & (1 << 12)) )
+            cout << " has faults" << endl;
+          else
+            cout << " has no faults" << endl;
+
+          cout << "DDR2 RTD";
+          if( (RTDErrors & (1 << 8)) )
+            cout << " has faults" << endl;
+          else
+            cout << " has no faults" << endl;
+
+          cout << "DDR Chiller RTD";
+          if( (RTDErrors & 1) )
+            cout << " has faults" << endl;
+          else
+            cout << " has no faults" << endl;
+
         } else
         {
             cout << "\nunable to get status" << endl;
         }
     }
 
-    uint16_t RTDsRunning;
+    uint16_t RTDErrors;
     uint16_t ACUsRunning;
-    uint16_t chillerRunning;
+    uint16_t chillerRunning; // TODO add back for chiller support
     
     private:
     menuGetStatus(const menuItemBase&);
@@ -151,15 +196,15 @@ class menuSetACUTemperature : public menuItemBase
     }
 
     menuSetACUTemperature()
-        :   menuItemBase("set ACU SV", "set an SV temperature"),
+        :   menuItemBase("set SV", "set target temp"),
             m_pSetACUTemperature(&controlProtocol::SetACUTemperature) {}
 
     void execute(controlProtocol* pCP)
     {
         if( (pCP->*m_pSetACUTemperature)(m_destId, ACUAddress, temperature) )
-            cout << "\nset ACU temperature succesful" << endl;
+            cout << "\nset target temp succesful" << endl;
           else
-            cout << "\nset ACU temperature failed" << endl;
+            cout << "\nset target temp failed" << endl;
     }
 
     uint16_t ACUAddress;
@@ -182,7 +227,7 @@ class menuGetACUTemperature : public menuItemBase
     }
 
     menuGetACUTemperature()
-        :   menuItemBase("get ACU SV", "get an SV temperature"),
+        :   menuItemBase("get SV", "get target temp"),
             m_pGetACUTemperature(&controlProtocol::GetACUTemperature) {}
 
     void execute(controlProtocol* pCP)
@@ -190,11 +235,11 @@ class menuGetACUTemperature : public menuItemBase
         if( (pCP->*m_pGetACUTemperature)(m_destId, ACUAddress, &result, &temperature) )
         {
             if( (result) )
-                cout << "\nACU temperature: " << temperature << endl;
+                cout << "\nSV temp: " << temperature << endl;
             else
-                cout << "\nget ACU temperature failed to return temp" << endl;
+                cout << "\nget SV failed to return temp" << endl;
         } else
-            cout << "\nget ACU temperature failed" << endl;
+            cout << "\nget SV temp failed" << endl;
     }
 
     uint16_t ACUAddress;
@@ -218,7 +263,7 @@ class menuGetACUObjTemperature : public menuItemBase
     }
 
     menuGetACUObjTemperature()
-        :   menuItemBase("get ACU PV", "get a PV temperature"),
+        :   menuItemBase("get PV", "get actual temp"),
             m_pGetACUObjTemperature(&controlProtocol::GetACUObjTemperature) {}
 
     void execute(controlProtocol* pCP)
@@ -226,11 +271,11 @@ class menuGetACUObjTemperature : public menuItemBase
         if( (pCP->*m_pGetACUObjTemperature)(m_destId, ACUAddress, &result, &temperature) )
         {
             if( (result) )
-                cout << "\nACU obj temperature: " << temperature << endl;
+                cout << "\nactual temp: " << temperature << endl;
             else
-                cout << "\nget ACU object temperature failed to return temp" << endl;
+                cout << "\nget PV failed to return temp" << endl;
         } else
-            cout << "\nget ACU object temperature failed" << endl;
+            cout << "\nget PV failed" << endl;
     }
 
     uint16_t ACUAddress;
@@ -404,15 +449,15 @@ class menuEnableACUs : public menuItemBase
     pEnableACUs_t m_pEnableACUs;
 
     menuEnableACUs()
-        :   menuItemBase("start ACUs", "start all ACUs"),
+        :   menuItemBase("enable", "start temp control"),
             m_pEnableACUs(&controlProtocol::EnableACUs) {}
 
     void execute(controlProtocol* pCP)
     {
         if( (pCP->*m_pEnableACUs)(m_destId) )
-            cout << "\nstart ACUs successful" << endl;
+            cout << "\nstart temp control successful" << endl;
         else
-            cout << "\nstart ACUs failed" << endl;
+            cout << "\nstart temp control failed" << endl;
     }
     
     private:
@@ -428,15 +473,15 @@ class menuDisableACUs : public menuItemBase
     pDisableACUs_t m_pDisableACUs;
 
     menuDisableACUs()
-        :   menuItemBase("stop ACUs", "stop all ACUs"),
+        :   menuItemBase("disable", "stop temp control"),
             m_pDisableACUs(&controlProtocol::DisableACUs) {}
 
     void execute(controlProtocol* pCP)
     {
         if( (pCP->*m_pDisableACUs)(m_destId) )
-            cout << "\nstop ACUs successful" << endl;
+            cout << "\nstop temp control successful" << endl;
         else
-            cout << "\nstop ACUs failed" << endl;
+            cout << "\nstop temp control failed" << endl;
     }
     
     private:
@@ -498,9 +543,9 @@ class menuSetRTCCmd : public menuItemBase
     void execute(controlProtocol* pCP)
     {   
         if( (pCP->*m_pSetRTCCmd)(m_destId) )
-            cout << "\nset RTC successful" << endl;
+            cout << "\nset clock successful" << endl;
         else
-            cout << "\nset RTC failed" << endl;
+            cout << "\nset clock failed" << endl;
     }   
     
     private:
@@ -527,7 +572,7 @@ class menuGetRTCCmd : public menuItemBase
             cout << "time : " << asctime(&ltime) << endl;
         }
         else
-            cout << "\nget RTC failed" << endl;
+            cout << "\nget clock failed" << endl;
     }   
     
     private:

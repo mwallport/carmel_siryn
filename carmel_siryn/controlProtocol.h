@@ -34,6 +34,7 @@
 #endif
 
 #ifdef __USING_LINUX_USB__
+    #include <unistd.h>
     #include <string.h>
     #include <unistd.h>
     #include <arpa/inet.h>
@@ -45,6 +46,19 @@
     #include <winsock2.h>
     #include <windows.h>
 #endif
+
+#ifndef GET_LOW_NIBBLE
+#define GET_LOW_NIBBLE
+typedef union _int_byte 
+{   
+    int intVal;
+    uint8_t byteVal[sizeof(int)];  
+} int_byte;
+
+// idea is to return the lowest nibble for Intel processor of arbitrary size int
+uint8_t get_low_nibble(int); 
+#endif
+
 
 //
 // is a character based protocol
@@ -444,13 +458,13 @@ typedef struct _getACUInfoMsgResp
     msgHeader_t header;
     uint16_t    result;         // 0 - failed to get; 1 - successfully set
     uint16_t    acu_address;    // uint16_6 - ACU address
-    uint32_t    OutL;
-    uint32_t    WkErno;
-    uint32_t    Ver;
+    uint32_t    OutL;     // meerstetter device type, see MeCom Protocol Specification 5117C.pdf
+    uint32_t    WkErno;      // meerstetter h/w version
+    uint32_t    Ver;      // meerstetter f/w version
     #ifdef __RUNNING_ON_CONTROLLINO__
 //    uint16_t    pad;            // some Arduino black magic here
     #endif
-    uint32_t    SerialNo;
+    uint32_t    SerialNo;   // meerstetter serial number
     CRC         crc;            // 16 bit CRC over the packet
     EOP         eop;            // end of transmission character/byte
 } getACUInfoMsgResp_t;
@@ -628,7 +642,6 @@ class controlProtocol
     bool    GetRTCCmd(uint16_t, struct tm*);
     bool    ClrEventLogCmd(uint16_t);
     bool    GetEventLogCmd(uint16_t, elogentry*);
-    bool    GetTempCmd(uint16_t, uint16_t*);
 
 
     // master - control/test PC USB or serial interface
@@ -728,10 +741,21 @@ class controlProtocol
     uint16_t    Make_getChillerObjTemperatureResp(uint16_t, uint8_t*, float, uint16_t);
     void        Parse_getChillerObjTemperatureResp(uint8_t*, float*, uint16_t*);
 
+    uint16_t    Make_setRTCCmd(uint16_t, uint8_t*, struct tm*);
     uint16_t    Make_setRTCCmdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    void        Parse_setRTCCmdResp(uint8_t*, uint16_t*, uint16_t*);
+
+    uint16_t    Make_getRTCCmd(uint16_t, uint8_t*);
     uint16_t    Make_getRTCCmdResp(uint16_t, uint8_t*, timeind*, uint16_t, uint16_t);
+    void        Parse_getRTCCmdResp(uint8_t*, uint16_t*, struct tm*, uint16_t*);
+
+    uint16_t    Make_clrEventLogCmd(uint16_t, uint8_t*);
     uint16_t    Make_clrEventLogCmdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    void        Parse_clrEventLogCmdResp(uint8_t*, uint16_t*, uint16_t*);
+
+    uint16_t    Make_getEventLogCmd(uint16_t, uint8_t*);
     uint16_t    Make_getEventLogCmdResp(uint16_t, uint8_t*, uint16_t, const elogentry*, uint16_t);
+    void        Parse_getEventLogCmdResp(uint8_t*, uint16_t*, elogentry*, uint16_t*);
 
     uint16_t    Make_NACK(uint16_t, uint8_t*, uint16_t);    // always for command not supported/recognized
 };

@@ -132,13 +132,13 @@ int handler::sndCmd(HardwareSerial& so, uint8_t* tx_buff, int8_t bufflen)
   // write the bytes, handle the return code in the caller
   //Controllino_RS485TxEnable();
   retVal = so.write(tx_buff, bufflen);
-  so.flush();
+  //so.flush();  dont' do this, flush() waits for data to be sent, if ACUs un-reachable, this API returns very late
   //Controllino_RS485RxEnable();
   
   #ifdef __DEBUG_MODBUS_TXRX__
   Serial.print("sent "); Serial.print(retVal); Serial.println(" bytes...");
   #endif
-  so.flush();
+  //so.flush();  same here
   
   return(retVal);
 }
