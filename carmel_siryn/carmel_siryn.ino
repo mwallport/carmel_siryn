@@ -1,4 +1,3 @@
-
 #include "carmel_siryn.h"
 
 void setup(void)
@@ -79,6 +78,8 @@ void loop(void)
 //
 void initSystem(void)
 {
+  Wire.begin();  // recall having issues with order-of-initialization with this ..
+  
   //
   // start the LCD and paint system initializing
   //
@@ -1066,6 +1067,8 @@ void lcd_shuttingDown(void)
   lcd.setCursor(2,2);
   lcd.print("**SHUTTING DOWN**");
   lcd.display();
+
+  delay(3000);  // hold it for 3 seconds
 }
 
 
@@ -2634,10 +2637,15 @@ void handleSetRTCCmd(void)
             //
             // set the RTC - don't know if there is a 'bad' return code from this call
             //
-   /* TODO: put the RTC we decide to use
-            Controllino_SetTimeDate(psetRTCCmd->tv.mday, psetRTCCmd->tv.wday, psetRTCCmd->tv.mon,
-              psetRTCCmd->tv.year, psetRTCCmd->tv.hour, psetRTCCmd->tv.min, psetRTCCmd->tv.sec);
-   */
+            RTCClock.setClockMode(false); // false == 24hr, true == 12hr
+            RTCClock.setYear(psetRTCCmd->tv.year);
+            RTCClock.setMonth(psetRTCCmd->tv.mon);
+            RTCClock.setDate(psetRTCCmd->tv.mday);
+            RTCClock.setDoW(psetRTCCmd->tv.wday);
+            RTCClock.setHour(psetRTCCmd->tv.hour);
+            RTCClock.setMinute(psetRTCCmd->tv.min);
+            RTCClock.setSecond(psetRTCCmd->tv.sec);
+            
             result  = 1;
 
             respLength = cp.Make_setRTCCmdResp(cp.m_peerAddress, cp.m_buff,
@@ -2686,6 +2694,7 @@ void handleGetRTCCmd(void)
     uint16_t    respLength;
     uint16_t    result = 0;
     timeind     RTCTime;
+    bool        h12, PM_flag, Century;
 
 
     //
@@ -2703,9 +2712,13 @@ void handleGetRTCCmd(void)
             //
             // get the RTC - don't know if there is a 'bad' return code from this call
             //
-            /* TODO: fix this when we get the RTC figured out
-            result  = getControllinoTime(&RTCTime);
-            */
+            RTCTime.year = RTCClock.getYear();
+            RTCTime.mon  = RTCClock.getMonth(Century);
+            RTCTime.mday = RTCClock.getDate();
+            RTCTime.wday = RTCClock.getDoW();
+            RTCTime.hour = RTCClock.getHour(h12, PM_flag);
+            RTCTime.min  = RTCClock.getMinute();
+            RTCTime.sec  = RTCClock.getSecond();
             result = 1;
 
             respLength = cp.Make_getRTCCmdResp(cp.m_peerAddress, cp.m_buff,
@@ -3686,7 +3699,7 @@ systemStatus setSystemStatus(void)
   // check the ASIC RTD chiller temperatures - log event if needed
   // if temp is high and not already in SHUTDOWN, log the event as we are
   // about to go into SHUTDOWN
-  if( (HIGH_CHILLER_TEMP < sysStates.ASIC_Chiller_RTD.temperature) &&
+  if( (ASIC_HIGH < sysStates.ASIC_Chiller_RTD.temperature) &&
       (SHUTDOWN != sysStates.sysStatus) )
   {
     #ifdef __DEBUG_VIA_SERIAL__
@@ -3699,7 +3712,7 @@ systemStatus setSystemStatus(void)
   // check the ASIC RTD chiller temperatures - log event if needed
   // if temp is high and not already in SHUTDOWN, log the event as we are
   // about to go into SHUTDOWN
-  if( (HIGH_CHILLER_TEMP < sysStates.DDR_Chiller_RTD.temperature) &&
+  if( (DDR_HIGH < sysStates.DDR_Chiller_RTD.temperature) &&
       (SHUTDOWN != sysStates.sysStatus) )
   {
     #ifdef __DEBUG_VIA_SERIAL__
@@ -4450,7 +4463,7 @@ bool checkRTDStatus(void)
   // - any chiller RTD is fault
   // - both RTDs not connected to the accuthermo are bad 'at the same time'
   //
-  // - and if either of the chiller RTDs get above HIGH_CHILLER_TEMP, return bad status
+  // - and if either of the chiller RTDs get above ASIC_HIGH or DDR_HIGH, return bad status
   //
   if( (sysStates.ASIC_Chiller_RTD.fault || sysStates.DDR_Chiller_RTD.fault || sysStates.DDR_RTD.fault ||
       (sysStates.DDR1_RTD.fault && sysStates.DDR2_RTD.fault)) )
@@ -4462,8 +4475,8 @@ bool checkRTDStatus(void)
     retVal = false;
   }
 
-  if( (HIGH_CHILLER_TEMP < sysStates.ASIC_Chiller_RTD.temperature) || 
-      (HIGH_CHILLER_TEMP < sysStates.DDR_Chiller_RTD.temperature) )
+  if( (ASIC_HIGH < sysStates.ASIC_Chiller_RTD.temperature) || 
+      (DDR_HIGH < sysStates.DDR_Chiller_RTD.temperature) )
   {
     #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("RTD chiller temp too high returning bad status");
@@ -4580,38 +4593,17 @@ int logEvent(uint16_t event_id, uint32_t inst, uint32_t d0, uint32_t d1, uint32_
 
 uint16_t getRTCTime(timeind& rtcTime)
 {
-/*
-    rtcTime->sec    = Controllino_GetSecond();
-    rtcTime->min    = Controllino_GetMinute();
-    rtcTime->hour   = Controllino_GetHour();
-    rtcTime->mday   = Controllino_GetDay();
-    rtcTime->mon    = Controllino_GetMonth();
-    rtcTime->year   = Controllino_GetYear();
-    rtcTime->wday   = Controllino_GetWeekDay();
-    rtcTime->fill = 0x00; // fill to keep the buff length 
+    bool h12, PM_Time, Century;
 
-    // if any of them are 0xff (-1) the get failed
-    if( (0xff == RTCTime->sec) || (0xff == RTCTime->min) || (0xff == RTCTime->hour) ||
-      (0xff == RTCTime->mday) || (0xff == RTCTime->mon) || (0xff == RTCTime->year) ||
-      (0xff == RTCTime->wday) )
-    {    
-      return(0);  // bad
-    }    
-
-    return(1);    // good
-*/
-
-// TODO: fix after the RTC decision has been made
-
-    rtcTime.sec    = 0;
-    rtcTime.min    = 0;
-    rtcTime.hour   = 0;
-    rtcTime.mday   = 0;
-    rtcTime.mon    = 0;
-    rtcTime.year   = 0;
-    rtcTime.wday   = 0;
+    
+    rtcTime.sec    = RTCClock.getSecond();
+    rtcTime.min    = RTCClock.getMinute();
+    rtcTime.hour   = RTCClock.getHour(h12, PM_Time); 
+    rtcTime.mday   = RTCClock.getDate();
+    rtcTime.mon    = RTCClock.getMonth(Century);
+    rtcTime.year   = RTCClock.getYear();
+    rtcTime.wday   = RTCClock.getDoW();
     rtcTime.fill = 0x00; // fill to keep the buff length 
-
   
   return(1);
 }
@@ -4774,7 +4766,8 @@ void handleSetH20AlarmASIC(void)
   setH20AlarmASIC_t* psetH20AlarmASIC = reinterpret_cast<setH20AlarmASIC_t*>(cp.m_buff);
   uint16_t  respLength; 
   uint16_t  result = 0;
-
+  char*     ptr = 0;
+  float     temp  = 0;
 
   //
   // verify the received packet, here beause this is a setH20AlarmASICCmd
@@ -4791,11 +4784,21 @@ void handleSetH20AlarmASIC(void)
       //
       // set the new H20 alarm ASIC
       //
-      sscanf(psetH20AlarmASIC->temperature, "%3.2f", &ASIC_HIGH);
+      temp = strtof((char*)psetH20AlarmASIC->temperature, &ptr);
+
+      if( (0 == temp) && (0 != ptr) )
+      {
+        result = 0; // failed to convert
+      } else
+      {
+        result = 1; // convert good
+        ASIC_HIGH = temp;
+      }
+      
       Serial.print("ASIC_HIGH: "); Serial.println(ASIC_HIGH, 2);
 
       respLength = cp.Make_setH20AlarmASICResp(cp.m_peerAddress, cp.m_buff,
-        1, psetH20AlarmASIC->header.seqNum
+        result, psetH20AlarmASIC->header.seqNum
       );
 
       //
@@ -4901,7 +4904,8 @@ void handleSetH20AlarmDDR(void)
   setH20AlarmDDR_t* psetH20AlarmDDR = reinterpret_cast<setH20AlarmDDR_t*>(cp.m_buff);
   uint16_t  respLength; 
   uint16_t  result = 0;
-
+  char*     ptr = 0;
+  float     temp  = 0;
 
   //
   // verify the received packet, here beause this is a setH20AlarmDDRCmd
@@ -4916,13 +4920,22 @@ void handleSetH20AlarmDDR(void)
                 ntohs(psetH20AlarmDDR->crc), ntohs(psetH20AlarmDDR->eop))) )
     {
       //
-      // set the new H20 alarm DDR
+      // set the new H20 alarm ASIC
       //
-      sscanf(psetH20AlarmDDR->temperature, "%3.2f", &DDR_HIGH);
-      Serial.print("DDR_HIGH: "); Serial.println(DDR_HIGH, 2);
+      temp = strtof((char*)psetH20AlarmDDR->temperature, &ptr);
 
+      if( (0 == temp) && (0 != ptr) )
+      {
+        result = 0; // failed to convert
+      } else
+      {
+        result = 1; // convert good
+        DDR_HIGH = temp;
+      }
+      
+      Serial.print("DDR_HIGH: "); Serial.println(DDR_HIGH, 2);
       respLength = cp.Make_setH20AlarmDDRResp(cp.m_peerAddress, cp.m_buff,
-        1, psetH20AlarmDDR->header.seqNum
+        result, psetH20AlarmDDR->header.seqNum
       );
 
       //

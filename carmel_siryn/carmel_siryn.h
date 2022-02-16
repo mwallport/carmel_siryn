@@ -1,9 +1,11 @@
 #ifndef __CARMEL_SIRYN__
 #define __CARMEL_SIRYN__
-#include <LiquidCrystal.h>    // LCD interface library
+#include <LiquidCrystal.h>
 #include <Adafruit_MAX31865.h>
+#include <DS3231.h>
+#include <Wire.h>
 #include "controlProtocol.h"
-#include "polySci.h"        // polySci chiller communication library
+#include "polySci.h"
 #include "common.h"
 #include "handler.h"
 #include "ctrlr_commands.h"
@@ -11,10 +13,6 @@
 #include "eventlog.h"
 #include "events.h"
 
-
-// move this
-float ASIC_HIGH   = 35.5;
-float DDR_HIGH    = 35.5;
 
 
 // this is for important, error condition debug output
@@ -38,9 +36,6 @@ float DDR_HIGH    = 35.5;
 // millis() between DDR RTD samples while in RUNNING state
 unsigned long timeBetweenSamples;
 
-// high RTD chiller temperature, if hit this, go to SHUTDOWN state
-// and don't start if RTD chiller temperature is this
-#define HIGH_CHILLER_TEMP       30
 
 // uncomment for the siryn project as it will use chiller
 //#define __USING_CHILLER__
@@ -160,6 +155,11 @@ unsigned long MS_REQ_FOR_60HZ_READ  = 500; //52;
 #endif
 #define MAX_MSG_DISPLAY_TIME  4000  // 1.5 minimum seconds per message
 
+// move this - and ask Rick what the correct initial settings should be
+// high RTD chiller temperature, if hit this, go to SHUTDOWN state
+// and don't start if RTD chiller temperature is this
+float ASIC_HIGH   = 35.5;
+float DDR_HIGH    = 35.5;
 
 
 //
@@ -318,7 +318,7 @@ systemState sysStates;
 // configure the fault/no-fault LED
 //
 //const int FAULT_LED     = 36;
-//const int NO_FAULT_LED  = 37;
+//const int NO_FAULT_LED  = 53;
 
 
 //
@@ -331,6 +331,12 @@ bool currentButtonOnOff = false;
 volatile bool buttonOnOff = false;
 volatile int bp_count = -2;  // button press 1
 #define   LONG_PRESS_BP_COUNT   1500000
+
+
+//
+// the RTC
+//
+DS3231 RTCClock;  // clock was taken, rtc was taken, so we go with RTCClock
 
 
 //

@@ -31,6 +31,10 @@ typedef bool (controlProtocol::*pSetRTCCmd_t)(uint16_t);
 typedef bool (controlProtocol::*pGetRTCCmd_t)(uint16_t, struct tm*);
 typedef bool (controlProtocol::*pClrEventLogCmd_t)(uint16_t);
 typedef bool (controlProtocol::*pGetEventLogCmd_t)(uint16_t, elogentry*);
+typedef bool (controlProtocol::*pSetH20AlarmASIC_t)(uint16_t, float);
+typedef bool (controlProtocol::*pGetH20AlarmASIC_t)(uint16_t, float*);
+typedef bool (controlProtocol::*pSetH20AlarmDDR_t)(uint16_t, float);
+typedef bool (controlProtocol::*pGetH20AlarmDDR_t)(uint16_t, float*);
 
 
 class menuItemBase
@@ -791,8 +795,116 @@ class menuGetEventLogCmd : public menuItemBase
     menuGetEventLogCmd& operator=(const menuItemBase&);
 };
 
+//    bool    SetChillerTemperature(uint16_t, float);
+class menuSetH20AlarmASIC : public menuItemBase
+{
+    public:
+    pSetH20AlarmASIC_t m_pSetH20AlarmASIC  = &controlProtocol::SetH20AlarmASIC;
+    void getParameters(void)
+    {
+        cout << "enter temperature (i.e. 24.0 or -10.5): "; cin >> temperature;
+    }
+
+    menuSetH20AlarmASIC()
+        :   menuItemBase("set H2O alarm ASIC", "set the shut-off threshold for ASIC H2O temp"),
+            m_pSetH20AlarmASIC(&controlProtocol::SetH20AlarmASIC) {}
+
+    void execute(controlProtocol* pCP)
+    {
+        if( (pCP->*m_pSetH20AlarmASIC)(m_destId, temperature) )
+            cout << "\nset H2O alarm ASIC successful" << endl;
+        else
+            cout << "\nset H2O alarm ASIC failed" << endl;
+    }
+
+    float   temperature;
+
+    private:
+    menuSetH20AlarmASIC(const menuItemBase&);
+    menuSetH20AlarmASIC& operator=(const menuItemBase&);
+};
 
 
+//    bool    GetChillerTemperature(uint16_t, float*);
+class menuGetH20AlarmASIC : public menuItemBase
+{
+    public:
+    pGetH20AlarmASIC_t m_pGetH20AlarmASIC;
+
+    menuGetH20AlarmASIC()
+        :   menuItemBase("get H2O alarm ASIC", "get the the temp"),
+            m_pGetH20AlarmASIC(&controlProtocol::GetH20AlarmASIC) {}
+
+    void execute(controlProtocol* pCP)
+    {
+        if( (pCP->*m_pGetH20AlarmASIC)(m_destId, &temperature) )
+            cout << "\nH2O alarm ASIC: " << temperature << endl;
+        else
+            cout << "\nget H2O alarm ASIC failed" << endl;
+    }
+
+    float   temperature;
+
+    private:
+    menuGetH20AlarmASIC(const menuItemBase&);
+    menuGetH20AlarmASIC& operator=(const menuItemBase&);
+};
+
+
+//    bool    SetChillerTemperature(uint16_t, float);
+class menuSetH20AlarmDDR : public menuItemBase
+{
+    public:
+    pSetH20AlarmDDR_t m_pSetH20AlarmDDR  = &controlProtocol::SetH20AlarmDDR;
+    void getParameters(void)
+    {
+        cout << "enter temperature (i.e. 24.0 or -10.5): "; cin >> temperature;
+    }
+
+    menuSetH20AlarmDDR()
+        :   menuItemBase("set H2O alarm DDR", "set the shut-off threshold for DDR H2O temp"),
+            m_pSetH20AlarmDDR(&controlProtocol::SetH20AlarmDDR) {}
+
+    void execute(controlProtocol* pCP)
+    {
+        if( (pCP->*m_pSetH20AlarmDDR)(m_destId, temperature) )
+            cout << "\nset H2O alarm DDR successful" << endl;
+        else
+            cout << "\nset H2O alarm DDR failed" << endl;
+    }
+
+    float   temperature;
+
+    private:
+    menuSetH20AlarmDDR(const menuItemBase&);
+    menuSetH20AlarmDDR& operator=(const menuItemBase&);
+};
+
+
+//    bool    GetChillerTemperature(uint16_t, float*);
+class menuGetH20AlarmDDR : public menuItemBase
+{
+    public:
+    pGetH20AlarmDDR_t m_pGetH20AlarmDDR;
+
+    menuGetH20AlarmDDR()
+        :   menuItemBase("get H2O alarm DDR", "get the the temp"),
+            m_pGetH20AlarmDDR(&controlProtocol::GetH20AlarmDDR) {}
+
+    void execute(controlProtocol* pCP)
+    {
+        if( (pCP->*m_pGetH20AlarmDDR)(m_destId, &temperature) )
+            cout << "\nH2O alarm DDR: " << temperature << endl;
+        else
+            cout << "\nget H2O alarm DDR failed" << endl;
+    }
+
+    float   temperature;
+
+    private:
+    menuGetH20AlarmDDR(const menuItemBase&);
+    menuGetH20AlarmDDR& operator=(const menuItemBase&);
+};
 
 #endif
 
