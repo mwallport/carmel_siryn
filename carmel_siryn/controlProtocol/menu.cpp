@@ -5,6 +5,10 @@
 #include "menu.h"
 
 
+#define __USING_CHILLER__
+
+
+
 controlProtocol* pCP;               //gobal controlProtocol pointer
 map<int, menuItemBase*> menuItems;  // gobal map of the menu items
 
@@ -174,11 +178,15 @@ void executeMenuItem(void)
     if(item != menuItems.end())
     {
         // get parameters for the selection
-        (item->second)->getParameters();
+        if( (false == (item->second)->getParameters()) )
+        {
+          cout << "invalid input" << endl;
+        } else
+        {
+          // exectue the command
+          (item->second)->execute(pCP);
+        }
 
-        // exectue the command
-        (item->second)->execute(pCP);
-        
     } else
         cout << selection << " is not valid" << endl; 
 

@@ -12,7 +12,7 @@
 #define __RUNNING_ON_CONTROLLINO__
 
 //chiller
-//#define __USING_CHILLER__
+#define __USING_CHILLER__
 
 // common
 #include <stdint.h>

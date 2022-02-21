@@ -1,5 +1,8 @@
 #include "carmel_siryn.h"
 
+
+
+
 void setup(void)
 {
   //
@@ -69,6 +72,20 @@ void loop(void)
   // - Otherwise the tmo for input is 3000ms
   //
   handleMsgs(CTRL_TIMEOUT);               // tmo is 3000ms
+
+
+  if (p_sht->readSample()) {
+      Serial.print("------->>>>> SHT:\n");
+      Serial.print("  RH: ");
+      Serial.print(p_sht->getHumidity(), 2);
+      Serial.print("\n");
+      Serial.print("  T:  ");
+      Serial.print(p_sht->getTemperature(), 2);
+      Serial.print("\n");
+  } else {
+      Serial.print("--->>>>>  Error in readSample()\n");
+  }
+
 }
 
 
@@ -78,8 +95,17 @@ void loop(void)
 //
 void initSystem(void)
 {
-  Wire.begin();  // recall having issues with order-of-initialization with this ..
-  
+  Wire.begin();   // for SHT humidity sensor
+  Wire1.begin();  // for the RTC
+
+
+  //
+  // the RTC
+  //
+  rtc_clock = new DS3231(Wire1);  // clock was taken, rtc was taken, so we go with rtc_clock
+  rtc_clock->setClockMode(false);
+
+
   //
   // start the LCD and paint system initializing
   //
@@ -171,6 +197,19 @@ void initSystem(void)
   //
   writePVOF(ASIC_RS485_ID, 0);
   writePVOF(DDR_RS485_ID, 0);
+
+
+#if defined(__USING_CHILLER__)
+  p_sht = new SHTSensor;
+  
+  if (p_sht->init()) {
+      Serial.print("------>>>>>>>>>> init(): success\n");
+  } else {
+      Serial.print("------>>>>>>>>>> init(): failed\n");
+  }
+  p_sht->setAccuracy(SHTSensor::SHT_ACCURACY_MEDIUM); // only supported by SHT3x
+#endif
+  
 }
 
 
@@ -399,7 +438,8 @@ bool startUp(bool startAT)
 
 void getStatus(void)
 {
-  static unsigned long  lastGetStatusTime     = 0;
+  static unsigned long  lastGetStatusTime         = 0;
+  static unsigned long  lastGetStatusTimeRunning  = 0;
   unsigned long         currentGetStatusTime  = millis();
 
 
@@ -412,25 +452,27 @@ void getStatus(void)
   {
     lastGetStatusTime = currentGetStatusTime;
 
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("- CHECK all ACUs and all RTDs  --------------");
     #endif
     
     #ifdef __USING_CHILLER__
     handleChillerStatus();
     #endif
-    handleACUStatus();      // read everything, running status, SV and PV for both controllers
-    handleRTDStatus(true, false);  // true means read the faults also, false get all RTDs temps
+    handleACUStatus();            // read everything, running status, SV and PV for both controllers
+    handleRTDStatus(true, false); // true means read the faults also, false get all RTDs temps
 
     //
     // determine the hot RTD temperature
     //
     setHotRTD();
-  
 
-  } else if( (RUNNING == sysStates.sysStatus) )
+  } else if( (RUNNING == sysStates.sysStatus) &&
+            (GET_STATUS_INTERVAL_RUNNING < (currentGetStatusTime - lastGetStatusTimeRunning)) )
   {
-    #ifdef __DEBUG2_VIA_SERIAL_
+    lastGetStatusTimeRunning = currentGetStatusTime;
+    
+    #ifdef __DEBUG_VIA_SERIAL_
     Serial.println("- NOT check all ACUs and all RTDs  --------------");
     #endif
     
@@ -2411,6 +2453,7 @@ void handleStopChiller(void)
 
 void handleGetChillerInfo(void)
 {
+/*
   getChillerInfo_t* pgetChillerInfo = reinterpret_cast<getChillerInfo_t*>(cp.m_buff);
   uint16_t  respLength;
   uint16_t  result = 0;
@@ -2431,7 +2474,7 @@ void handleGetChillerInfo(void)
       result  = 1;
 
       respLength = cp.Make_getChillerInfoResp(cp.m_peerAddress, cp.m_buff,
-        result, reinterpret_cast<uint8_t*>(const_cast<char*>(chiller.GetSlaveName())),
+        result, "not supported",
         MAX_SLAVE_NAME_LENGTH, pgetChillerInfo->header.seqNum
       );
 
@@ -2468,6 +2511,7 @@ void handleGetChillerInfo(void)
     Serial.flush();
   #endif
   }
+*/
 }
 
 
@@ -2634,19 +2678,27 @@ void handleSetRTCCmd(void)
         if( (cp.verifyMessage(len_setRTCCmd_t,
                                 ntohs(psetRTCCmd->crc), ntohs(psetRTCCmd->eop))) )
         {
+          Serial.print("year:mon:mday:wday:hour:min:sec");
+          Serial.print(psetRTCCmd->tv.year); Serial.print(":");
+          Serial.print(psetRTCCmd->tv.mon); Serial.print(":");
+          Serial.print(psetRTCCmd->tv.mday); Serial.print(":");
+          Serial.print(psetRTCCmd->tv.wday); Serial.print(":");
+          Serial.print(psetRTCCmd->tv.hour); Serial.print(":");
+          Serial.print(psetRTCCmd->tv.min); Serial.print(":");
+          Serial.println(psetRTCCmd->tv.sec);
             //
             // set the RTC - don't know if there is a 'bad' return code from this call
             //
-            RTCClock.setClockMode(false); // false == 24hr, true == 12hr
-            RTCClock.setYear(psetRTCCmd->tv.year);
-            RTCClock.setMonth(psetRTCCmd->tv.mon);
-            RTCClock.setDate(psetRTCCmd->tv.mday);
-            RTCClock.setDoW(psetRTCCmd->tv.wday);
-            RTCClock.setHour(psetRTCCmd->tv.hour);
-            RTCClock.setMinute(psetRTCCmd->tv.min);
-            RTCClock.setSecond(psetRTCCmd->tv.sec);
+          rtc_clock->setClockMode(false); // false == 24hr, true == 12hr
+          rtc_clock->setYear(psetRTCCmd->tv.year);
+          rtc_clock->setMonth(psetRTCCmd->tv.mon);
+          rtc_clock->setDate(psetRTCCmd->tv.mday);
+          rtc_clock->setDoW(psetRTCCmd->tv.wday);
+          rtc_clock->setHour(psetRTCCmd->tv.hour);
+          rtc_clock->setMinute(psetRTCCmd->tv.min);
+          rtc_clock->setSecond(psetRTCCmd->tv.sec);
             
-            result  = 1;
+          result  = 1;
 
             respLength = cp.Make_setRTCCmdResp(cp.m_peerAddress, cp.m_buff,
                 result, psetRTCCmd->header.seqNum
@@ -2712,13 +2764,13 @@ void handleGetRTCCmd(void)
             //
             // get the RTC - don't know if there is a 'bad' return code from this call
             //
-            RTCTime.year = RTCClock.getYear();
-            RTCTime.mon  = RTCClock.getMonth(Century);
-            RTCTime.mday = RTCClock.getDate();
-            RTCTime.wday = RTCClock.getDoW();
-            RTCTime.hour = RTCClock.getHour(h12, PM_flag);
-            RTCTime.min  = RTCClock.getMinute();
-            RTCTime.sec  = RTCClock.getSecond();
+            RTCTime.year = rtc_clock->getYear();
+            RTCTime.mon  = rtc_clock->getMonth(Century);
+            RTCTime.mday = rtc_clock->getDate();
+            RTCTime.wday = rtc_clock->getDoW();
+            RTCTime.hour = rtc_clock->getHour(h12, PM_flag);
+            RTCTime.min  = rtc_clock->getMinute();
+            RTCTime.sec  = rtc_clock->getSecond();
             result = 1;
 
             respLength = cp.Make_getRTCCmdResp(cp.m_peerAddress, cp.m_buff,
@@ -2934,7 +2986,9 @@ void handleChillerStatus(void)
 {
 #if defined(__USING_CHILLER__)
 
-  bool  retVal  = false;
+  bool  retVal  = true;
+  float temp    = 0;
+  char* ptr     = 0;
 
   
   //
@@ -2942,14 +2996,11 @@ void handleChillerStatus(void)
   //
   if( (offline == sysStates.chiller.online) )
   {
-    digitalWrite(FAULT_LED, HIGH);
-    retVal = chiller.GetAllChillerInfo();
-  } else
-  {
-    retVal  = chiller.getChillerStatus();
+//    digitalWrite(FAULT_LED, HIGH);
+    retVal = chiller.ChillerPresent(0);
   }
   
-  if( (false == retVal) )
+  if( (false == retVal) )  // call to chiller.ChillerPresent(0) failed
   {
     #ifdef __DEBUG_VIA_SERIAL__
     Serial.print(__PRETTY_FUNCTION__);
@@ -2968,31 +3019,90 @@ void handleChillerStatus(void)
 
   } else
   {
+    sysStates.chiller.online = online;
+    sysStates.lcd.lcdFacesIndex[CHILLER_FAIL_OFFSET] = no_Status;
+
     //
-    // update sysStates with what was feACUhed from GetAllChillerInfo
+    // get the run state and temps
     //
-    sysStates.chiller.online              = online;
-    if( ('O' == chiller.GetTempCtrlMode()) )
+    memset(chiller_buff, '\0', sizeof(chiller_buff));
+
+    if( chiller.ReadStatus(chiller_buff) )
     {
-      sysStates.chiller.state = stopped;
+      if( ('0' == chiller_buff[0]) )
+      {
+        sysStates.chiller.state = stopped;
+        sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Stopped;
+      }
+      else
+      {
+        sysStates.chiller.state = running;
+        sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Running;
+      }
+
+      //
+      // get the set point temp
+      //
+      memset(chiller_buff, '\0', sizeof(chiller_buff));
+      chiller.ReadSetPointTemperature(chiller_buff);
+
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print("reported setpoint temp: "); Serial.println(chiller_buff);
+      #endif
+      
+      temp = strtof(chiller_buff, &ptr);
+
+      if( ((ptr != 0) && ( (*ptr == '\0') || (*ptr == '\r') || (*ptr == '\n'))) || (ptr == 0) )
+      {
+        sysStates.chiller.setpoint = temp;
+      #ifdef __DEBUG_VIA_SERIAL__
+      } else
+      {
+        Serial.println("failed to get the chiller setpoint temp");
+      #endif
+      }
+
+      // get the current temp
+      memset(chiller_buff, '\0', sizeof(chiller_buff));
+      chiller.ReadTemperature(chiller_buff);
+
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print("reported temp: "); Serial.println(chiller_buff);
+      #endif
+
+      temp = strtof(chiller_buff, &ptr);
+
+      if( ((ptr != 0) && ( (*ptr == '\0') || (*ptr == '\r') || (*ptr == '\n'))) || (ptr == 0) )
+      {
+        sysStates.chiller.temperature = temp;
+      #ifdef __DEBUG_VIA_SERIAL__
+      } else
+      {
+        Serial.println("failed to get the chiller temp");
+      #endif
+      }
+
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print("stored temperatures "); Serial.print(sysStates.chiller.temperature);
+      Serial.print(" : "); Serial.println(sysStates.chiller.setpoint);
+      #endif
+    } else
+    {
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print(__PRETTY_FUNCTION__);
+      Serial.println(" WARINING: unable to chiller ReadStatus() ");
+      #endif
+  
+      //
+      // update the chilller state to stopped (as it is not running)
+      //
+      sysStates.chiller.online              = offline;
+      sysStates.chiller.state               = stopped;  // offline, we don't know
+      sysStates.chiller.temperature         = 0;
+      sysStates.chiller.setpoint            = 0;
       sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Stopped;
+      sysStates.lcd.lcdFacesIndex[CHILLER_FAIL_OFFSET]  = chiller_ComFailure;
     }
-    else
-    {
-      sysStates.chiller.state = running;
-      sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Running;
-    }
-
-    sysStates.chiller.temperature             = chiller.GetInternalTempFloat();
-    sysStates.chiller.setpoint              = chiller.GetSetPointFloat();
-    sysStates.lcd.lcdFacesIndex[CHILLER_FAIL_OFFSET]  = no_Status;
-
-    #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.print("stored temperatures "); Serial.print(sysStates.chiller.temperature);
-    Serial.print(" : "); Serial.println(sysStates.chiller.setpoint);
-    Serial.print("chiller.GetTempCtrlMode(): "); Serial.println(chiller.GetTempCtrlMode());
-    Serial.flush();
-    #endif
   }
 #endif
 }
@@ -3003,6 +3113,8 @@ void handleChillerStatus(void)
 //
 void handleACUStatus(void)
 {
+  Serial.println("handleACUStatus called...");
+  
   // initialize to running and online
   sysStates.ACU[ASIC_ACU_IDX].state      = running;
   sysStates.ACU[ASIC_ACU_IDX].online     = online;
@@ -3040,7 +3152,8 @@ void handleACURunningStatus(uint8_t id)
   bool  Running     = false;
   uint8_t idx       = id - 1;  // array index is id - 1
 
-
+  Serial.println("handleACURunningStatus called...");
+  
   //
   // assume they are running, if one if found not running, mark the group
   // as not running
@@ -3056,24 +3169,27 @@ void handleACURunningStatus(uint8_t id)
   //
   // get the value of ENAB, the current run mode
   //
+  // returns false if can't talk to ACU
+  // updates formal parameter Running if can talk to ACU
+  //
   Running = false;
   if( (false == ACURunning(id, Running)) )
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
     Serial.print(id, DEC); Serial.println(" unable to get running");
     Serial.flush();
     #endif
 
-    ACUsRunning = false;
     ACUsOnline  = false;
+    ACUsRunning = false;
 
     sysStates.ACU[idx].online = offline;
     sysStates.ACU[idx].state  = stopped;
 
   } else if( (false == Running) )
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: ACU ");
     Serial.print(id); Serial.println(" is not running");
     Serial.flush();
@@ -3081,10 +3197,26 @@ void handleACURunningStatus(uint8_t id)
     //
     // keep track of whether all ACUs are running
     //
+    ACUsOnline  = true;
     ACUsRunning = false;
 
     // update sysStates
-    sysStates.ACU[idx].state = stopped;
+    sysStates.ACU[idx].online = online;
+    sysStates.ACU[idx].state  = stopped;
+    
+  } else
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: ACU ");
+    Serial.print(id); Serial.println(" is running");
+    Serial.flush();
+    #endif
+
+    ACUsOnline  = true;
+    ACUsRunning = true;
+
+    sysStates.ACU[idx].online = online;
+    sysStates.ACU[idx].state  = running;
   }
 
   //
@@ -3177,7 +3309,7 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
     // pick up the temperature and faul, the online and state are updated in handleRTDStatus
     sysStates.ASIC_RTD.temperature  = sysStates.ACU[idx].temperature;
 
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.print("ASIC_RTD.temperature: "); Serial.println(sysStates.ASIC_RTD.temperature, 2);
     Serial.print("souce temperature: "); Serial.println(sysStates.ACU[idx].temperature, 2);
     #endif      
@@ -3191,7 +3323,7 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
 
   } else if( (DDR_RS485_ID == id) )
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("Translating DDR ACU data to DDR_RTD");
     #endif      
       
@@ -3297,7 +3429,6 @@ bool handleRTDStatus(bool getFaults, bool getDDROnly)
   if( (sysStates.ASIC_Chiller_RTD.fault) )
   {
     sysStates.ASIC_Chiller_RTD.online  = offline;
-    sysStates.ASIC_Chiller_RTD.state   = stopped;
     NON_DDR_RTDsRunning  = false;  
   } else
   {
@@ -3424,17 +3555,17 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state, bool getAl
 
 //-----------------------------------------------
 //
-// only to be called when the system is in RUNNING state
 //
 bool getRTDDataDRDY(bool getFaults, bool getDDROnly)
 {
   unsigned long newStartTime  = millis();   // they all get the same start time when starting
   unsigned long currTime      = millis();  
   uint8_t t;
-  uint8_t c = 0;
   bool  retVal  = false;
-
+  bool  guard_timer = false;
+  
  
+  // arm the DRDY on DDR1 to and start a conversion
   if( (0 == RTD_DDR1_DRDY_StartTime) )
   {
     handleRTDISRs(false);
@@ -3445,63 +3576,66 @@ bool getRTDDataDRDY(bool getFaults, bool getDDROnly)
     handleRTDISRs(true);
   }
 
-//  if((true == RTD_DDR1_DRDY) || (MS_REQ_FOR_60HZ_READ < (currTime - RTD_DDR1_DRDY_StartTime)))
-  // using a counter instead of millis(), millis() is 'weird' at less than 100ms on Due
-  if( (true == RTD_DDR1_DRDY) || (c++ > 3) || (false == getDDROnly) )
+
+  guard_timer = (DRDY_GUARD_TIMER < (currTime - RTD_DDR1_DRDY_StartTime)) ? true : false;
+
+  // if DRDY is high/true or we've timed out, try to get the DDR data
+  if( (true == RTD_DDR1_DRDY) || (true == guard_timer) )
   {
-    if( (true == RTD_DDR1_DRDY) || (false == getDDROnly) )
+    #ifdef __DEBUG_VIA_SERIAL__
+    if( (true == RTD_DDR1_DRDY) )
+      Serial.println("-----------> RTD_DDR1_DRDY is true, getting temperature"); 
+    else
+      Serial.println("-----------> guard_timer expired, getting temperature");
+    #endif
+
+    // always get the DDR tempteratures
+    resetRTDState(sysStates.DDR1_RTD);
+    resetRTDState(sysStates.DDR2_RTD);
+    getAdafruitRTDData(DDR1_RTD, sysStates.DDR1_RTD, getFaults);
+    getAdafruitRTDData(DDR2_RTD, sysStates.DDR2_RTD, getFaults);
+
+    // get the other if getDDROnly is false
+    if( (false == getDDROnly) )
     {
-      c = 0;
-      #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.println("RTD_DDR1_DRDY is true, getting temperature"); 
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.println("RTD_DDR1_DRDY is false, getting ASCI or DDR H2O temperatures too"); 
+      #endif
+      resetRTDState(sysStates.DDR_Chiller_RTD);
+      resetRTDState(sysStates.ASIC_Chiller_RTD);
+      getAdafruitRTDData(DDR_Chiller_RTD, sysStates.DDR_Chiller_RTD, getFaults);
+      getAdafruitRTDData(ASIC_Chiller_RTD, sysStates.ASIC_Chiller_RTD, getFaults);
+    } else
+    {
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.println("RTD_DDR1_DRDY is true, NOT getting CHILLER temperatures too"); 
       #endif
 
-      // always get the DDR tempteratures
-      resetRTDState(sysStates.DDR1_RTD);
-      resetRTDState(sysStates.DDR2_RTD);
-      getAdafruitRTDData(DDR1_RTD, sysStates.DDR1_RTD, getFaults);
-      getAdafruitRTDData(DDR2_RTD, sysStates.DDR2_RTD, getFaults);
-
-      // get the other if getDDROnly is false
-      if( (false == getDDROnly) )
-      {
-        #ifdef __DEBUG2_VIA_SERIAL__
-        Serial.println("RTD_DDR1_DRDY is false, getting CHILLER temperatures too"); 
-        #endif
-        resetRTDState(sysStates.DDR_Chiller_RTD);
-        resetRTDState(sysStates.ASIC_Chiller_RTD);
-        getAdafruitRTDData(DDR_Chiller_RTD, sysStates.DDR_Chiller_RTD, getFaults);
-        getAdafruitRTDData(ASIC_Chiller_RTD, sysStates.ASIC_Chiller_RTD, getFaults);
-      } else
-      {
-        #ifdef __DEBUG2_VIA_SERIAL__
-        Serial.println("RTD_DDR1_DRDY is true, NOT getting CHILLER temperatures too"); 
-        #endif
-        // getDDRonly is true in RUNNING state
-        // trigger another read 'now' rather than waiting to come back to
-        // the top of this function
-        handleRTDISRs(false);
-        RTD_DDR1_DRDY_StartTime = newStartTime;
-        RTD_DDR1_DRDY = false;
-        DDR1_RTD.setOneShot_dd();
-        DDR1_RTD.readRTD_dd();
-        handleRTDISRs(true);
-      }
-
-      retVal = true;
-      
-//    } else if(MS_REQ_FOR_60HZ_READ < (currTime - RTD_DDR1_DRDY_StartTime))
-    } else if( (c > 3) )
-    {
-      Serial.println("ERROR :: DDR1_RTD did not get ready");    
-      // try again
-      c = 0;
+      //
+      // getDDRonly is true when in RUNNING state
+      // the ISR is on/used only when in RUNNING state
+      // so, trigger another read 'now' rather than waiting to come back to
+      // the top of this function
+      //
+      handleRTDISRs(false);
+      RTD_DDR1_DRDY_StartTime = newStartTime;
       RTD_DDR1_DRDY = false;
-      RTD_DDR1_DRDY_StartTime = 0;
+      DDR1_RTD.setOneShot_dd();
+      DDR1_RTD.readRTD_dd();
+      handleRTDISRs(true);
     }
-    
-  }
 
+    retVal = true;
+  }      
+
+  if( (true == guard_timer) )    
+  {
+    Serial.println("WARNING :: DDR1_RTD did not get ready, no DRDY");    
+    // try again
+    RTD_DDR1_DRDY = false;
+    RTD_DDR1_DRDY_StartTime = 0;
+  }
+    
   return(retVal);
 }
 
@@ -3726,10 +3860,12 @@ systemStatus setSystemStatus(void)
   // special case check - if the chiller is not running and the ACUs are running, shutdown the ACUs
   //
 #if defined(__USING_CHILLER__)
-  if( (sysStates.chiller.state != running && ACUsRunning == true) ||
-    (ACUMismatch || offline == sysStates.chiller.online || false== ACUsOnline) || false == RTDsRunning)
+  if( (running != sysStates.chiller.state || offline == sysStates.chiller.online) ||
+      (true == ACUMismatch || false == ACUsOnline) ||
+      (false == RTDsRunning) )
 #else
-  if( (ACUMismatch || false== ACUsOnline || false == RTDsRunning) )
+  if( (true == ACUMismatch || false == ACUsOnline) ||
+      (false == RTDsRunning))
 #endif
   {
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Shutdown;
@@ -3778,13 +3914,12 @@ systemStatus setSystemStatus(void)
 */
   }
 #if defined(__USING_CHILLER__)
-  //
-  // TODO: verify this fucking logic is right ..
-  //
-  else if( ((online == sysStates.chiller.online && true == ACUsOnline)
-        && (running != sysStates.chiller.state && false == ACUsRunning) && (true == RTDsRunning)) )
+  else if( (running == sysStates.chiller.state && online == sysStates.chiller.online) &&
+      (false == ACUsRunning && false == ACUMismatch && true == ACUsOnline) &&
+      (true == RTDsRunning))
 #else
-  else if( ((true == ACUsOnline) && (false == ACUsRunning) && (true == RTDsRunning)) )
+  else if( (false == ACUsRunning && false == ACUMismatch && true == ACUsOnline) &&
+          (true == RTDsRunning))
 #endif
   {
     //
@@ -3824,7 +3959,15 @@ systemStatus setSystemStatus(void)
       // disable the MAX31865 ISRs
       //handleRTDISRs(true);
     }
-  } else
+  }
+#if defined(__USING_CHILLER__)
+  else if( (running == sysStates.chiller.state && online == sysStates.chiller.online) &&
+      (true == ACUsRunning && false == ACUMismatch && true == ACUsOnline) &&
+      (true == RTDsRunning))
+#else
+  else if( (true == ACUsRunning && false == ACUMismatch && true == ACUsOnline) &&
+          (true == RTDsRunning))
+#endif
   {
     //
     // else the system is running
@@ -3888,9 +4031,6 @@ void enableButtonISR(void)
   #endif
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
-//  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);  // FALLING good for single press is FALLING, RISING, HIGH, CHANGE and LOW stalls system
-//  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, CHANGE);  // no
-//  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, HIGH);  // one button press and the ISR is continuously hit - i.e. system freeze
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, LOW);  // one button press and the ISR is continuously hit - i.e. system freeze
 }
 
@@ -4202,7 +4342,7 @@ bool ACURunning(uint8_t id, bool& Running)
   if( (false == readENAB.retCode() || 0 == readENAB.bufflen()) )
   {
     // unable to communicate with the unit
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.print("ACU: "); Serial.print(id); Serial.println(" is not communicating");
     #endif
 
@@ -4212,7 +4352,7 @@ bool ACURunning(uint8_t id, bool& Running)
   
   if( (OFF == ntohs(*(reinterpret_cast<uint16_t*>(readENAB.buff())))) )
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.print("ACU: "); Serial.print(id); Serial.print(" is not running: 0x"); Serial.println(ntohs(*(reinterpret_cast<uint16_t*>(readENAB.buff()))), 16);
     #endif
 
@@ -4220,7 +4360,7 @@ bool ACURunning(uint8_t id, bool& Running)
     
   } else
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL__
     Serial.print("ACU: "); Serial.print(id); Serial.print(" is running: 0x"); Serial.println(ntohs(*(reinterpret_cast<uint16_t*>(readENAB.buff()))), 16);
     #endif
 
@@ -4278,17 +4418,6 @@ bool GetACUTempPV(uint8_t id, float* pv)
 {
   uint16_t  pvpvof  = 0;
   uint32_t  pvof    = 0;
-
-  // do the read, request 2 bytes back
-  //cmdResp readPVPVOF = RS485Bus.readProcess(id, PV0, 2); // PV0 returns the SV .. WTF ?
-  //cmdResp readPVPVOF = RS485Bus.readProcess(id, PV1, 2); // returns SV PV+PVOF
-  //cmdResp readPVPVOF = RS485Bus.readProcess(id, PV2, 2);   // returns SV PV+PVOF
-  //cmdResp readPVPVOF = RS485Bus.readProcess(id, ET0, 2);   // returns SV SV ..or.. PV+PVOF PV+PVOF for ID2 .. ? WTF ?
-  //cmdResp readPVPVOF = RS485Bus.readProcess(id, PVPVOF, 2);   // returns PV+PVOF and SV
-  //cmdResp readPVPVOF = RS485Bus.readProcess(id, SVSVOF, 2);   // returns SV
-  //cmdResp readPVPVOF = RS485Bus.readProcess(id, SV0, 2);   // returns 0
-  //cmdResp readPVPVOF = RS485Bus.readProcess(id, SV, 2);   // returns the SV
-  //cmdResp readPVPVOF = RS485Bus.readProcess(id, PVOF, 2);   // 
 
 
   // get the pv+pvof - this returns 2 bytes of PVPVOF
@@ -4596,13 +4725,13 @@ uint16_t getRTCTime(timeind& rtcTime)
     bool h12, PM_Time, Century;
 
     
-    rtcTime.sec    = RTCClock.getSecond();
-    rtcTime.min    = RTCClock.getMinute();
-    rtcTime.hour   = RTCClock.getHour(h12, PM_Time); 
-    rtcTime.mday   = RTCClock.getDate();
-    rtcTime.mon    = RTCClock.getMonth(Century);
-    rtcTime.year   = RTCClock.getYear();
-    rtcTime.wday   = RTCClock.getDoW();
+    rtcTime.sec    = rtc_clock->getSecond();
+    rtcTime.min    = rtc_clock->getMinute();
+    rtcTime.hour   = rtc_clock->getHour(h12, PM_Time); 
+    rtcTime.mday   = rtc_clock->getDate();
+    rtcTime.mon    = rtc_clock->getMonth(Century);
+    rtcTime.year   = rtc_clock->getYear();
+    rtcTime.wday   = rtc_clock->getDoW();
     rtcTime.fill = 0x00; // fill to keep the buff length 
   
   return(1);

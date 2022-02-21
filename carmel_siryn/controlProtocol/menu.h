@@ -47,7 +47,7 @@ class menuItemBase
     menuItemBase(const string& name, const string& description, const uint16_t destId = 1)
         : m_name(name), m_description(description), m_destId(destId) {};
     virtual ~menuItemBase() {};
-    virtual void getParameters(void) {};    // prompt for parameters for cmd - derived as needed
+    virtual bool getParameters(void) { return(true); };    // prompt for parameters for cmd - derived as needed
     void executeTest(controlProtocol* pCP) {cout.flush(); cout << "Not implemented.\n"; cout.flush(); };
     virtual void execute(controlProtocol*) = 0;
     friend ostream& operator<<(ostream& str, const menuItemBase& item)
@@ -218,10 +218,27 @@ class menuSetACUTemperature : public menuItemBase
 {
     public:
     pSetACUTemperature_t m_pSetACUTemperature;
-    void getParameters(void)
+    bool getParameters(void)
     {
-        cout << "enter ACU address (i.e. 1, 2, or 3):  "; cin >> ACUAddress;
-        cout << "enter temperature (i.e. 5.0 or -5.0): "; cin >> temperature;
+        cout << "enter ACU address (i.e. 1, 2, or 3):  ";
+        cin >> ACUAddress;
+/*
+        if( !(cin >> ACUAddress) )
+        {
+          cout << "bad input" << endl;
+          return(false);
+        }
+*/
+        cout << "enter temperature (i.e. 5.0 or -5.0): ";
+        cin >> temperature;
+/*
+        if( !(cin >> temperature) )
+        {
+          cout << "bad input" << endl;
+          return(false);
+        }
+*/
+        return(true);
     }
 
     menuSetACUTemperature()
@@ -250,9 +267,20 @@ class menuGetACUTemperature : public menuItemBase
 {
     public:
     pGetACUTemperature_t m_pGetACUTemperature;
-    void getParameters(void)
+    bool getParameters(void)
     {
-        cout << "enter ACU address:  "; cin >> ACUAddress;
+        cout << "enter ACU address:  ";
+
+        cin >> ACUAddress;
+/*
+        if( !(cin >> ACUAddress) )
+        {
+          cout << "bad input" << endl;
+          return(false);
+        }
+*/
+
+        return(true);
     }
 
     menuGetACUTemperature()
@@ -286,9 +314,20 @@ class menuGetACUObjTemperature : public menuItemBase
     public:
     pGetACUObjTemperature_t m_pGetACUObjTemperature;
     
-    void getParameters(void)
+    bool getParameters(void)
     {
-        cout << "enter ACU address:  "; cin >> ACUAddress;
+        cout << "enter ACU address:  ";
+
+        cin >> ACUAddress;
+/*
+        if( !(cin >> ACUAddress) )
+        {
+          cout << "bad input" << endl;
+          return(false);
+        }
+*/
+
+        return(true);
     }
 
     menuGetACUObjTemperature()
@@ -395,9 +434,20 @@ class menuSetChillerTemperature : public menuItemBase
 {
     public:
     pSetChillerTemperature_t m_pSetChillerTemperature  = &controlProtocol::SetChillerTemperature;
-    void getParameters(void)
+    bool getParameters(void)
     {
-        cout << "enter temperature (i.e. 24.0 or -10.5): "; cin >> temperature;
+        cout << "enter temperature (i.e. 24.0 or -10.5): ";
+
+        //
+        // check if cin got a float ??
+        //
+        cin >> temperature;
+/*
+        if( (cin.bad()) )
+        {
+          cout << "bad input" << endl;
+        }
+*/
     }
 
     menuSetChillerTemperature()
@@ -524,9 +574,20 @@ class menuGetACUInfo : public menuItemBase
 {
     public:
     pGetACUInfo_t m_pGetACUInfo;
-    void getParameters(void)
+    bool getParameters(void)
     {
-        cout << "enter ACU address:  "; cin >> acu_address;
+        cout << "enter ACU address:  ";
+
+        cin >> acu_address;
+/*
+        if( !(cin >> acu_address) )
+        {
+          cout << "bad input" << endl;
+          return(false);
+        }
+*/
+
+        return(true);
     }
 
     menuGetACUInfo()
@@ -658,9 +719,9 @@ class menuGetEventLogCmd : public menuItemBase
           memset(&ltime, '\0', sizeof(ltime));
           ltime.tm_sec  = eventlog[i].ts.sec;
           ltime.tm_min  = eventlog[i].ts.min;
-          ltime.tm_hour = eventlog[i].ts.hour + 1;
-          ltime.tm_mon  = eventlog[i].ts.mon;
-          ltime.tm_year = eventlog[i].ts.year + 101;
+          ltime.tm_hour = eventlog[i].ts.hour;
+          ltime.tm_mon  = eventlog[i].ts.mon - 1;
+          ltime.tm_year = eventlog[i].ts.year + 100;
           ltime.tm_wday = eventlog[i].ts.wday;
           ltime.tm_mday = eventlog[i].ts.mday;
 
@@ -800,9 +861,20 @@ class menuSetH20AlarmASIC : public menuItemBase
 {
     public:
     pSetH20AlarmASIC_t m_pSetH20AlarmASIC  = &controlProtocol::SetH20AlarmASIC;
-    void getParameters(void)
+    bool getParameters(void)
     {
-        cout << "enter temperature (i.e. 24.0 or -10.5): "; cin >> temperature;
+        cout << "enter temperature (i.e. 24.0 or -10.5): ";
+
+        cin >> temperature;
+/*
+        if( !(cin >> temperature) )
+        {
+          cout << "bad input" << endl;
+          return(false);
+        }
+*/
+
+        return(true);
     }
 
     menuSetH20AlarmASIC()
@@ -856,9 +928,20 @@ class menuSetH20AlarmDDR : public menuItemBase
 {
     public:
     pSetH20AlarmDDR_t m_pSetH20AlarmDDR  = &controlProtocol::SetH20AlarmDDR;
-    void getParameters(void)
+    bool getParameters(void)
     {
-        cout << "enter temperature (i.e. 24.0 or -10.5): "; cin >> temperature;
+        cout << "enter temperature (i.e. 24.0 or -10.5): ";
+
+        cin >> temperature;
+/*
+        if( !(cin >> temperature) )
+        {
+          cout << "bad input" << endl;
+          return(false);
+        }
+*/
+
+        return(true);
     }
 
     menuSetH20AlarmDDR()

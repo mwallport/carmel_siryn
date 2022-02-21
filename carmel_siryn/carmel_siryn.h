@@ -4,6 +4,7 @@
 #include <Adafruit_MAX31865.h>
 #include <DS3231.h>
 #include <Wire.h>
+#include <SHTSensor.h>
 #include "controlProtocol.h"
 #include "polySci.h"
 #include "common.h"
@@ -21,7 +22,7 @@
 // this is for frivilous debug output
 //#define __DEBUG2_VIA_SERIAL__
 
-//#define __DEBUG_RTD_READS__
+#define __DEBUG_RTD_READS__
 
 // peripheral component speeds
 #define CONTROL_PROTO_SPEED   19200
@@ -38,7 +39,7 @@ unsigned long timeBetweenSamples;
 
 
 // uncomment for the siryn project as it will use chiller
-//#define __USING_CHILLER__
+#define __USING_CHILLER__
 
 //
 // these are the RS485 bus Ids of the entities on the bus
@@ -61,6 +62,10 @@ const int rs = 8, en = 7, d4 = 11, d5 = 12, d6 = 13, d7 = 42;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 
+DS3231* rtc_clock;
+
+SHTSensor*  p_sht;
+
 //
 // control PC communication
 // assuming they will be address 0 and this program will be address 1
@@ -73,6 +78,8 @@ controlProtocol cp(Serial1, 1, 0);  // slave address (arduino) is 1, control add
 //
 #if defined(__USING_CHILLER__)
 polySci chiller(9600);  // hard programmed to use Serial2 SERIAL_8N1
+#define CHILLER_BUFF_LEN  10
+char chiller_buff[CHILLER_BUFF_LEN + 1];
 #endif
 
 
@@ -113,20 +120,14 @@ Adafruit_MAX31865 DDR_Chiller_RTD(26, 24, 22, 34);  // #4 - not on the SPI bus
 //#define DDR_Chiller_RTD_ISR_PIN   28
 
 volatile bool RTD_DDR1_DRDY          = false;
-//volatile bool RTD_DDR2_DRDY          = false;
-//volatile bool ASIC_Chiller_RTD_DRDY  = false;
-//volatile bool DDR_Chiller_RTD_DRDY   = false;
 volatile unsigned long  RTD_DDR1_DRDY_StartTime = 0;
-//volatile unsigned long  RTD_DDR2_DRDY_StartTime = 0;
-//volatile unsigned long  ASIC_Chiller_RTD_StartTime   = 0;
-//volatile unsigned long  DDR_Chiller_RTD_StartTime    = 0;
-unsigned long MS_REQ_FOR_60HZ_READ  = 500; //52;
-
+unsigned long DRDY_GUARD_TIMER  = 1500; //52;
 
 //
 // contants
 //
 #define GET_STATUS_INTERVAL   5000
+#define GET_STATUS_INTERVAL_RUNNING 3500
 #define BUTTON_PERIOD         250
 #define BUTTON_COUNT_FOR_AT1  5000
 //#define PIN_HW_ENABLE_n       8
@@ -146,6 +147,7 @@ unsigned long MS_REQ_FOR_60HZ_READ  = 500; //52;
 #define ASIC_RTD_FAIL_OFFSET  5
 #define DDR_RTD_NRML_OFFSET   6
 #define DDR_RTD_FAIL_OFFSET   7
+
 #if defined(__USING_CHILLER__)
 #define CHILLER_NRML_OFFSET   8   // 2 msgs, good and bad
 #define CHILLER_FAIL_OFFSET   9   // 2 msgs, good and bad
@@ -332,11 +334,6 @@ volatile bool buttonOnOff = false;
 volatile int bp_count = -2;  // button press 1
 #define   LONG_PRESS_BP_COUNT   1500000
 
-
-//
-// the RTC
-//
-DS3231 RTCClock;  // clock was taken, rtc was taken, so we go with RTCClock
 
 
 //
