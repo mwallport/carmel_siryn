@@ -63,11 +63,13 @@ void loop()
     {
       state = running;
       Serial2.write(simpleAck, strlen(simpleAck));
+      Serial.println("chiller started...");
       
     } else if( (0 == strcmp(setOffCmd, buff)) )
     {
       state = standby;
       Serial2.write(simpleAck, strlen(simpleAck));
+      Serial.println("chiller stopped...");
       
     } else if( (0 == strcmp(readStatusCmd, buff)) )
     {

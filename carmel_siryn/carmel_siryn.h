@@ -22,7 +22,7 @@
 // this is for frivilous debug output
 //#define __DEBUG2_VIA_SERIAL__
 
-#define __DEBUG_RTD_READS__
+//#define __DEBUG_RTD_READS__
 
 // peripheral component speeds
 #define CONTROL_PROTO_SPEED   19200
@@ -40,6 +40,9 @@ unsigned long timeBetweenSamples;
 
 // uncomment for the siryn project as it will use chiller
 #define __USING_CHILLER__
+
+// uncomment to use the Humidity sensor in the software
+#define __USING_HUMIDITY__
 
 //
 // these are the RS485 bus Ids of the entities on the bus
@@ -62,9 +65,7 @@ const int rs = 8, en = 7, d4 = 11, d5 = 12, d6 = 13, d7 = 42;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 
-DS3231* rtc_clock;
-
-SHTSensor*  p_sht;
+DS3231* rtc_clock;  // need the Wire.h library loaded and Wire.begin() before instantiating clock
 
 //
 // control PC communication
@@ -82,6 +83,12 @@ polySci chiller(9600);  // hard programmed to use Serial2 SERIAL_8N1
 char chiller_buff[CHILLER_BUFF_LEN + 1];
 #endif
 
+#if defined(__USING_HUMIDITY__)
+SHTSensor*  p_sht;  // need the Wire.h library loaded and Wire1.begin() before instantiating SHT
+#define GET_HUMIDITY_INTERVAL   2500
+#define HUMIDITY_THRESHOLD      80
+#define HUMIDITY_BUFFER         10
+#endif
 
 //
 // modbus communication
@@ -148,13 +155,16 @@ unsigned long DRDY_GUARD_TIMER  = 1500; //52;
 #define DDR_RTD_NRML_OFFSET   6
 #define DDR_RTD_FAIL_OFFSET   7
 
-#if defined(__USING_CHILLER__)
+//#if defined(__USING_CHILLER__)
 #define CHILLER_NRML_OFFSET   8   // 2 msgs, good and bad
 #define CHILLER_FAIL_OFFSET   9   // 2 msgs, good and bad
-#define MAX_LCD_MSGS      (CHILLER_FAIL_OFFSET + 1)
-#else
-#define MAX_LCD_MSGS      (DDR_RTD_FAIL_OFFSET + 1)
-#endif
+#define HUMIDITY_NRML_OFFSET    10   // 2 msgs, good and bad
+#define HUMIDITY_FAIL_OFFSET    11  // 2 msgs, good and bad
+#define MAX_LCD_MSGS            (HUMIDITY_FAIL_OFFSET + 1)
+
+//#else
+//#define MAX_LCD_MSGS      (DDR_RTD_FAIL_OFFSET + 1)
+//#endif
 #define MAX_MSG_DISPLAY_TIME  4000  // 1.5 minimum seconds per message
 
 // move this - and ask Rick what the correct initial settings should be
@@ -185,10 +195,13 @@ enum {
   // DDR RTD status
   DDR_RTD_Running, DDR_RTD_Failure,
 
-#if defined(__USING_CHILLER__)
+//#if defined(__USING_CHILLER__)
   // chiller
   chiller_Running, chiller_Stopped, chiller_ComFailure,
-#endif
+//#endif
+  sensor_humidityAndThreshold,
+  sensor_HighHumidity, sensor_Failure,
+  
   MAX_LCD_FUNC
 };
 
@@ -213,12 +226,17 @@ void lcd_ASIC_RTDs_Failure();
 void lcd_DDR_RTDs_Running();
 void lcd_DDR_RTDs_Failure();
 
-#if defined(__USING_CHILLER__)
+//#if defined(__USING_CHILLER__)
 // chiller
 void lcd_chillerRunning();    //set point and current temp
 void lcd_chillerStopped();    // running or stopped or fail
 void lcd_chillerComFailure();   // can't communicate with the chiller
-#endif
+//#endif
+
+// sensor
+void lcd_humidityAndThreshold();    // current humidity and threshold
+void lcd_highHumidity();    // humidity alert, or mechanical failure
+void lcd_sensorFailure();   // unable to communicate with the sensor
 
 
 typedef void (*lcdFunc)(void);   
@@ -239,11 +257,14 @@ lcdFunc lcdFaces[MAX_LCD_FUNC] =
   lcd_ASIC_RTDs_Failure,
   lcd_DDR_RTDs_Running,
   lcd_DDR_RTDs_Failure,
-#if defined(__USING_CHILLER__)
+//#if defined(__USING_CHILLER__)
   lcd_chillerRunning, // running - pump is on, etc. and temps
   lcd_chillerStopped, // not running - pump is off and temps
   lcd_chillerComFailure,  // can't communicate with the chiller
-#endif
+//#endif
+  lcd_humidityAndThreshold, // normal humidity
+  lcd_highHumidity,   // high humidity
+  lcd_sensorFailure
 };
 
 
@@ -257,7 +278,7 @@ typedef enum { offline, online, running, stopped, shutdown } runningStates;
 //
 typedef enum { SHUTDOWN, READY, RUNNING, UNKNOWN } systemStatus;
 
-#if defined(__USING_CHILLER__)
+//#if defined(__USING_CHILLER__)
 typedef struct _chillerState
 {
   runningStates online;         // online or offline
@@ -265,7 +286,22 @@ typedef struct _chillerState
   float         setpoint;       // current set point temperature, the SV
   float         temperature;    // current temperature, the PV
 } chillerState;
-#endif
+//#endif
+
+const int MAX_HUMIDITY_SAMPLES  = 6;
+typedef struct _humiditySamples
+{
+    int    index;
+    float  sample[MAX_HUMIDITY_SAMPLES];
+} humiditySamples_t;
+
+typedef struct _humidityState
+{
+    runningStates       online;
+    float               humidity;
+    uint16_t            threshold;
+    humiditySamples_t   sampleData;
+} humidityState;
 
 typedef struct _ACUState
 {
@@ -294,9 +330,10 @@ typedef struct _LCDState
 
 typedef struct _systemState
 {
-#if defined (__USING_CHILLER__)
+//#if defined (__USING_CHILLER__)
   chillerState  chiller;
-#endif
+//#endif
+  humidityState sensor;
   ACUState    ACU[MAX_ACU_ADDRESS];
   RTDState    ASIC_RTD;             // ASIC chip temp - this RTD is connected to ASIC Accutermo - can't get fault
   RTDState    ASIC_Chiller_RTD;     // ASIC chiller temp - fault is reflected in status menu cmd
@@ -330,6 +367,7 @@ systemState sysStates;
 const int BUTTON_PIN = 5;
 const int BUTTON_LED = 6;
 bool currentButtonOnOff = false;
+static unsigned long  buttonLastInterruptTime = 0;
 volatile bool buttonOnOff = false;
 volatile int bp_count = -2;  // button press 1
 #define   LONG_PRESS_BP_COUNT   1500000

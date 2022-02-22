@@ -664,6 +664,301 @@ bool controlProtocol::GetStatus(uint16_t destAddress, uint16_t* RTDsRunning,
 }
 
 
+bool controlProtocol::GetHumidity(uint16_t destAddress, float* humidity)
+{
+    bool                retVal  = false;
+    uint16_t            seqNum;
+    msgHeader_t*        pMsgHeader;
+    getHumidityResp_t*    pgetHumidityResp;
+
+
+    //
+    // increment the sequence number for this transaction
+    //
+    ++m_seqNum;
+
+    if( (doTxCommand(Make_getHumidity(destAddress, m_buff))) )
+    {
+        //
+        // save the seqNum
+        //
+        pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+        seqNum  = pMsgHeader->seqNum;
+
+        // get the return packet
+        if( (doRxResponse(COMM_TIMEOUT)) )
+        {
+            #ifdef __DEBUG_CTRL_PROTO__
+            //
+            // dump out what we got
+            //
+            for(uint16_t i = 0; i < sizeof(getHumidityResp_t); i++)
+            {
+                printf("0x%02X ", m_buff[i]);
+            }
+            printf("\n");
+            #endif
+
+            //
+            // check got the expected message number
+            //
+            pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+            if( (getHumidityResp != pMsgHeader->msgNum) )
+            {
+                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+           }
+
+            //
+            // cast into the buffer, pick up the CRC
+            //
+            pgetHumidityResp = reinterpret_cast<getHumidityResp_t*>(m_buff);
+
+            //
+            // verify seqNum and CRC
+            //
+            if( !(verifyMessage(len_getHumidityResp_t, ntohs(pgetHumidityResp->crc),
+                                    seqNum, ntohs(pgetHumidityResp->eop))) )
+            {
+                // TODO: drop the packet
+                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
+                        __PRETTY_FUNCTION__);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+
+            Parse_getHumidityResp(m_buff, humidity, &seqNum);
+
+            #ifdef __DEBUG_CTRL_PROTO__
+            printf("found in packet humidity %lf, seqNumer 0x%02x\n", *humidity, seqNum);
+            #endif
+
+            retVal  = true;
+        } else
+        {
+            fprintf(stderr, "ERROR: did not get a m_buffer back\n");
+        }
+
+    } else
+    {
+        fprintf(stderr, "ERROR: unable to Make_getStatus\n");
+    }
+
+    return(retVal);
+}
+
+
+bool controlProtocol::SetHumidityThreshold(uint16_t destAddress, uint16_t threshold)
+{
+    bool                retVal  = false;
+
+    uint16_t            seqNum;
+    uint16_t            result;
+    msgHeader_t*        pMsgHeader;
+    setHumidityThresholdResp_t*    psetHumidityThresholdResp;
+
+
+    //
+    // increment the sequence number for this transaction
+    //
+    ++m_seqNum;
+
+    if( (doTxCommand(Make_setHumidityThreshold(destAddress, m_buff, threshold))) )
+    {
+        //
+        // save the seqNum
+        //
+        pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+        seqNum  = pMsgHeader->seqNum;
+
+        // get the return packet
+        if( (doRxResponse(COMM_TIMEOUT)) )
+        {
+            #ifdef __DEBUG_CTRL_PROTO__
+            //
+            // dump out what we got
+            //
+            for(uint16_t i = 0; i < sizeof(setHumidityThresholdResp_t); i++)
+            {
+                printf("0x%02X ", m_buff[i]);
+            }
+            printf("\n");
+            #endif
+
+            //
+            // check got the expected message number
+            //
+            pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+            if( (setHumidityThresholdResp != pMsgHeader->msgNum) )
+            {
+                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+                                                                                                   
+            //
+            // cast into the buffer, pick up the CRC
+            //
+            psetHumidityThresholdResp = reinterpret_cast<setHumidityThresholdResp_t*>(m_buff);
+
+            //
+            // verify seqNum and CRC
+            //
+            if( !(verifyMessage(len_setHumidityThresholdResp_t, ntohs(psetHumidityThresholdResp->crc),
+                                            seqNum, ntohs(psetHumidityThresholdResp->eop))) )
+            {
+                // TODO: drop the packet
+                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
+                        __PRETTY_FUNCTION__);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+
+            //
+            // report the health
+            //
+            Parse_setHumidityThresholdResp(m_buff, &result, &seqNum);
+
+            #ifdef __DEBUG_CTRL_PROTO__
+            printf("found in packet result %d seqNumer 0x%02x\n", result, seqNum);
+            #endif
+
+            if( (result) )
+                retVal  = true;
+            else
+                retVal  = false;
+        } else
+        {
+            fprintf(stderr, "ERROR: did not get a m_buffer back\n");
+        }
+
+    } else
+    {
+        fprintf(stderr, "ERROR: unable to Make_getStatus\n");
+    }
+
+    return(retVal);
+}
+
+
+bool controlProtocol::GetHumidityThreshold(uint16_t destAddress, uint16_t* threshold)
+{
+    bool                retVal  = false;
+    uint16_t            seqNum;
+    msgHeader_t*        pMsgHeader;
+    getHumidityThresholdResp_t*    pgetHumidityThresholdResp;
+
+
+    //
+    // increment the sequence number for this transaction
+    //
+    ++m_seqNum;
+
+    if( (doTxCommand(Make_getHumidityThreshold(destAddress, m_buff))) )
+    {
+        //
+        // save the seqNum
+        //
+        pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+        seqNum  = pMsgHeader->seqNum;
+
+        // get the return packet
+        if( (doRxResponse(COMM_TIMEOUT)) )
+        {
+            #ifdef __DEBUG_CTRL_PROTO__
+            //
+            // dump out what we got
+            //
+            for(uint16_t i = 0; i < sizeof(getHumidityThresholdResp_t); i++)
+            {
+                printf("0x%02X ", m_buff[i]);
+            }
+            printf("\n");
+            #endif
+
+            //
+            // check got the expected message number
+            //
+            pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+            if( (getHumidityThresholdResp != pMsgHeader->msgNum) )
+            {
+                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+            //
+            // cast into the buffer, pick up the CRC
+            //
+            pgetHumidityThresholdResp = reinterpret_cast<getHumidityThresholdResp_t*>(m_buff);
+
+            //
+            // verify seqNum and CRC
+            //
+            if( !(verifyMessage(len_getHumidityThresholdResp_t, ntohs(pgetHumidityThresholdResp->crc),
+                                            seqNum, ntohs(pgetHumidityThresholdResp->eop))) )
+            {
+                // TODO: drop the packet
+                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
+                        __PRETTY_FUNCTION__);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+
+            //
+            // report the health
+            //
+            Parse_getHumidityThresholdResp(m_buff, threshold, &seqNum);
+
+            #ifdef __DEBUG_CTRL_PROTO__
+            printf("found in packet threshold %d seqNumer 0x%02x\n", *threshold, seqNum);
+            #endif
+
+            retVal  = true;
+        } else
+        {
+            fprintf(stderr, "ERROR: did not get a m_buffer back\n");
+        }
+
+    } else
+    {
+        fprintf(stderr, "ERROR: unable to Make_getStatus\n");
+    }
+
+    return(retVal);
+}
+
+
+
+
+
+
 bool controlProtocol::SetACUTemperature(uint16_t destAddress, uint16_t acu_address, float temperature)
 {
     bool                retVal  = false;
@@ -960,7 +1255,7 @@ bool controlProtocol::GetACUObjTemperature(uint16_t destAddress, uint16_t acu_ad
     return(retVal);
 }
 
-#if defined __USING_CHILLER__
+//#if defined __USING_CHILLER__
 bool controlProtocol::StartChiller(uint16_t destAddress)
 {
     bool                retVal  = false;
@@ -1551,7 +1846,7 @@ bool controlProtocol::GetChillerInfo(uint16_t destAddress, char* info, uint8_t l
 
     return(retVal);
 }
-#endif
+//#endif
 
 
 bool controlProtocol::EnableACUs(uint16_t destAddress)
@@ -3241,6 +3536,289 @@ void controlProtocol::Parse_getStatusResp(uint8_t* m_buff, uint16_t* RTDsRunning
 }
 
 
+uint16_t controlProtocol::Make_getHumidityThreshold(uint16_t Address, uint8_t* pBuff)
+{
+    getHumidityThreshold_t*    msg  = reinterpret_cast<getHumidityThreshold_t*>(pBuff);
+    uint16_t        CRC  = 0; 
+
+
+    // create the getHumidityThreshold message in pBuff and CRC16 checksum it
+    msg->header.control         = COMMAND;
+    msg->header.length          = sizeof(getHumidityThreshold_t);
+    msg->header.address.address = htons(Address);   // need htons here ?
+    msg->header.seqNum          = m_seqNum;    // htons ?
+    msg->header.msgNum          = getHumidityThreshold;
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_getHumidityThreshold_t);
+
+    // put the CRC
+    msg->crc                = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getHumidityThreshold_t));
+}
+
+
+uint16_t controlProtocol::Make_getHumidityThresholdResp(uint16_t Address, uint8_t* pBuff, uint16_t threshold, uint16_t SeqNum)
+{
+    getHumidityThresholdResp_t* msg  = reinterpret_cast<getHumidityThresholdResp_t*>(pBuff);
+    uint16_t                    CRC  = 0; 
+
+
+    // create the getHumidityThresholdResp message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(getHumidityThresholdResp_t);
+    msg->header.address.address = htons(Address);   // need htons here ?
+    msg->header.seqNum          = SeqNum;    // htons ?
+    msg->header.msgNum          = getHumidityThresholdResp;
+    msg->threshold              = htons(threshold);
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_getHumidityThresholdResp_t);
+
+    // put the CRC
+    msg->crc                = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getHumidityThresholdResp_t));
+}
+
+void controlProtocol::Parse_getHumidityThresholdResp(uint8_t* m_buff, uint16_t* threshold, uint16_t* pSeqNum)
+{
+    getHumidityThresholdResp_t* pResponse = reinterpret_cast<getHumidityThresholdResp_t*>(m_buff);
+
+
+    *threshold  = ntohs(pResponse->threshold);
+    *pSeqNum    = pResponse->header.seqNum;
+}
+
+
+uint16_t controlProtocol::Make_setHumidityThreshold(uint16_t Address, uint8_t* pBuff, uint16_t threshold)
+{
+    setHumidityThreshold_t* msg = reinterpret_cast<setHumidityThreshold_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = COMMAND;
+    msg->header.length          = sizeof(setHumidityThreshold_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = m_seqNum;
+    msg->header.msgNum          = setHumidityThreshold;
+
+    // pass in the humidity threshold to set
+    msg->threshold          = htons(threshold);
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_setHumidityThreshold_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(setHumidityThreshold_t));
+}
+
+
+void controlProtocol::Parse_setHumidityThresholdResp(uint8_t* m_buff, uint16_t* result, uint16_t* pSeqNum)
+{
+    setHumidityThresholdResp_t* pResponse = reinterpret_cast<setHumidityThresholdResp_t*>(m_buff);
+
+
+    *result     = ntohs(pResponse->result);
+    *pSeqNum    = pResponse->header.seqNum;
+}
+
+
+uint16_t controlProtocol::Make_getHumidity(uint16_t Address, uint8_t* pBuff)
+{
+    getHumidity_t* msg = reinterpret_cast<getHumidity_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = COMMAND;
+    msg->header.length          = sizeof(getHumidity_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = m_seqNum;
+    msg->header.msgNum          = getHumidity;
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_getHumidity_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getHumidity_t));
+}
+
+
+void controlProtocol::Parse_getHumidityResp(uint8_t* m_buff, float* humidity, uint16_t* pSeqNum)
+{
+    getHumidityResp_t* pResponse = reinterpret_cast<getHumidityResp_t*>(m_buff);
+
+
+    #ifdef __RUNNING_ON_CONTROLLINO__
+    //
+    // on uC use atof, sscanf support is dodgy
+    //
+    *humidity = atof(reinterpret_cast<char*>(pResponse->humidity));
+    #else
+    sscanf(reinterpret_cast<char*>(pResponse->humidity), "%6f", humidity);
+    #endif
+
+    *pSeqNum    = pResponse->header.seqNum;
+}
+
+
+
+
+
+uint16_t controlProtocol::Make_setHumidityThresholdResp(uint16_t Address, uint8_t* pBuff, uint16_t result, uint16_t SeqNum)
+{
+    setHumidityThresholdResp_t* msg = reinterpret_cast<setHumidityThresholdResp_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(setHumidityThresholdResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = setHumidityThresholdResp;
+
+    // set the result
+    msg->result                 = htons(result);
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_setHumidityThresholdResp_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(setHumidityThresholdResp_t));
+}
+
+
+uint16_t controlProtocol::Make_getHumidityResp(uint16_t Address, uint8_t* pBuff, float humidity, uint16_t SeqNum)
+{
+    getHumidityResp_t* msg = reinterpret_cast<getHumidityResp_t*>(pBuff);
+    uint16_t CRC = 0;
+
+
+    // create the getStatus message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(getHumidityResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = getHumidityResp;
+
+    #ifdef __RUNNING_ON_CONTROLLINO__
+    //
+    // use the dostrf function, left justified, max 7 characters total, max 2 decimal places
+    //
+    //dtostrf(humidity, -(MAX_HUMIDITY_LENGTH), 2, reinterpret_cast<char*>(msg->humidity));
+    snprintf(reinterpret_cast<char*>(msg->humidity), MAX_HUMIDITY_LENGTH, "%-+3.2f", humidity);
+    #else
+    //
+    // use the snprintf function, 
+    //
+    snprintf(reinterpret_cast<char*>(msg->humidity), MAX_HUMIDITY_LENGTH, "%-+3.2f", humidity);
+    #endif
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_getHumidityResp_t);
+
+    // put the CRC
+    msg->crc    = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getHumidityResp_t));
+}
+
+
+uint16_t controlProtocol::Make_getTempCmdResp(uint16_t Address, uint8_t* pBuff,
+                      uint16_t temp, uint16_t SeqNum)
+{
+    getTempCmdResp_t*  msg  = reinterpret_cast<getTempCmdResp_t*>(pBuff);
+    uint16_t        CRC  = 0; 
+
+
+    // create the getTempCmdResp message in pBuff and CRC16 checksum it
+    msg->header.control         = RESPONSE;
+    msg->header.length          = sizeof(getTempCmdResp_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = SeqNum;
+    msg->header.msgNum          = getTempCmdResp;
+
+    // set the temp
+    msg->temp                  = temp;
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff, len_getTempCmdResp_t);
+
+    // put the CRC
+    msg->crc                = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getTempCmdResp_t));
+}
+
+
+uint16_t controlProtocol::Make_getTempCmd(uint16_t Address, uint8_t* pBuff)
+{
+    getTempCmd_t* msg  = reinterpret_cast<getTempCmd_t*>(pBuff);
+    uint16_t      CRC  = 0;
+
+
+    memset(m_buff, '\0', MAX_BUFF_LENGTH_CP + 1);
+    // create the getTempCmd message in pBuff and CRC16 checksum it
+    msg->header.control         = COMMAND;
+    msg->header.length          = sizeof(getTempCmd_t);
+    msg->header.address.address = htons(Address);
+    msg->header.seqNum          = m_seqNum;
+    msg->header.msgNum          = getTempCmd;
+
+    // calculate the CRC
+    CRC = calcCRC16(pBuff,  len_getTempCmd_t);
+
+    // put the CRC
+    msg->crc                = htons(CRC);   // TODO: need htons ?
+
+    // put the end of transmission byte
+    msg->eop                = htons(EOP_VAL);
+
+    return(sizeof(getTempCmd_t));
+}
+
+
+void controlProtocol::Parse_getTempCmdResp(uint8_t* m_buff, uint16_t* temp, uint16_t* pSeqNum)
+{
+    getTempCmdResp_t* pResponse = reinterpret_cast<getTempCmdResp_t*>(m_buff);
+
+
+    *temp     = ntohs(pResponse->temp);
+    *pSeqNum  = pResponse->header.seqNum;
+}
+
+
 uint16_t controlProtocol::Make_setACUTemperature(uint16_t Address, uint8_t* pBuff, uint16_t acu_address, float temperature)
 {
     setACUTemperature_t* msg = reinterpret_cast<setACUTemperature_t*>(pBuff);
@@ -4013,7 +4591,7 @@ uint8_t get_low_nibble(int x)
 
 
 
-#if defined __USING_CHILLER__
+//#if defined __USING_CHILLER__
 uint16_t controlProtocol::Make_startChillerMsg(uint16_t Address, uint8_t* pBuff)
 {
     startChillerMsg_t* msg  = reinterpret_cast<startChillerMsg_t*>(pBuff);
@@ -4450,7 +5028,7 @@ void controlProtocol::Parse_getChillerInfoResp(uint8_t* m_buff, uint16_t* result
 
     *pSeqNum    = pResponse->header.seqNum;
 }
-#endif
+//#endif
 
 
 uint16_t controlProtocol::Make_setH20AlarmASIC(uint16_t Address, uint8_t* pBuff, float temperature)
@@ -4885,4 +5463,103 @@ uint16_t controlProtocol::getMsgId()
     msgHeader_t* pmsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
 
     return(pmsgHeader->msgNum);
+}
+
+
+bool controlProtocol::GetTempCmd(uint16_t destAddress, uint16_t* temp)
+{
+    bool                retVal  = false;
+    uint16_t            seqNum;
+    msgHeader_t*        pMsgHeader;
+    getTempCmdResp_t*   pgetTempCmdResp;
+
+
+    //
+    // increment the sequence number for this transaction
+    //
+    ++m_seqNum;
+
+    if( (doTxCommand(Make_getTempCmd(destAddress, m_buff))) )
+    {
+        //
+        // save the seqNum
+        //
+        pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+        seqNum  = pMsgHeader->seqNum;
+
+        // get the return packet
+        if( (doRxResponse(COMM_TIMEOUT)) )
+        {
+            #ifdef __DEBUG_CTRL_PROTO__
+            //
+            // dump out what we got
+            //
+            for(uint16_t i = 0; i < sizeof(getTempCmdResp_t); i++)
+            {
+                printf("0x%02X ", m_buff[i]);
+            }
+            printf("\n");
+            #endif
+
+            //
+            // check got the expected message number
+            //
+            pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
+            if( (getTempCmdResp != pMsgHeader->msgNum) )
+            {
+                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+            //
+            // cast into the buffer, pick up the CRC
+            //
+            pgetTempCmdResp = reinterpret_cast<getTempCmdResp_t*>(m_buff);
+
+            //
+            // verify seqNum and CRC
+            //
+            if( !(verifyMessage(len_getTempCmdResp_t, ntohs(pgetTempCmdResp->crc),
+                                        seqNum, ntohs(pgetTempCmdResp->eop))) )
+            {
+                // TODO: drop the packet
+                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
+                        __PRETTY_FUNCTION__);
+
+                //
+                // no need to continue processing
+                //
+                return(false);
+            }
+
+
+            //
+            // report the health
+            //
+            Parse_getTempCmdResp(m_buff, temp, &seqNum);
+
+            #ifdef __DEBUG_CTRL_PROTO__
+            printf("found in packet temp %d seqNumer 0x%02x\n", temp, seqNum);
+            #endif
+
+            if( (temp) )
+                retVal  = true;
+            else
+                retVal  = false;
+        } else
+        {
+            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+        }
+
+    } else
+    {
+        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+    }
+
+    return(retVal);
 }

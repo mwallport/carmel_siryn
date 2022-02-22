@@ -12,7 +12,7 @@
 #define __RUNNING_ON_CONTROLLINO__
 
 //chiller
-#define __USING_CHILLER__
+//#define __USING_CHILLER__
 
 // common
 #include <stdint.h>
@@ -134,6 +134,12 @@ typedef enum _msgID
 {
     getStatusCmd,               // fetch the status of chiller, all ACUs, and humidity sensor
     getStatusResp,              // get status response
+    setHumidityThreshold,       // get the humidity threshold
+    setHumidityThresholdResp,   // get the humidity threshold response
+    getHumidityThreshold,       // set the humidity threshold
+    getHumidityThresholdResp,   // set the humidity threshold response
+    getHumidity,                // get current humidity and temperature
+    getHumidityResp,            // get current humidity and temperature response
     setACUTemperature,          // target ACU m_address and temp
     setACUTemperatureResp,      // target ACU m_address and temp response
     getACUTemperature,          // target ACU m_address and temp
@@ -146,7 +152,7 @@ typedef enum _msgID
     enableACUsResp,             // turn on all ACUs response
     disableACUs,                // turn off all ACUs
     disableACUsResp,            // turn off all ACUs response
-#if defined(__USING_CHILLER__)
+//#if defined(__USING_CHILLER__)
     setChillerTemperature,      // set chiller set point
     setChillerTemperatureResp,  // set chiller set point response
     getChillerTemperature,      // get chiller set point
@@ -159,7 +165,7 @@ typedef enum _msgID
     stopChillerResp,            // response ***
     getChillerInfo,             // get the name of the chiller  ***
     getChillerInfoResp,         // response ***
-#endif
+//#endif
     startUpCmd,                 // start up
     startUpCmdResp,             // reponse
     startUpATCmd,               // start up
@@ -182,6 +188,8 @@ typedef enum _msgID
     getH20AlarmASICResp,        //
     getH20AlarmDDR,             // 
     getH20AlarmDDRResp,         //
+    getTempCmd,                 // get the sht sensor-read temperature
+    getTempCmdResp,             // response bla bal ( i'm tired )
     NACK                        // command not supported
 } msgID;
 
@@ -232,6 +240,76 @@ typedef struct _getStatusResp
 } getStatusResp_t;
 const uint16_t len_getStatusResp_t  = sizeof(getStatusResp_t) - sizeof(CRC) - sizeof(EOP);
 
+typedef struct _setHumidityThreshold
+{
+    msgHeader_t header;
+    uint16_t    threshold;      // uint16_6 - humidity threshold - TODO: make this ASCII char ?
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} setHumidityThreshold_t;
+const uint16_t len_setHumidityThreshold_t    = sizeof(setHumidityThreshold_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _setHumidityThresholdResp
+{
+    msgHeader_t header;
+    uint16_t    result;         // 0 - failed to set; 1 - successfully set
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} setHumidityThresholdResp_t;
+const uint16_t len_setHumidityThresholdResp_t    = sizeof(setHumidityThresholdResp_t) - sizeof(CRC) - sizeof(EOP);
+
+typedef struct _getHumidityThreshold
+{
+    msgHeader_t header;
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getHumidityThreshold_t;
+const uint16_t len_getHumidityThreshold_t    = sizeof(getHumidityThreshold_t) - sizeof(CRC) - sizeof(EOP);
+
+
+typedef struct _getHumidityThresholdResp
+{
+    msgHeader_t header;
+    uint16_t    threshold;      // uint16_6 - current humidity threshold - TODO: make this ASCII char?
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getHumidityThresholdResp_t;
+const uint16_t len_getHumidityThresholdResp_t    = sizeof(getHumidityThresholdResp_t) - sizeof(CRC) - sizeof(EOP);
+
+typedef struct _getHumidity
+{
+    msgHeader_t header;
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getHumidity_t;
+const uint16_t len_getHumidity_t    = sizeof(getHumidity_t) - sizeof(CRC) - sizeof(EOP);
+
+typedef struct _getHumidityResp
+{
+    msgHeader_t header;
+    uint8_t     humidity[MAX_HUMIDITY_LENGTH];    // float in 32 bits
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getHumidityResp_t;
+const uint16_t len_getHumidityResp_t    = sizeof(getHumidityResp_t) - sizeof(CRC) - sizeof(EOP);
+
+typedef struct _getTempCmd
+{
+    msgHeader_t header;
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getTempCmd_t;
+const uint16_t len_getTempCmd_t = sizeof(getTempCmd_t) - sizeof(CRC) - sizeof(EOP);
+
+typedef struct _getTempCmdResp
+{
+    msgHeader_t header;
+    uint16_t    temp;           // temperarue as from the sht .. no floating point yet
+    CRC         crc;            // 16 bit CRC over the packet
+    EOP         eop;            // end of transmission character/byte
+} getTempCmdResp_t;
+const uint16_t len_getTempCmdResp_t = sizeof(getTempCmdResp_t) - sizeof(CRC) - sizeof(EOP);
 
 typedef struct _setACUTemperature
 {
@@ -735,6 +813,9 @@ class controlProtocol
     bool    StartUpATCmd(uint16_t);
     bool    ShutDownCmd(uint16_t);
     bool    GetStatus(uint16_t, uint16_t*, uint16_t*, uint16_t*);
+    bool    GetHumidity(uint16_t, float*);
+    bool    SetHumidityThreshold(uint16_t, uint16_t);
+    bool    GetHumidityThreshold(uint16_t, uint16_t*);
     bool    SetACUTemperature(uint16_t, uint16_t, float);
     bool    GetACUTemperature(uint16_t, uint16_t, uint16_t*, float*);
     bool    GetACUObjTemperature(uint16_t, uint16_t, uint16_t*, float*);
@@ -751,6 +832,7 @@ class controlProtocol
     bool    GetRTCCmd(uint16_t, struct tm*);
     bool    ClrEventLogCmd(uint16_t);
     bool    GetEventLogCmd(uint16_t, elogentry*);
+    bool    GetTempCmd(uint16_t, uint16_t*);
     bool    SetH20AlarmASIC(uint16_t, float);
     bool    GetH20AlarmASIC(uint16_t, float*);
     bool    SetH20AlarmDDR(uint16_t, float);
@@ -807,6 +889,22 @@ class controlProtocol
     uint16_t    Make_getStatus(uint16_t, uint8_t*);
     uint16_t    Make_getStatusResp(uint16_t, uint8_t*, uint16_t, uint16_t, uint16_t, uint16_t);
     void        Parse_getStatusResp(uint8_t*, uint16_t*, uint16_t*, uint16_t*, uint16_t*);
+    
+    uint16_t    Make_setHumidityThreshold(uint16_t, uint8_t*, uint16_t);
+    uint16_t    Make_setHumidityThresholdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    void        Parse_setHumidityThresholdResp(uint8_t*, uint16_t*, uint16_t*);
+ 
+    uint16_t    Make_getHumidityThreshold(uint16_t, uint8_t*);
+    uint16_t    Make_getHumidityThresholdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    void        Parse_getHumidityThresholdResp(uint8_t*, uint16_t*, uint16_t*);
+
+    uint16_t    Make_getHumidity(uint16_t, uint8_t*);
+    uint16_t    Make_getHumidityResp(uint16_t, uint8_t*, float, uint16_t);
+    void        Parse_getHumidityResp(uint8_t*, float*, uint16_t*);
+
+    uint16_t    Make_getTempCmd(uint16_t, uint8_t*);
+    uint16_t    Make_getTempCmdResp(uint16_t, uint8_t*, uint16_t, uint16_t);
+    void        Parse_getTempCmdResp(uint8_t*, uint16_t*, uint16_t*);
 
     uint16_t    Make_setACUTemperature(uint16_t, uint8_t*, uint16_t, float);
     uint16_t    Make_setACUTemperatureResp(uint16_t, uint8_t*, uint16_t, uint16_t, uint16_t);

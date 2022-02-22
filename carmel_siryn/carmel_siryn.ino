@@ -1,14 +1,18 @@
 #include "carmel_siryn.h"
 
-
-
-
 void setup(void)
 {
   //
   // start the system components and Serial port if running debug
   //
   initSystem();
+
+  #ifdef __USING_HUMIDITY__
+  //
+  // set the humidity threshold to ambient + 10%
+  //
+  setInitialHumidityThreshold();
+  #endif
 
   //
   // banner - used to easily find system restarts in log file
@@ -19,6 +23,12 @@ void setup(void)
   Serial.println(" -----------------------------------------------------------"); Serial.flush();
   #endif
  
+  //
+  // always start the chiller
+  //
+  #ifdef __USING_CHILLER__
+  startChiller();
+  #endif
   
   //
   // shutdown on boot up, get to a known state
@@ -30,13 +40,7 @@ void setup(void)
   //
   configureAdafruitsBySysteState(SHUTDOWN);
 
-  //
-  // always start the chiller
-  //
-  #ifdef __USING_CHILLER__
-  startChiller();
-  #endif
-  
+
   //
   // these are normally gotten via getStatus() which runs on a period
   // at start up, i.e. now, the period will not have lapsed, so get them now
@@ -72,22 +76,27 @@ void loop(void)
   // - Otherwise the tmo for input is 3000ms
   //
   handleMsgs(CTRL_TIMEOUT);               // tmo is 3000ms
-
-
-  if (p_sht->readSample()) {
-      Serial.print("------->>>>> SHT:\n");
-      Serial.print("  RH: ");
-      Serial.print(p_sht->getHumidity(), 2);
-      Serial.print("\n");
-      Serial.print("  T:  ");
-      Serial.print(p_sht->getTemperature(), 2);
-      Serial.print("\n");
-  } else {
-      Serial.print("--->>>>>  Error in readSample()\n");
-  }
-
 }
 
+
+bool humidityHigh(void)
+{
+    bool retVal = false;
+
+
+    if( ((sysStates.sensor.humidity > sysStates.sensor.threshold) 
+        || (offline == sysStates.sensor.online)) )
+    {    
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.print(__PRETTY_FUNCTION__);
+        Serial.println(" WARNING: humidity too high or sensor failure");
+        #endif
+
+        retVal = true;
+    }    
+
+    return(retVal);
+}
 
 
 //-------------------------------------------------------------
@@ -95,8 +104,7 @@ void loop(void)
 //
 void initSystem(void)
 {
-  Wire.begin();   // for SHT humidity sensor
-  Wire1.begin();  // for the RTC
+  Wire1.begin();  // for the RTC; the Wire.begin() is called only if using SHT
 
 
   //
@@ -105,12 +113,6 @@ void initSystem(void)
   rtc_clock = new DS3231(Wire1);  // clock was taken, rtc was taken, so we go with rtc_clock
   rtc_clock->setClockMode(false);
 
-
-  //
-  // start the LCD and paint system initializing
-  //
-  startLCD();
-   
   //
   // initialize the system states /stats - these are
   // used to hold temperatures, humidity, etc. and
@@ -118,6 +120,36 @@ void initSystem(void)
   // and holds the LCD messages
   //
   initSysStates(sysStates);
+
+
+
+  //
+  // remove the LCD faces that are not going to be used due to compile time
+  // options for chiller and humidity
+  //
+//#if defined(__USING_CHILLER__)
+  // chiller
+  chiller_Running, chiller_Stopped, chiller_ComFailure,
+//#endif
+  sensor_humidityAndThreshold,
+  sensor_HighHumidity, sensor_Failure,
+  
+  #ifndef __USING_CHILLER__
+  lcdFaces[chiller_Running]     = 0;
+  lcdFaces[chiller_Stopped]     = 0;
+  lcdFaces[chiller_ComFailure]  = 0;
+  #endif
+
+  #ifndef __USING_HUMIDITY__
+  lcdFaces[sensor_humidityAndThreshold] = 0;
+  lcdFaces[sensor_HighHumidity]         = 0;
+  lcdFaces[sensor_Failure]              = 0;
+  #endif
+  
+  // start the LCD and paint system initializing
+  //
+  startLCD();
+  
 
   //
   // start the Serial ports
@@ -167,6 +199,13 @@ void initSystem(void)
   }
 
 
+#ifdef __USING_HUMIDITY__
+  //   
+  // start the humidity sensor - call this only after Wire.begin()
+  //   
+  startSHTSensor();
+#endif
+
   //
   // initialize the start/stop button
   //
@@ -197,19 +236,6 @@ void initSystem(void)
   //
   writePVOF(ASIC_RS485_ID, 0);
   writePVOF(DDR_RS485_ID, 0);
-
-
-#if defined(__USING_CHILLER__)
-  p_sht = new SHTSensor;
-  
-  if (p_sht->init()) {
-      Serial.print("------>>>>>>>>>> init(): success\n");
-  } else {
-      Serial.print("------>>>>>>>>>> init(): failed\n");
-  }
-  p_sht->setAccuracy(SHTSensor::SHT_ACCURACY_MEDIUM); // only supported by SHT3x
-#endif
-  
 }
 
 
@@ -218,13 +244,22 @@ void initSystem(void)
 //
 void initSysStates(systemState& states)
 {
-#if defined(__USING_CHILLER__)
+//#if defined(__USING_CHILLER__)
   // chiller starts offline until queried via getStatus()
   states.chiller.online    = offline;
   states.chiller.state     = stopped;
   states.chiller.temperature = 0;
   states.chiller.setpoint  = 0;
-#endif
+//#endif
+
+  // sensor starts offline until discovered to be online via getStatus()
+  states.sensor.humidity     = 0; 
+  states.sensor.threshold    = HUMIDITY_THRESHOLD;
+  states.sensor.online       = offline;
+  states.sensor.sampleData.index = 0; 
+  for(int i = 0; i < MAX_HUMIDITY_SAMPLES; i++) 
+    states.sensor.sampleData.sample[i] = 0.0; 
+
 
 
   // ACUs starts offline until discovered to be online via getStatus()
@@ -278,9 +313,10 @@ void initSysStates(systemState& states)
   sysStates.lcd.lcdFacesIndex[ACU_NRML_OFFSET]      = ACU_Stopped;
   sysStates.lcd.lcdFacesIndex[ASIC_RTD_NRML_OFFSET] = ASIC_RTD_Running;
   sysStates.lcd.lcdFacesIndex[DDR_RTD_NRML_OFFSET]  = DDR_RTD_Running;
-#if defined(__USING_CHILLER__)
+//#if defined(__USING_CHILLER__)
   sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Stopped;
-#endif
+  sysStates.lcd.lcdFacesIndex[HUMIDITY_NRML_OFFSET]  = sensor_humidityAndThreshold;
+//#endif
   sysStates.lcd.index = 0;
   sysStates.sysStatus = UNKNOWN;
 }
@@ -341,8 +377,30 @@ void manageLCD(bool now)
       }
     }
 
-    lcdFaces[sysStates.lcd.lcdFacesIndex[(sysStates.lcd.index)]]();
+  #ifdef __USING_HUMIDITY__
+    //
+    // update the LCD screen
+    //
+    // special case the humidity sensor - show humidity status in case of:
+    // - humidity is too high
+    // - SHT sensor failure
+    // in either case the system will be in shutdown mode already or very soon
+    //
+    if( (humidityHigh()) )
+    {
+        // high or sensor failure
+        if( (offline == sysStates.sensor.online) )
+            lcdFaces[sensor_Failure]();
+        else
+            lcdFaces[sensor_HighHumidity]();
 
+    } else // paint the current LCD screen
+    {
+        lcdFaces[sysStates.lcd.lcdFacesIndex[(sysStates.lcd.index)]]();
+    }
+  #else
+    lcdFaces[sysStates.lcd.lcdFacesIndex[(sysStates.lcd.index)]]();
+  #endif
 
     //
     // reload the count down timer
@@ -387,6 +445,55 @@ bool startLCD(void)
 }
 
 
+//--------------------------------------------------------------
+// must be called AFTER Wire.begin();
+// only called if #define __USING_HUMIDITY__
+//
+bool startSHTSensor(void)
+{
+    bool retVal = false;
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("---------------------------------------");
+    Serial.println(__PRETTY_FUNCTION__);
+    #endif
+
+    Wire.begin();   // for SHT humidity sensor
+    p_sht = new SHTSensor;
+
+    if( (p_sht->init()) && (p_sht->setAccuracy(SHTSensor::SHT_ACCURACY_MEDIUM)) )
+    {
+        #ifdef __DEBUG2_VIA_SERIAL__
+        Serial.print(__PRETTY_FUNCTION__);
+        Serial.println("started SHT sensor");
+        Serial.flush();
+        #endif
+
+
+        sysStates.sensor.online = online;
+        sysStates.lcd.lcdFacesIndex[HUMIDITY_NRML_OFFSET]  = sensor_humidityAndThreshold;
+        retVal  = true;
+    } else
+    {
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.print(__PRETTY_FUNCTION__);
+        Serial.println(" ERROR: unable to start sensor");
+        Serial.flush();
+        #endif
+
+        // update the sysStates
+        sysStates.sensor.online = offline;
+
+        // update the LCD status for the sensor
+        sysStates.lcd.lcdFacesIndex[HUMIDITY_FAIL_OFFSET]  = sensor_Failure;
+
+        retVal  = false;
+    }
+
+    return(retVal);
+}
+
+
 // ----------------------------------------------------------
 // return true only if
 // - LCD is up
@@ -405,32 +512,45 @@ bool startUp(bool startAT)
   #endif
 
 
+  #ifdef __USING_HUMIDITY__
   //
-  // paint 'Starting' on LCD
+  // if humidity is too high, or there is a humidity sensor failure,
+  // do not start the chiller - return failure
   //
-  if( (true == startAT) )
-    lcd_starting_AT();
-  else
-    lcd_starting();
-
-  // allow the LCD to show what is starting for at least 3 seconds
-  delay(3000);
+  if( (humidityHigh()) )
+    return(false);
+  #endif
 
   //
   // start the chiller and the ACUs
   //
+  #ifdef __USING_CHILLER__
   if( !(startChiller()) )
-    retVal  = false;
+    return(false);
+  #endif
+  
 
-  // only start the ACUs is the chiller is running
-  else if( !(startACUs(startAT)) )
-    retVal = false;
-
-  if( (true == retVal) )
+  if( (startACUs(startAT)) )
   {
+    //
+    // paint 'Starting' on LCD
+    //
+    if( (true == startAT) )
+      lcd_starting_AT();
+    else
+      lcd_starting();
+  
+    // allow the LCD to show what is starting for at least 3 seconds
+    delay(2000);
+  
     // set the LCD to running
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Running;
   } // else leave the FacesIndex what it was .. ?
+  else
+  {
+    retVal = false;
+    // and don't change the lcdFaces
+  }
 
   return(retVal);
 }
@@ -440,6 +560,7 @@ void getStatus(void)
 {
   static unsigned long  lastGetStatusTime         = 0;
   static unsigned long  lastGetStatusTimeRunning  = 0;
+  static unsigned long  lastGetHumidityTime       = 0;
   unsigned long         currentGetStatusTime  = millis();
 
 
@@ -452,7 +573,7 @@ void getStatus(void)
   {
     lastGetStatusTime = currentGetStatusTime;
 
-    #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("- CHECK all ACUs and all RTDs  --------------");
     #endif
     
@@ -467,7 +588,9 @@ void getStatus(void)
     //
     setHotRTD();
 
-  } else if( (RUNNING == sysStates.sysStatus) &&
+  }
+  
+  if( (RUNNING == sysStates.sysStatus) &&
             (GET_STATUS_INTERVAL_RUNNING < (currentGetStatusTime - lastGetStatusTimeRunning)) )
   {
     lastGetStatusTimeRunning = currentGetStatusTime;
@@ -502,7 +625,49 @@ void getStatus(void)
     }
   }
 
+  //   
+  // get the chiller and TEC's status every GET_HUMIDITY_INTERVAL seconds
+  //   
+  if( (GET_HUMIDITY_INTERVAL < (currentGetStatusTime - lastGetHumidityTime)) )
+  {    
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.println("- check humidity ----------------------");
+    Serial.println(__PRETTY_FUNCTION__);
+    #endif
 
+    lastGetHumidityTime = currentGetStatusTime;
+    getHumidityLevel();
+ 
+    //
+    // if humidity too high, shutdown the chiller
+    //
+    // TODO: shutdown just the chiller or the TECs too ?
+    //
+    if( (humidityHigh()) )
+    {
+        #ifdef __DEBUG2_VIA_SERIAL__
+        Serial.println("- !!! humidity is high !!!! ----------------------");
+        Serial.print("sysStates.sysStatus is: "); Serial.println(sysStates.sysStatus);
+        Serial.println(__PRETTY_FUNCTION__);
+        #endif
+
+        // disable the button ISR, the uC queues up the
+        // interrupts, so if button is presssed while system is
+        // shutdown due to high humidity, that button press could
+        // cause the system to start up when the humidity failure clears
+        disableButtonISR();
+
+        // stop the chiller, stop the TECs
+        if( (SHUTDOWN != sysStates.sysStatus) )
+        {
+            logEvent(HumidityHigh, 0);
+            shutDownSys(false);
+        }
+    } else 
+    {
+        //enableButtonISR();
+    }
+  }
 
   //
   // set the LCD state for the overall system based on the
@@ -535,11 +700,18 @@ bool shutDownSys(bool stopChillerCmd)
   //
   // turn off the chiller only if there is a humidity failure or stopChillerCmd is true
   //
-#if defined(__USING_CHILLER__)
+#if defined(__USING_HUMIDITY__) && defined(__USING_CHILLER__)
+  if( (stopChillerCmd) || (humidityHigh()) )
+  {
+    Serial.println("have stopChillerCmd || humidityHigh()");
+#else if defined(__USING_CHILLER__)
   if( (stopChillerCmd) )
   {
+    Serial.println("have stopChillerCmd");
+#endif
     for(uint8_t i = 0; i < MAX_SHUTDOWN_ATTEMPTS; i++)
     {
+      Serial.println("stopping the chiller...");
       if( !(chiller.StopChiller()) )
         retVal  = false;
       else
@@ -549,7 +721,6 @@ bool shutDownSys(bool stopChillerCmd)
       }
     }
   }
-#endif
       
   //
   // turn off the ACUs - not checking return value here as we are dying anyway ??
@@ -575,17 +746,32 @@ bool shutDownSys(bool stopChillerCmd)
 // turn on the chiller
 // return success if all these happen
 //
+#if defined(__USING_CHILLER__)
 bool startChiller(void)
 {
-#if defined(__USING_CHILLER__)
-
-  #ifdef __DEBUG2_VIA_SERIAL__
+  #ifdef __DEBUG_VIA_SERIAL__
   Serial.println("---------------------------------------");
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
   bool retVal = true;
 
+
+  #ifdef __USING_HUMIDITY__
+  //
+  // if humidity is too high, or there is a humidity sensor failure,
+  // do not start the chiller - return failure
+  //
+  if( (humidityHigh()) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.print(__PRETTY_FUNCTION__);
+    Serial.println(" WARNING: not starting chiller, humidity too high or sensor failure");
+    #endif
+
+    return(false);
+  }
+  #endif
 
 
   if( !(chiller.StartChiller()) )
@@ -595,6 +781,11 @@ bool startChiller(void)
     #ifdef __DEBUG_VIA_SERIAL__
     Serial.print(__PRETTY_FUNCTION__); Serial.println(" unable to start chiller");
     #endif
+  } else
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print(__PRETTY_FUNCTION__); Serial.println(" chiller started");
+    #endif
   }
 
   //
@@ -602,17 +793,14 @@ bool startChiller(void)
   //
   handleChillerStatus();
 
-
   //
   // update the system state
   //
   //setSystemStatus();
 
   return(retVal);
-#else
-  return(true);
-#endif
 }
+#endif
 
 
 // ---------------------------------------
@@ -793,36 +981,44 @@ void handleMsgs(uint16_t tmo)
    
   if( (currentButtonOnOff != buttonOnOff) )
   {
-    currentButtonOnOff = buttonOnOff;
-      
-    #ifdef __DEBUG_VIA_SERIAL__
-    Serial.print("button press happened, switching ");
-    if( (true == currentButtonOnOff) ) Serial.println("on"); else Serial.println("off");
-    Serial.flush();
+    #ifdef __USING_HUMIDITY__
+    if( (!humidityHigh()) )
+    {
     #endif
-
-    if( (true == currentButtonOnOff) )
-    {
-      //
-      // adjust the button LED
-      //
-      digitalWrite(BUTTON_LED, HIGH);
-
-      if( (LONG_PRESS_BP_COUNT < bp_count) )
-        startUp(true);
-      else
-        startUp(false);
+      currentButtonOnOff = buttonOnOff;
         
-      bp_count = 0;
-    } else
-    {
-      //
-      // adjust the button LED
-      //
-      digitalWrite(BUTTON_LED, LOW);
-      shutDownSys(false);
-      bp_count = 0;
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print("button press happened, switching ");
+      if( (true == currentButtonOnOff) ) Serial.println("on"); else Serial.println("off");
+      Serial.flush();
+      #endif
+  
+      if( (true == currentButtonOnOff) )
+      {
+        //
+        // adjust the button LED
+        //
+        digitalWrite(BUTTON_LED, HIGH);
+  
+        if( (LONG_PRESS_BP_COUNT < bp_count) )
+          startUp(true);
+        else
+          startUp(false);
+          
+        bp_count = 0;
+      } else
+      {
+        //
+        // adjust the button LED
+        //
+        digitalWrite(BUTTON_LED, LOW);
+        shutDownSys(false);
+        bp_count = 0;
+      }
+
+    #ifdef __USING_HUMIDITY__
     }
+    #endif
   } else
   {
     //
@@ -895,7 +1091,7 @@ void handleMsgs(uint16_t tmo)
           break;
         };
         
-#if defined(__USING_CHILLER__)
+//#if defined(__USING_CHILLER__)
         case startChillerMsg:
         {
           handleStartChillerMsg();
@@ -931,7 +1127,7 @@ void handleMsgs(uint16_t tmo)
           handleGetChillerTemperature(false);
           break;
         };
-#endif
+//#endif
         case setRTCCmd:
         {
             handleSetRTCCmd();
@@ -980,6 +1176,31 @@ void handleMsgs(uint16_t tmo)
             break;
         }
 
+//#ifdef __USING_HUMIDITY__
+        case setHumidityThreshold:       // get the humidity threshold
+        {
+            handleSetHumidityThreshold();
+            break;
+        };
+
+        case getHumidityThreshold:       // set the humidity threshold
+        {
+            handleGetHumidityThreshold();
+            break;
+        };
+
+        case getHumidity:                // get current humidity and temperature
+        {
+            handleGetHumidity();
+            break;
+        };
+
+        case getTempCmd:
+        {
+            handleGetTempCmd();
+            break;
+        }
+//#endif
         default:
         {
           // send NACK
@@ -1110,7 +1331,7 @@ void lcd_shuttingDown(void)
   lcd.print("**SHUTTING DOWN**");
   lcd.display();
 
-  delay(3000);  // hold it for 3 seconds
+  delay(2000); 
 }
 
 
@@ -1447,7 +1668,7 @@ void lcd_DDR_RTDs_Failure(void)
 }
 
   
-#if defined(__USING_CHILLER__)
+//#if defined(__USING_CHILLER__)
 void lcd_chillerRunning(void)
 {
   #ifdef __DEBUG2_VIA_SERIAL__
@@ -1512,7 +1733,63 @@ void lcd_chillerComFailure(void)
   lcd.print("CHL COM FAILURE");
   lcd.display();
 }
-#endif
+//#endif
+
+void lcd_humidityAndThreshold(void)
+{
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.println("---------------------------------------");
+    Serial.println(__PRETTY_FUNCTION__);
+    #endif
+
+
+    lcd.noDisplay();
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Humidity:       %");
+    lcd.setCursor(11,0);
+    lcd.print(sysStates.sensor.humidity);
+    lcd.setCursor(0,1);
+    lcd.print("Threshold:      %");
+    lcd.setCursor(11,1);
+    lcd.print(sysStates.sensor.threshold);
+    lcd.display();
+}
+
+
+void lcd_highHumidity(void)
+{
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.println("---------------------------------------");
+    Serial.println(__PRETTY_FUNCTION__);
+    #endif
+
+
+    lcd.noDisplay();
+    lcd.clear();
+    lcd.home();
+    lcd.setCursor(0,0);
+    lcd.print("*** HUMIDITY ***");
+    lcd.setCursor(0,1);
+    lcd.print("**** ALERT *****");
+    lcd.display();
+}
+
+
+void lcd_sensorFailure(void)
+{
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.println("---------------------------------------");
+    Serial.println(__PRETTY_FUNCTION__);
+    #endif
+
+    lcd.noDisplay();
+    lcd.clear();
+    lcd.home();
+    lcd.setCursor(0,1);
+    lcd.print("SENSOR FAILURE ");
+    lcd.display();
+}
 
 
 bool getMsgFromControl(uint16_t tmo)
@@ -1794,8 +2071,9 @@ void handleShutDownCmd(void)
 void handleGetStatusCmd(void)
 {
   getStatus_t*  pgetStatus = reinterpret_cast<getStatus_t*>(cp.m_buff);
-  uint16_t    respLength; 
-
+  uint16_t      respLength; 
+  uint16_t      chiller_humidity = 0; // top 8 bits are chiller, bottom 8 bits are humidity
+  
 
   //
   // verify the received packet, here beause this is a getStatusCmd
@@ -1813,20 +2091,43 @@ void handleGetStatusCmd(void)
       // use the sysStates conentent to respond, send back the received seqNum
       //
       #if defined(__USING_CHILLER__)
-      respLength = cp.Make_getStatusResp(cp.m_peerAddress, cp.m_buff,
-        getRTDErrors(),            // return bit map of RTDErrors
-        getACUErrorsAndRunState(), // ACUs running and errors
-        ((running == sysStates.chiller.state) ? 1 : 0), // chiller running
-        pgetStatus->header.seqNum
-      );
-      #else
+      if(offline == sysStates.chiller.online)
+      {
+        Serial.println("      setting chiller offline...");
+        chiller_humidity |= 0x1000;
+      } else
+        Serial.println("      setting chiller online...");
+        
+      if(running == sysStates.chiller.state)
+      {
+        chiller_humidity |= 0x0100;
+        Serial.println("      setting chiller running...");
+      } else
+        Serial.println("      setting chiller not running...");
+      #endif
+
+      #if defined(__USING_HUMIDITY__)
+      if(offline == sysStates.sensor.online)
+      {
+        chiller_humidity  |= 0x0010;
+        Serial.println("      setting humidity offline...");
+      } else
+        Serial.println("      stting humidity online...");
+          
+      if( sysStates.sensor.humidity > sysStates.sensor.threshold )
+      {
+        chiller_humidity  |= 0x0001;
+        Serial.println("      setting humidity high...");
+      } else
+        Serial.println("      setting humidity low...");
+      #endif
+      
       respLength = cp.Make_getStatusResp(cp.m_peerAddress, cp.m_buff,
         getRTDErrors(),            // return bit map of RTDErrors 
         getACUErrorsAndRunState(), // ACUs running
-        0,                         // aint got no chiller running
+        chiller_humidity,          // values are set if using them
         pgetStatus->header.seqNum
       );
-      #endif
 
       //
       // use the CP object to send the response back
@@ -3029,15 +3330,21 @@ void handleChillerStatus(void)
 
     if( chiller.ReadStatus(chiller_buff) )
     {
-      if( ('0' == chiller_buff[0]) )
+      if( ('1' == chiller_buff[0]) )
       {
-        sysStates.chiller.state = stopped;
-        sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Stopped;
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.println("chiller is running...");
+        #endif
+        sysStates.chiller.state = running;
+        sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Running;
       }
       else
       {
-        sysStates.chiller.state = running;
-        sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Running;
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.println("chiller is not running...");
+        #endif
+        sysStates.chiller.state = stopped;
+        sysStates.lcd.lcdFacesIndex[CHILLER_NRML_OFFSET]  = chiller_Stopped;
       }
 
       //
@@ -3046,7 +3353,7 @@ void handleChillerStatus(void)
       memset(chiller_buff, '\0', sizeof(chiller_buff));
       chiller.ReadSetPointTemperature(chiller_buff);
 
-      #ifdef __DEBUG_VIA_SERIAL__
+      #ifdef __DEBUG2_VIA_SERIAL__
       Serial.print("reported setpoint temp: "); Serial.println(chiller_buff);
       #endif
       
@@ -3066,7 +3373,7 @@ void handleChillerStatus(void)
       memset(chiller_buff, '\0', sizeof(chiller_buff));
       chiller.ReadTemperature(chiller_buff);
 
-      #ifdef __DEBUG_VIA_SERIAL__
+      #ifdef __DEBUG2_VIA_SERIAL__
       Serial.print("reported temp: "); Serial.println(chiller_buff);
       #endif
 
@@ -3082,7 +3389,7 @@ void handleChillerStatus(void)
       #endif
       }
 
-      #ifdef __DEBUG_VIA_SERIAL__
+      #ifdef __DEBUG2_VIA_SERIAL__
       Serial.print("stored temperatures "); Serial.print(sysStates.chiller.temperature);
       Serial.print(" : "); Serial.println(sysStates.chiller.setpoint);
       #endif
@@ -3113,7 +3420,7 @@ void handleChillerStatus(void)
 //
 void handleACUStatus(void)
 {
-  Serial.println("handleACUStatus called...");
+  //Serial.println("handleACUStatus called...");
   
   // initialize to running and online
   sysStates.ACU[ASIC_ACU_IDX].state      = running;
@@ -3152,7 +3459,7 @@ void handleACURunningStatus(uint8_t id)
   bool  Running     = false;
   uint8_t idx       = id - 1;  // array index is id - 1
 
-  Serial.println("handleACURunningStatus called...");
+  //Serial.println("handleACURunningStatus called...");
   
   //
   // assume they are running, if one if found not running, mark the group
@@ -3309,7 +3616,7 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
     // pick up the temperature and faul, the online and state are updated in handleRTDStatus
     sysStates.ASIC_RTD.temperature  = sysStates.ACU[idx].temperature;
 
-    #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.print("ASIC_RTD.temperature: "); Serial.println(sysStates.ASIC_RTD.temperature, 2);
     Serial.print("souce temperature: "); Serial.println(sysStates.ACU[idx].temperature, 2);
     #endif      
@@ -3323,7 +3630,7 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
 
   } else if( (DDR_RS485_ID == id) )
   {
-    #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("Translating DDR ACU data to DDR_RTD");
     #endif      
       
@@ -3582,7 +3889,7 @@ bool getRTDDataDRDY(bool getFaults, bool getDDROnly)
   // if DRDY is high/true or we've timed out, try to get the DDR data
   if( (true == RTD_DDR1_DRDY) || (true == guard_timer) )
   {
-    #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     if( (true == RTD_DDR1_DRDY) )
       Serial.println("-----------> RTD_DDR1_DRDY is true, getting temperature"); 
     else
@@ -3598,7 +3905,7 @@ bool getRTDDataDRDY(bool getFaults, bool getDDROnly)
     // get the other if getDDROnly is false
     if( (false == getDDROnly) )
     {
-      #ifdef __DEBUG_VIA_SERIAL__
+      #ifdef __DEBUG2_VIA_SERIAL__
       Serial.println("RTD_DDR1_DRDY is false, getting ASCI or DDR H2O temperatures too"); 
       #endif
       resetRTDState(sysStates.DDR_Chiller_RTD);
@@ -3666,7 +3973,7 @@ systemStatus setSystemStatus(void)
       {
         logEvent(ACUNotOnLine, i);
 
-        #ifdef __DEBUG_VIA_SERIAL__
+        #ifdef __DEBUG2_VIA_SERIAL__
         Serial.println("logging ACU not online");
         #endif
       }
@@ -3856,17 +4163,56 @@ systemStatus setSystemStatus(void)
     logEvent(DDR_Chiller_RTDHot, 0, sysStates.DDR_Chiller_RTD.temperature);
   }
 
+
+  //
+  // log chiller events if have chiller and states have changed
+  //
+  #ifdef __USING_CHILLER__
+  if( (offline == sysStates.chiller.online) && (SHUTDOWN != sysStates.sysStatus) )
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("chiller is offline logging event");
+    #endif
+    
+    logEvent(ChillerOffline);
+  }
+
+  if( (running != sysStates.chiller.state) && (SHUTDOWN != sysStates.sysStatus) )
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("chiller is not running logging event");
+    #endif
+    
+    logEvent(ChillerNotRunning);
+  } 
+  #endif
+  
+  //
+  // log humidity sensor failure if using
+  //
+  #ifdef __USING_HUMIDITY__
+  if( (online != sysStates.sensor.online) && (SHUTDOWN != sysStates.sysStatus) )
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("humidity sensor failrue logging event");
+    #endif
+    
+    logEvent(HumiditySensorFail);
+  } 
+  #endif
+  
   //
   // special case check - if the chiller is not running and the ACUs are running, shutdown the ACUs
   //
+  if(
+     ( (true == ACUMismatch || false == ACUsOnline) || (false == RTDsRunning) )
 #if defined(__USING_CHILLER__)
-  if( (running != sysStates.chiller.state || offline == sysStates.chiller.online) ||
-      (true == ACUMismatch || false == ACUsOnline) ||
-      (false == RTDsRunning) )
-#else
-  if( (true == ACUMismatch || false == ACUsOnline) ||
-      (false == RTDsRunning))
+    || (running != sysStates.chiller.state || offline == sysStates.chiller.online)
 #endif
+#if defined(__USING_HUMIDITY__)
+    || (humidityHigh())
+#endif
+  )
   {
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Shutdown;
     retVal  = SHUTDOWN;
@@ -3913,14 +4259,16 @@ systemStatus setSystemStatus(void)
     digitalWrite(NO_FAULT_LED, LOW);
 */
   }
+
+  else if(
+     ( (false == ACUsRunning && false == ACUMismatch && true == ACUsOnline) )
 #if defined(__USING_CHILLER__)
-  else if( (running == sysStates.chiller.state && online == sysStates.chiller.online) &&
-      (false == ACUsRunning && false == ACUMismatch && true == ACUsOnline) &&
-      (true == RTDsRunning))
-#else
-  else if( (false == ACUsRunning && false == ACUMismatch && true == ACUsOnline) &&
-          (true == RTDsRunning))
+    && (running == sysStates.chiller.state && online == sysStates.chiller.online)
 #endif
+#if defined(__USING_HUMIDITY__)
+    && (false == humidityHigh())
+#endif
+  )
   {
     //
     // READY - else everythig is online, ACUs are not running
@@ -3930,6 +4278,7 @@ systemStatus setSystemStatus(void)
 
     if( (READY != sysStates.sysStatus) )
     {
+      Serial.println("1. calling enableButtonISR...");
       enableButtonISR();
       
       // disable the MAX31865 ISRs
@@ -3960,14 +4309,16 @@ systemStatus setSystemStatus(void)
       //handleRTDISRs(true);
     }
   }
+
+  else if(
+     ( (true == ACUsRunning && false == ACUMismatch && true == ACUsOnline) )
 #if defined(__USING_CHILLER__)
-  else if( (running == sysStates.chiller.state && online == sysStates.chiller.online) &&
-      (true == ACUsRunning && false == ACUMismatch && true == ACUsOnline) &&
-      (true == RTDsRunning))
-#else
-  else if( (true == ACUsRunning && false == ACUMismatch && true == ACUsOnline) &&
-          (true == RTDsRunning))
+    && (running == sysStates.chiller.state && online == sysStates.chiller.online)
 #endif
+#if defined(__USING_HUMIDITY__)
+    && (false == humidityHigh())
+#endif
+  )
   {
     //
     // else the system is running
@@ -3988,8 +4339,7 @@ systemStatus setSystemStatus(void)
 
       buttonOnOff     = true;
       currentButtonOnOff  = buttonOnOff;
-
-      
+     
       //
       // adjust the button LED
       //
@@ -4022,7 +4372,6 @@ void configureButton(void)
 }
 
 
-
 void enableButtonISR(void)
 {
   #ifdef __DEBUG_VIA_SERIAL__
@@ -4030,8 +4379,14 @@ void enableButtonISR(void)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
+  noInterrupts();
+
+  buttonLastInterruptTime = millis();
+
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, LOW);  // one button press and the ISR is continuously hit - i.e. system freeze
+
+  interrupts();
 }
 
 
@@ -4057,8 +4412,7 @@ void buttonISR(void)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
- // de-bounce .. does this even work in ISR, millis() is not supposed to work in ISR !
-  static unsigned long  buttonLastInterruptTime = 0;
+  // de-bounce
   unsigned long         interruptTime   = millis();
 
   bp_count += 1;
@@ -4352,7 +4706,7 @@ bool ACURunning(uint8_t id, bool& Running)
   
   if( (OFF == ntohs(*(reinterpret_cast<uint16_t*>(readENAB.buff())))) )
   {
-    #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.print("ACU: "); Serial.print(id); Serial.print(" is not running: 0x"); Serial.println(ntohs(*(reinterpret_cast<uint16_t*>(readENAB.buff()))), 16);
     #endif
 
@@ -4360,7 +4714,7 @@ bool ACURunning(uint8_t id, bool& Running)
     
   } else
   {
-    #ifdef __DEBUG_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.print("ACU: "); Serial.print(id); Serial.print(" is running: 0x"); Serial.println(ntohs(*(reinterpret_cast<uint16_t*>(readENAB.buff()))), 16);
     #endif
 
@@ -4716,7 +5070,7 @@ int logEvent(uint16_t event_id, uint32_t inst, uint32_t d0, uint32_t d1, uint32_
   event.data[3] = d3;
   addEventLogEntry(&event);
 
-  Serial.print("added event.id: "); Serial.println(event.id, 16);
+//  Serial.print("added event.id: "); Serial.println(event.id, 16);
 }
 
 
@@ -5160,4 +5514,404 @@ void handleGetH20AlarmDDR()
     Serial.flush();
   #endif
   }
+}
+
+
+void handleSetHumidityThreshold(void)
+{
+    setHumidityThreshold_t* psetHumidityThreshold = reinterpret_cast<setHumidityThreshold_t*>(cp.m_buff);
+    uint16_t                respLength;
+    uint16_t                result = 0;
+    
+    
+    //
+    // verify the received packet, here beause this is a setHumidityThreshold
+    // check this is my address and the CRC is correct
+    //
+    if( (ntohs(psetHumidityThreshold->header.address.address)) == cp.m_myAddress)
+    {
+        //
+        // verify the CRC
+        //
+        if( (cp.verifyMessage(len_setHumidityThreshold_t,
+            ntohs(psetHumidityThreshold->crc), ntohs(psetHumidityThreshold->eop))) )
+        {
+            //
+            // pick up the new threshold if not running 
+            //
+            if( (RUNNING != sysStates.sysStatus) )
+            {
+                sysStates.sensor.threshold  = ntohs(psetHumidityThreshold->threshold);
+                result = 1;
+                #ifdef __DEBUG2_VIA_SERIAL__
+                Serial.print(__PRETTY_FUNCTION__); Serial.print( " set humidity threshold to: ");
+                Serial.println(sysStates.sensor.threshold);
+                #endif
+            }
+
+            //
+            // use the sysStates conentent to respond, send back the received seqNum
+            //
+            respLength = cp.Make_setHumidityThresholdResp(cp.m_peerAddress, cp.m_buff, result,
+                psetHumidityThreshold->header.seqNum
+            );
+
+            //
+            // use the CP object to send the response back
+            // this functoin usese the cp.m_buff created above, just
+            // need to send the lenght into the function
+            //
+            if( !(cp.doTxResponse(respLength)))
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+                Serial.flush();
+            #ifdef __DEBUG2_VIA_SERIAL__
+            } else
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+                Serial.flush();
+            #endif
+            }
+        #ifdef __DEBUG_VIA_SERIAL__
+        } else
+        {
+            Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+            Serial.println(ntohs(psetHumidityThreshold->crc));
+            Serial.flush();
+        #endif
+        }
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+        Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+        Serial.println(ntohs(psetHumidityThreshold->header.address.address));
+        Serial.flush();
+    #endif
+    }
+}
+
+
+void handleGetHumidityThreshold(void)
+{
+    getHumidityThreshold_t* pgetHumidityThreshold = reinterpret_cast<getHumidityThreshold_t*>(cp.m_buff);
+    uint16_t                respLength;
+
+
+    //
+    // verify the received packet, here beause this is a getHumidityThresholdCmd
+    // check this is my address and the CRC is correct
+    //
+    if( (ntohs(pgetHumidityThreshold->header.address.address)) == cp.m_myAddress)
+    {
+        //
+        // verify the CRC
+        //
+        if( (cp.verifyMessage(len_getHumidityThreshold_t,
+                            ntohs(pgetHumidityThreshold->crc), ntohs(pgetHumidityThreshold->eop))) )
+        {
+            #ifdef __DEBUG2_VIA_SERIAL__
+            Serial.print(__PRETTY_FUNCTION__); Serial.print( " returning humidity threshold: ");
+            Serial.println(sysStates.sensor.threshold);
+            #endif
+
+            //
+            // use the sysStates conentent to respond, send back the received seqNum
+            //
+            respLength = cp.Make_getHumidityThresholdResp(cp.m_peerAddress, cp.m_buff,
+                sysStates.sensor.threshold,
+                pgetHumidityThreshold->header.seqNum
+            );
+
+            //
+            // use the CP object to send the response back
+            // this functoin usese the cp.m_buff created above, just
+            // need to send the lenght into the function
+            //
+            if( !(cp.doTxResponse(respLength)))
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+                Serial.flush();
+            #ifdef __DEBUG2_VIA_SERIAL__
+            } else
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+                Serial.flush();
+            #endif
+            }
+        #ifdef __DEBUG_VIA_SERIAL__
+        } else
+        {
+            Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+            Serial.println(ntohs(pgetHumidityThreshold->crc));
+            Serial.flush();
+        #endif
+        }
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+        Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+        Serial.println(ntohs(pgetHumidityThreshold->header.address.address));
+        Serial.flush();
+    #endif
+    }
+}
+
+
+void handleGetHumidity(void)
+{
+    getHumidity_t* pgetHumidity = reinterpret_cast<getHumidity_t*>(cp.m_buff);
+    uint16_t       respLength;
+
+
+    //
+    // verify the received packet, here beause this is a getHumidityCmd
+    // check this is my address and the CRC is correct
+    //
+    if( (ntohs(pgetHumidity->header.address.address)) == cp.m_myAddress)
+    {
+        //
+        // verify the CRC
+        //
+        if( (cp.verifyMessage(len_getHumidity_t,
+                        ntohs(pgetHumidity->crc), ntohs(pgetHumidity->eop))) )
+        {
+            #ifdef __DEBUG2_VIA_SERIAL__
+            Serial.print(__PRETTY_FUNCTION__); Serial.print( " returning humidity: ");
+            Serial.println(sysStates.sensor.humidity);
+            #endif
+
+            //
+            // use the sysStates content to respond, send back the received seqNum
+            //
+            respLength = cp.Make_getHumidityResp(cp.m_peerAddress, cp.m_buff,
+                sysStates.sensor.humidity,
+                pgetHumidity->header.seqNum
+            );
+
+            //
+            // use the CP object to send the response back
+            // this functoin usese the cp.m_buff created above, just
+            // need to send the lenght into the function
+            //
+            if( !(cp.doTxResponse(respLength)))
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+                Serial.flush();
+            #ifdef __DEBUG2_VIA_SERIAL__
+            } else
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+                Serial.flush();
+            #endif
+            }
+        #ifdef __DEBUG_VIA_SERIAL__
+        } else
+        {
+            Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+            Serial.println(ntohs(pgetHumidity->crc));
+            Serial.flush();
+        #endif
+        }
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+        Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+        Serial.println(ntohs(pgetHumidity->header.address.address));
+        Serial.flush();
+    #endif
+    }
+}
+
+
+void handleGetTempCmd(void)
+{
+    getTempCmd_t* pgetTempCmd = reinterpret_cast<getTempCmd_t*>(cp.m_buff);
+    uint16_t      respLength;
+    float         temp  = 0;
+    uint16_t      itemp = 0;
+    int16_t       fraction;
+    int16_t       base;
+
+
+    //
+    // verify the received packet, here beause this is a getTempCmdCmd
+    // check this is my address and the CRC is correct
+    //
+    if( (ntohs(pgetTempCmd->header.address.address)) == cp.m_myAddress)
+    {
+        //
+        // verify the CRC
+        //
+        if( (cp.verifyMessage(len_getTempCmd_t,
+                        ntohs(pgetTempCmd->crc), ntohs(pgetTempCmd->eop))) )
+        {
+            //
+            // use the sysStates content to respond, send back the received seqNum
+            //
+            temp = getTemperature();
+
+            base = temp;  // explicit conversion to int to peel off the fraction part
+            fraction  = ((float)(temp - base))*100;
+            itemp     = base << 8;
+            itemp     |= fraction & 0x00ff;
+
+            #ifdef __DEBUG_VIA_SERIAL__
+            Serial.print("p_sht->getTemperature() returned: "); Serial.println(temp, 2);
+            Serial.print("returning representation: "); Serial.println(itemp, HEX);
+            #endif
+
+            respLength = cp.Make_getTempCmdResp(cp.m_peerAddress, cp.m_buff, itemp, pgetTempCmd->header.seqNum);
+
+            //
+            // use the CP object to send the response back
+            // this functoin usese the cp.m_buff created above, just
+            // need to send the lenght into the function
+            //
+            if( !(cp.doTxResponse(respLength)))
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+                Serial.flush();
+            #ifdef __DEBUG2_VIA_SERIAL__
+            } else
+            {
+                Serial.println(__PRETTY_FUNCTION__); Serial.print(" sent response");
+                Serial.flush();
+            #endif
+            }
+        #ifdef __DEBUG_VIA_SERIAL__
+        } else
+        {
+            Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: dropping packet bad CRC: ");
+            Serial.println(ntohs(pgetTempCmd->crc));
+            Serial.flush();
+        #endif
+        }
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    } else
+    {
+        Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: bad address, dropping packet");
+        Serial.println(ntohs(pgetTempCmd->header.address.address));
+        Serial.flush();
+    #endif
+    }
+}
+
+
+bool getHumidityLevel(void)
+{
+    bool retVal = true;
+
+
+    //
+    // update status and take a reading
+    //
+    if( (sysStates.sensor.online == offline) )
+//      digitalWrite(FAULT_LED, HIGH);
+
+    sysStates.sensor.online = online;
+
+    if( (p_sht->readSample()) )
+    {
+        //
+        // update the sysStates for humidity - take an average to smooth spikes
+        //
+        sysStates.sensor.sampleData.sample[sysStates.sensor.sampleData.index] = p_sht->getHumidity();
+        sysStates.sensor.humidity = 0;  // this will eventually be an average when have enough samples
+        for(int i = 0; i < MAX_HUMIDITY_SAMPLES; i++)
+        {
+            if( ( 0 != sysStates.sensor.sampleData.sample[i]) )
+                sysStates.sensor.humidity += (sysStates.sensor.sampleData.sample[i]);
+            else
+            {
+                sysStates.sensor.humidity = 0;
+                break;
+            }
+        }
+
+        if( (0 != sysStates.sensor.humidity) )
+        {
+            // have enough samples, make an average
+            sysStates.sensor.humidity /= (float)MAX_HUMIDITY_SAMPLES;
+
+            #ifdef __DEBUG2_VIA_SERIAL__
+            Serial.print(__PRETTY_FUNCTION__); Serial.print(" took an average for humidity: ");
+            Serial.print(sysStates.sensor.humidity, 2); Serial.println("%"); Serial.flush();
+            #endif
+
+        } else
+            // not enough samples - take the raw reading
+            sysStates.sensor.humidity = sysStates.sensor.sampleData.sample[sysStates.sensor.sampleData.index];
+
+        //
+        // update the index for the next reading
+        //
+        sysStates.sensor.sampleData.index += 1;
+
+        if( (sysStates.sensor.sampleData.index >= MAX_HUMIDITY_SAMPLES) )
+            sysStates.sensor.sampleData.index = 0;
+
+        if (humidityHigh())
+        {
+            #ifdef __DEBUG_VIA_SERIAL__
+            Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR: found high humidity: ");
+            Serial.print(sysStates.sensor.humidity, 2); Serial.println("%"); Serial.flush();
+            #endif
+
+            // update the LCD
+            sysStates.lcd.lcdFacesIndex[HUMIDITY_FAIL_OFFSET]   = sensor_HighHumidity;
+            retVal  = false;
+        } else
+        {
+            sysStates.lcd.lcdFacesIndex[HUMIDITY_FAIL_OFFSET]   = no_Status;
+        }
+    } else
+    {
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.print(__PRETTY_FUNCTION__); Serial.println(" ERROR: sensor not on-line");
+        #endif
+
+        //
+        // update sysStates
+        //
+        sysStates.sensor.online = offline;
+
+        // update the LCD
+        sysStates.lcd.lcdFacesIndex[HUMIDITY_FAIL_OFFSET]   = sensor_Failure;
+
+        retVal = false;
+    }
+
+    return(retVal);
+}
+
+
+float getTemperature(void)
+{
+    float retVal = 0;
+
+    p_sht->readSample();
+    retVal = p_sht->getTemperature();
+
+    return(retVal); // get a free conversion to int ..?
+}
+
+
+void setInitialHumidityThreshold(void)
+{
+    //
+    // fetch current humidity 2x w/ breif delay inbetween
+    //
+    getHumidityLevel();
+
+    delay(1000);
+    getHumidityLevel();
+
+    //
+    // set threshold to ambient + 10
+    //
+    sysStates.sensor.threshold = sysStates.sensor.humidity + HUMIDITY_BUFFER;
 }

@@ -6,6 +6,7 @@
 
 
 #define __USING_CHILLER__
+#define __USING_HUMIDITY__
 
 
 
@@ -98,7 +99,20 @@ void createMenu(void)
     p_menuItem  = new menuGetChillerObjTemperature;
     menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
 #endif
+#if defined (__USING_HUMIDITY__)
+    p_menuItem  = new menuGetTempCmd;
+    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
 
+    p_menuItem  = new menuGetHumidity;
+    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
+
+    p_menuItem  = new menuSetHumidityThreshold;
+    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
+
+    p_menuItem  = new menuGetHumidityThreshold;
+    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
+
+#endif
     p_menuItem  = new menuSetACUTemperature;
     menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
 
@@ -171,6 +185,7 @@ void executeMenuItem(void)
 {
     int selection;
     map<int, menuItemBase*>::iterator item;
+    char c;
     
     
     cin >> selection;
@@ -197,7 +212,10 @@ void executeMenuItem(void)
     #endif
     
     #ifdef __USING_LINUX_USB__
-    system("read");
+    //system("read");
+    //system("read -n 1 -s -r -p \"Press any key to continue\"");
+    cout << "Press Enter to continue..." << endl;
+    c = getchar();
     #endif
 }
 

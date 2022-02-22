@@ -19,5 +19,7 @@ const uint16_t    ASIC_Chiller_RTDHot     = 0x0024; // ASIC chiller water too ho
 const uint16_t    DDR_Chiller_RTDHot      = 0x0025; // DDR chiller water too hot
 const uint16_t    ChillerOffline          = 0x0030; // ChillerOffline
 const uint16_t    ChillerNotRunning       = 0x0031; // ChillerNotRunning
+const uint16_t    HumidityHigh            = 0x0040; // high humidity
+const uint16_t    HumiditySensorFail      = 0x0041; // humiditiy sensor failed
 
 #endif

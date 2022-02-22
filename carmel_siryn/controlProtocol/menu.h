@@ -7,6 +7,9 @@
 #include "controlProtocol.h"
 #include "events.h"
 
+
+#define __USING_CHILLER__
+#define __USING_HUMIDITY__
     
 
 using namespace std;
@@ -15,6 +18,9 @@ typedef bool (controlProtocol::*pStartUpCmd_t)(uint16_t);
 typedef bool (controlProtocol::*pStartUpATCmd_t)(uint16_t);
 typedef bool (controlProtocol::*pShutDownCmd_t)(uint16_t);
 typedef bool (controlProtocol::*pGetStatus_t)(uint16_t, uint16_t*, uint16_t*, uint16_t*);
+typedef bool (controlProtocol::*pGetHumidity_t)(uint16_t, float*);
+typedef bool (controlProtocol::*pSetHumidityThreshold_t)(uint16_t, uint16_t);
+typedef bool (controlProtocol::*pGetHumidityThreshold_t)(uint16_t, uint16_t*);
 typedef bool (controlProtocol::*pSetACUTemperature_t)(uint16_t, uint16_t, float);
 typedef bool (controlProtocol::*pGetACUTemperature_t)(uint16_t, uint16_t, uint16_t*, float*);
 typedef bool (controlProtocol::*pGetACUObjTemperature_t)(uint16_t, uint16_t, uint16_t*, float*);
@@ -35,6 +41,7 @@ typedef bool (controlProtocol::*pSetH20AlarmASIC_t)(uint16_t, float);
 typedef bool (controlProtocol::*pGetH20AlarmASIC_t)(uint16_t, float*);
 typedef bool (controlProtocol::*pSetH20AlarmDDR_t)(uint16_t, float);
 typedef bool (controlProtocol::*pGetH20AlarmDDR_t)(uint16_t, float*);
+typedef bool (controlProtocol::*pGetTempCmd_t)(uint16_t, uint16_t*);
 
 
 class menuItemBase
@@ -147,7 +154,7 @@ class menuGetStatus : public menuItemBase
 
     void execute(controlProtocol* pCP)
     {
-        if( (pCP->*m_pGetStatus)(m_destId, &RTDErrors, &ACUsRunning, &chillerRunning) )
+        if( (pCP->*m_pGetStatus)(m_destId, &RTDErrors, &ACUsRunning, &chiller_humidity) )
         {
           cout << endl;
 
@@ -197,6 +204,30 @@ class menuGetStatus : public menuItemBase
           else
             cout << " has no faults" << endl;
 
+          #ifdef __USING_CHILLER__
+          if( (chiller_humidity & 0x1000) )
+            cout << "chiller offline" << endl;
+          else
+            cout << "chiller online" << endl;
+
+          if( (chiller_humidity & 0x0100) )
+            cout << "chiller running" << endl;
+          else
+            cout << "chiller not running" << endl;
+          #endif
+
+          #ifdef __USING_HUMIDITY__
+          if( (chiller_humidity & 0x0010) )
+            cout << "humidity sensor offline" << endl;
+          else
+            cout << "humidity sensor online" << endl;
+
+          if( (chiller_humidity & 0x0001) )
+            cout << "humidity high" << endl;
+          else
+            cout << "humidity ok" << endl;
+          #endif
+
         } else
         {
             cout << "\nunable to get status" << endl;
@@ -205,7 +236,7 @@ class menuGetStatus : public menuItemBase
 
     uint16_t RTDErrors;
     uint16_t ACUsRunning;
-    uint16_t chillerRunning; // TODO add back for chiller support
+    uint16_t chiller_humidity;
     
     private:
     menuGetStatus(const menuItemBase&);
@@ -448,6 +479,7 @@ class menuSetChillerTemperature : public menuItemBase
           cout << "bad input" << endl;
         }
 */
+        return(true);
     }
 
     menuSetChillerTemperature()
@@ -824,6 +856,14 @@ class menuGetEventLogCmd : public menuItemBase
 
               break;
             }
+            case HumidityHigh:
+            {
+              printf("%-26s : %-18s humidity beyond threshold\n",
+                time_buff, "HumidityHigh");
+                //asctime(&ltime), "ChillerNotRunning");
+
+              break;
+            }
             default:
             {
               // show the bytes
@@ -988,6 +1028,130 @@ class menuGetH20AlarmDDR : public menuItemBase
     menuGetH20AlarmDDR(const menuItemBase&);
     menuGetH20AlarmDDR& operator=(const menuItemBase&);
 };
+
+
+class menuGetHumidity : public menuItemBase
+{
+    public:
+    pGetHumidity_t m_pGetHumidity;
+
+    menuGetHumidity()
+        :   menuItemBase("get humidity", "get current humidity measurement"),
+            m_pGetHumidity(&controlProtocol::GetHumidity) {}
+
+    void execute(controlProtocol* pCP)
+    {
+        if( (pCP->*m_pGetHumidity)(m_destId, &humidity) )
+        {
+            cout << "\nhumidity: " << humidity << endl;
+        } else
+        {
+            cout << "\nunable to get humidity" << endl;
+        }
+    }
+
+    float humidity;
+
+    private:
+    menuGetHumidity(const menuItemBase&);
+    menuGetHumidity& operator=(const menuItemBase&);
+};
+
+
+//bool    SetHumidityThreshold(uint16_t, uint16_t);
+class menuSetHumidityThreshold : public menuItemBase
+{
+    public:
+    pSetHumidityThreshold_t m_pSetHumidityThreshold;
+    bool getParameters(void)
+    {
+        cout << "enter humidity threshold: "; cin >> humidityThreshold;
+        return(true);
+    }
+
+    menuSetHumidityThreshold()
+        :   menuItemBase("set humidity threshold", "set running humidity threshold"),
+            m_pSetHumidityThreshold(&controlProtocol::SetHumidityThreshold) {}
+
+    void execute(controlProtocol* pCP)
+    {
+        if( (pCP->*m_pSetHumidityThreshold)(m_destId, humidityThreshold) )
+            cout << "\nset humidity threshold successful" << endl;
+        else
+            cout << "\nset humidity threshold failed" << endl;
+    }
+
+    float humidityThreshold;
+
+    private:
+    menuSetHumidityThreshold(const menuItemBase&);
+    menuSetHumidityThreshold& operator=(const menuItemBase&);
+};
+
+
+//bool (controlProtocol::*pGetHumidityThreshold_t)(uint16_t, uint16_t*);
+class menuGetHumidityThreshold : public menuItemBase
+{
+    public:
+    pGetHumidityThreshold_t m_pGetHumidityThreshold;
+
+    menuGetHumidityThreshold()
+        :   menuItemBase("get humidity threshold", "get current humidity threshold"),
+            m_pGetHumidityThreshold(&controlProtocol::GetHumidityThreshold) {}
+
+    void execute(controlProtocol* pCP)
+    {
+        if( (pCP->*m_pGetHumidityThreshold)(m_destId, &humidityThreshold) )
+        {
+            cout << "\nhumidity threshold: " << humidityThreshold << endl;
+        } else
+        {
+            cout << "\nget humidity threshold failed" << endl;
+        }
+    }
+
+    uint16_t humidityThreshold;
+
+    private:
+    menuGetHumidityThreshold(const menuItemBase&);
+    menuGetHumidityThreshold& operator=(const menuItemBase&);
+};
+
+class menuGetTempCmd : public menuItemBase
+{
+    public:
+    pGetTempCmd_t m_pGetTempCmd;
+
+    menuGetTempCmd()
+        :   menuItemBase("get ambient temp", "get the ambient temperature"),
+            m_pGetTempCmd(&controlProtocol::GetTempCmd) {}
+
+    void execute(controlProtocol* pCP)
+    {   
+        if( (pCP->*m_pGetTempCmd)(m_destId, &temp) )
+        {
+            base      = temp & 0x00ff;
+            fraction  = (temp & 0xff00) >> 8;
+            ftemp     = base + (((float)(fraction))/100);
+            printf("temperature (celcius) : %.2f\n", ftemp);
+        }
+        else
+        {
+            printf("get temperature failed\n");
+        }
+    }   
+    
+    private:
+    uint16_t  temp      = 0;
+    uint16_t  base      = 0;
+    uint16_t  fraction  = 0;
+    float     ftemp     = 0;
+
+
+    menuGetTempCmd(const menuItemBase&);
+    menuGetTempCmd& operator=(const menuItemBase&);
+};
+
 
 #endif
 
