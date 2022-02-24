@@ -690,6 +690,8 @@ class menuGetRTCCmd : public menuItemBase
     {   
         if( (pCP->*m_pGetRTCCmd)(m_destId, &ltime) )
         {
+            ltime.tm_mon   -=1;
+            ltime.tm_year  -= 1;
             // output the time 
             cout << "time : " << asctime(&ltime) << endl;
         }
@@ -860,6 +862,14 @@ class menuGetEventLogCmd : public menuItemBase
             {
               printf("%-26s : %-18s humidity beyond threshold\n",
                 time_buff, "HumidityHigh");
+                //asctime(&ltime), "ChillerNotRunning");
+
+              break;
+            }
+            case HumiditySensorFail:
+            {
+              printf("%-26s : %-18s humidity sensor fail\n",
+                time_buff, "HumiditySensorFail");
                 //asctime(&ltime), "ChillerNotRunning");
 
               break;

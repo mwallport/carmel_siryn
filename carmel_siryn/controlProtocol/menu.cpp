@@ -5,11 +5,6 @@
 #include "menu.h"
 
 
-#define __USING_CHILLER__
-#define __USING_HUMIDITY__
-
-
-
 controlProtocol* pCP;               //gobal controlProtocol pointer
 map<int, menuItemBase*> menuItems;  // gobal map of the menu items
 

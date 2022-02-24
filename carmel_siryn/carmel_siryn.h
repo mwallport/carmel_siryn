@@ -85,10 +85,12 @@ char chiller_buff[CHILLER_BUFF_LEN + 1];
 
 #if defined(__USING_HUMIDITY__)
 SHTSensor*  p_sht;  // need the Wire.h library loaded and Wire1.begin() before instantiating SHT
-#define GET_HUMIDITY_INTERVAL   2500
+#endif
+
+#define GET_HUMIDITY_INTERVAL   2000
 #define HUMIDITY_THRESHOLD      80
 #define HUMIDITY_BUFFER         10
-#endif
+
 
 //
 // modbus communication
@@ -126,15 +128,17 @@ Adafruit_MAX31865 DDR_Chiller_RTD(26, 24, 22, 34);  // #4 - not on the SPI bus
 // for #4
 //#define DDR_Chiller_RTD_ISR_PIN   28
 
-volatile bool RTD_DDR1_DRDY          = false;
+volatile bool RTD_DDR1_DRDY   = false;
 volatile unsigned long  RTD_DDR1_DRDY_StartTime = 0;
-unsigned long DRDY_GUARD_TIMER  = 1500; //52;
+unsigned long DRDY_GUARD_TIMER  = 7000;
 
 //
 // contants
 //
+unsigned long  status_interval;
 #define GET_STATUS_INTERVAL   5000
 #define GET_STATUS_INTERVAL_RUNNING 3500
+
 #define BUTTON_PERIOD         250
 #define BUTTON_COUNT_FOR_AT1  5000
 //#define PIN_HW_ENABLE_n       8
@@ -283,6 +287,8 @@ typedef struct _chillerState
 {
   runningStates online;         // online or offline
   runningStates state;          // running or stopped
+  runningStates prior_online;   // eventlog guard
+  runningStates prior_state;    // eventlog guard
   float         setpoint;       // current set point temperature, the SV
   float         temperature;    // current temperature, the PV
 } chillerState;
@@ -298,6 +304,8 @@ typedef struct _humiditySamples
 typedef struct _humidityState
 {
     runningStates       online;
+    runningStates       prior_online; // eventlog guard
+    float               prior_humidity; // guard against logging same humidity event
     float               humidity;
     uint16_t            threshold;
     humiditySamples_t   sampleData;
@@ -307,6 +315,8 @@ typedef struct _ACUState
 {
   runningStates   online;       // online or offline
   runningStates   state;        // running or stopped
+  runningStates   prior_online; // event log guard
+  runningStates   prior_state;  // event log guard
   float           setpoint;     // current set point temperature ( SV )
   float           temperature;  // current temperature ( PV )
 } ACUState;
@@ -318,6 +328,7 @@ typedef struct _RTDState
   uint8_t         prior_fault;  // tightly coupled to adafruit .. boo .. can display on the LCD fault face which could be good-ish ..?
   uint8_t         fault;        // tightly coupled to adafruit .. boo .. can display on the LCD fault face which could be good-ish ..?
   uint16_t        rtd;          // same same - tightly coupled
+  float           prior_temperature; // event log guard
   float           temperature;  // current temperature
 } RTDState;
 
