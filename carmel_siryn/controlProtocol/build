@@ -1,0 +1,6 @@
+#!/bin/sh
+
+g++ ./controlProtocol.cpp -c -o ./controlProtocol.o -Wall -I../
+g++ ./menu.cpp -c -o ./menu.o -Wall -I../
+g++ ./menu.o ./controlProtocol.o -o ./menu.exe
+
