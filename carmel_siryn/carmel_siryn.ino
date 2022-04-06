@@ -334,10 +334,10 @@ void initSysStates(systemState& states)
 
 void configureFaultNoFault(void)
 {
-//  pinMode(FAULT_LED, OUTPUT);
-//  digitalWrite(FAULT_LED, HIGH);
-//  pinMode(NO_FAULT_LED, OUTPUT);
-//  digitalWrite(NO_FAULT_LED, LOW);
+  pinMode(FAULT_LED, OUTPUT);
+  digitalWrite(FAULT_LED, HIGH);
+  pinMode(NO_FAULT_LED, OUTPUT);
+  digitalWrite(NO_FAULT_LED, LOW);
 }
 
 
@@ -3342,7 +3342,7 @@ void handleChillerStatus(void)
   //
   if( (offline == sysStates.chiller.online) )
   {
-//    digitalWrite(FAULT_LED, HIGH);
+    digitalWrite(FAULT_LED, HIGH);
     retVal = chiller.ChillerPresent(0);
   }
   
@@ -3517,7 +3517,7 @@ void handleACURunningStatus(uint8_t id)
   // to a dead ACU
   if( (sysStates.ACU[idx].online == offline) )
   {
-//    digitalWrite(FAULT_LED, HIGH);
+    digitalWrite(FAULT_LED, HIGH);
   }
  
   //
@@ -3613,7 +3613,7 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
   // to a dead ACU
   if( (sysStates.ACU[idx].online == offline) )
   {
-//      digitalWrite(FAULT_LED, HIGH);
+    digitalWrite(FAULT_LED, HIGH);
   }
 
   //
@@ -3754,10 +3754,10 @@ bool handleRTDStatus(bool getFaults, bool getDDROnly)
   // before going to chat w/ the RTDs - enable the FAUL_LED if already in fault so it is on 
   // while we could be timing out chatting up a dead RTD
   //
-//  if( !(checkRTDStatus()) )
-//  {
-//    digitalWrite(FAULT_LED, HIGH);
-//  }
+  if( !(checkRTDStatus()) )
+  {
+    digitalWrite(FAULT_LED, HIGH);
+  }
   
   //
   // use the DRDY - return retVal true if a read was performed, false otherwise
@@ -4235,7 +4235,7 @@ systemStatus setSystemStatus(void)
 
     if( (SHUTDOWN != sysStates.sysStatus) )
     {
-//      digitalWrite(FAULT_LED, HIGH);
+      digitalWrite(FAULT_LED, HIGH);
       disableButtonISR();
 
       // disable the MAX31865 ISRs
@@ -4270,7 +4270,6 @@ systemStatus setSystemStatus(void)
     // adjust the FAULT/NO-FAULT LEDs
     //
 
-/* TODO: revisit this 
     // want this LED to blink
     if( (HIGH == digitalRead(FAULT_LED)) )
       digitalWrite(FAULT_LED, LOW);
@@ -4278,7 +4277,6 @@ systemStatus setSystemStatus(void)
       digitalWrite(FAULT_LED, HIGH);
       
     digitalWrite(NO_FAULT_LED, LOW);
-*/
   }
 
   else if(
@@ -4319,13 +4317,12 @@ systemStatus setSystemStatus(void)
       //
       digitalWrite(BUTTON_LED, LOW);
 
-/*
       //
       // adjust the FAULT/NO-FAULT LEDs
       //
       digitalWrite(FAULT_LED, LOW);
       digitalWrite(NO_FAULT_LED, HIGH);
-*/
+
       // disable the MAX31865 ISRs
       //handleRTDISRs(true);
       
@@ -4370,14 +4367,13 @@ systemStatus setSystemStatus(void)
       // adjust the button LED
       //
       digitalWrite(BUTTON_LED, HIGH);
-/*      
   
       //
       // adjust the FAULT/NO-FAULT LEDs
       //
       digitalWrite(FAULT_LED, LOW);
-      digitalWrite(NO_FAULT_LED, LOW);
-*/
+      digitalWrite(NO_FAULT_LED, HIGH); // this is LOW in Infineon ..
+
       //
       // put the status_interval back to the not-running-state rate
       //
@@ -5843,7 +5839,7 @@ bool getHumidityLevel(void)
     // update status and take a reading
     //
     if( (sysStates.sensor.online == offline) )
-//      digitalWrite(FAULT_LED, HIGH);
+      digitalWrite(FAULT_LED, HIGH);
 
     sysStates.sensor.online = online;
 

@@ -8,8 +8,8 @@
 #include "events.h"
 
 
-#define __USING_CHILLER__
-#define __USING_HUMIDITY__
+//#define __USING_CHILLER__
+//#define __USING_HUMIDITY__
     
 
 using namespace std;

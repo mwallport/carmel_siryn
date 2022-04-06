@@ -39,10 +39,10 @@ unsigned long timeBetweenSamples;
 
 
 // uncomment for the siryn project as it will use chiller
-#define __USING_CHILLER__
+//#define __USING_CHILLER__
 
 // uncomment to use the Humidity sensor in the software
-#define __USING_HUMIDITY__
+//#define __USING_HUMIDITY__
 
 //
 // these are the RS485 bus Ids of the entities on the bus
@@ -367,8 +367,8 @@ systemState sysStates;
 //
 // configure the fault/no-fault LED
 //
-//const int FAULT_LED     = 36;
-//const int NO_FAULT_LED  = 53;
+const int FAULT_LED     = 36;
+const int NO_FAULT_LED  = 53;
 
 
 //
