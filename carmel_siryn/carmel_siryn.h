@@ -17,12 +17,14 @@
 
 
 // this is for important, error condition debug output
-#define __DEBUG_VIA_SERIAL__
+//#define __DEBUG_VIA_SERIAL__
 
 // this is for frivilous debug output
 //#define __DEBUG2_VIA_SERIAL__
 
 //#define __DEBUG_RTD_READS__
+
+//#define __DEBUG_RTD_READS2__
 
 // peripheral component speeds
 #define CONTROL_PROTO_SPEED   19200
@@ -39,10 +41,11 @@ unsigned long timeBetweenSamples;
 
 
 // uncomment for the siryn project as it will use chiller
-#define __USING_CHILLER__
+//#define __USING_CHILLER__
 
 // uncomment to use the Humidity sensor in the software
-#define __USING_HUMIDITY__
+//#define __USING_HUMIDITY__
+
 
 //
 // these are the RS485 bus Ids of the entities on the bus
@@ -61,7 +64,7 @@ unsigned long timeBetweenSamples;
 //
 // LCD display
 //
-const int rs = 8, en = 7, d4 = 11, d5 = 12, d6 = 13, d7 = 42;
+const int rs = 8, en = 7, d4 = 11, d5 = 12, d6 = 13, d7 = 3;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 
@@ -108,7 +111,10 @@ deviceHandler RS485Bus(Serial3, tx_buff, MAX_BUFF_LENGTH_MODBUS, rx_buff, MAX_BU
 Adafruit_MAX31865 DDR1_RTD(4);                      // #1
 Adafruit_MAX31865 DDR2_RTD(52);                     // #2
 Adafruit_MAX31865 ASIC_Chiller_RTD(10);             // #3
-Adafruit_MAX31865 DDR_Chiller_RTD(26, 24, 22, 34);  // #4 - not on the SPI bus
+//Adafruit_MAX31865 DDR_Chiller_RTD(26, 24, 22, 34);  // #4 - not on the SPI bus
+Adafruit_MAX31865 DDR_Chiller_RTD(28, 26, 24, 22);
+//Adafruit_MAX31865(int8_t spi_cs, int8_t spi_mosi, int8_t spi_miso, int8_t spi_clk);
+
 
 // The value of the Rref resistor. Use 430.0 for PT100 and 4300.0 for PT1000
 #define RREF      430.0
@@ -376,7 +382,7 @@ const int NO_FAULT_LED  = 53;
 //
 // The pin number attached to the button.
 const int BUTTON_PIN = 5;
-const int BUTTON_LED = 6;
+const int BUTTON_LED = 47;
 bool currentButtonOnOff = false;
 static unsigned long  buttonLastInterruptTime = 0;
 volatile bool buttonOnOff = false;

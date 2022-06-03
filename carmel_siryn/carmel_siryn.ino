@@ -105,6 +105,13 @@ bool humidityHigh(void)
 //
 void initSystem(void)
 {
+
+  //
+  // initialize the fault/no-fault LED(s)
+  //
+  configureFaultNoFault();
+
+
   Wire1.begin();  // for the RTC; the Wire.begin() is called only if using SHT
 
 
@@ -160,7 +167,7 @@ void initSystem(void)
   //
   // start the Serial ports
   //
-  #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__ || defined __DEBUG_RTD_READS__
+  #if defined __DEBUG_VIA_SERIAL__ || defined __DEBUG2_VIA_SERIAL__ || defined __DEBUG_RTD_READS__ || defined __DEBUG_RTD_READS2__
   Serial.begin(115200);
   #endif
 
@@ -216,11 +223,6 @@ void initSystem(void)
   // initialize the start/stop button
   //
   configureButton();
-
-  //
-  // initialize the fault/no-fault LED(s)
-  //
-  //configureFaultNoFault();
 
 
   //
@@ -3344,6 +3346,7 @@ void handleChillerStatus(void)
   if( (offline == sysStates.chiller.online) )
   {
     digitalWrite(FAULT_LED, HIGH);
+    digitalWrite(NO_FAULT_LED, LOW);
     retVal = chiller.ChillerPresent(0);
   }
   
@@ -3519,6 +3522,7 @@ void handleACURunningStatus(uint8_t id)
   if( (sysStates.ACU[idx].online == offline) )
   {
     digitalWrite(FAULT_LED, HIGH);
+    digitalWrite(NO_FAULT_LED, LOW);
   }
  
   //
@@ -3615,6 +3619,7 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
   if( (sysStates.ACU[idx].online == offline) )
   {
     digitalWrite(FAULT_LED, HIGH);
+    digitalWrite(NO_FAULT_LED, LOW);
   }
 
   //
@@ -3758,6 +3763,7 @@ bool handleRTDStatus(bool getFaults, bool getDDROnly)
   if( !(checkRTDStatus()) )
   {
     digitalWrite(FAULT_LED, HIGH);
+    digitalWrite(NO_FAULT_LED, LOW);
   }
   
   //
@@ -4221,7 +4227,13 @@ systemStatus setSystemStatus(void)
   //
   // special case check - if the chiller is not running and the ACUs are running, shutdown the ACUs
   //
-  if(
+  if( (SHUTDOWN == sysStates.sysStatus) && (true == ACUsRunning) )
+  {
+    shutDownSys(false);
+    sysStates.sysStatus = UNKNOWN;
+  }
+  
+  if( (UNKNOWN == sysStates.sysStatus) ||
      ( (true == ACUMismatch || false == ACUsOnline) || (false == RTDsRunning) )
 #if defined(__USING_CHILLER__)
     || (running != sysStates.chiller.state || offline == sysStates.chiller.online)
@@ -4234,10 +4246,15 @@ systemStatus setSystemStatus(void)
     sysStates.lcd.lcdFacesIndex[SYSTEM_NRML_OFFSET]  = sys_Shutdown;
     retVal  = SHUTDOWN;
 
-    if( (SHUTDOWN != sysStates.sysStatus) )
+    if( (SHUTDOWN != sysStates.sysStatus || UNKNOWN == sysStates.sysStatus) )
     {
-      digitalWrite(FAULT_LED, HIGH);
       disableButtonISR();
+
+      digitalWrite(FAULT_LED, HIGH);
+      delay(250);
+      digitalWrite(NO_FAULT_LED, LOW);
+      delay(250);
+      digitalWrite(BUTTON_LED, LOW);
 
       // disable the MAX31865 ISRs
       configureAdafruitsBySysteState(SHUTDOWN);
@@ -4261,23 +4278,11 @@ systemStatus setSystemStatus(void)
     //
     // ALWAYS adjust the button, knobs, and LEDs
     //
-
-    //
-    // adjust the button LED
-    //
-    digitalWrite(BUTTON_LED, LOW);
-  
-    //
-    // adjust the FAULT/NO-FAULT LEDs
-    //
-
-    // want this LED to blink
-    if( (HIGH == digitalRead(FAULT_LED)) )
-      digitalWrite(FAULT_LED, LOW);
-    else
-      digitalWrite(FAULT_LED, HIGH);
-      
+    digitalWrite(FAULT_LED, HIGH);
+    delay(250);
     digitalWrite(NO_FAULT_LED, LOW);
+    delay(250);
+    digitalWrite(BUTTON_LED, LOW);
   }
 
   else if(
@@ -4298,7 +4303,12 @@ systemStatus setSystemStatus(void)
 
     if( (READY != sysStates.sysStatus) )
     {
-      Serial.println("1. calling enableButtonISR...");
+      //
+      // turn off the ACUs
+      //
+      for(uint8_t Address = MIN_ACU_ADDRESS; (Address <= MAX_ACU_ADDRESS); Address++)
+        StopACU(Address);
+      
       enableButtonISR();
       
       // disable the MAX31865 ISRs
@@ -4314,24 +4324,28 @@ systemStatus setSystemStatus(void)
       currentButtonOnOff  = buttonOnOff;
 
       //
-      // adjust the button LED
-      //
-      digitalWrite(BUTTON_LED, LOW);
-
-      //
-      // adjust the FAULT/NO-FAULT LEDs
+      // adjust the  LEDs
       //
       digitalWrite(FAULT_LED, LOW);
+      delay(250);
       digitalWrite(NO_FAULT_LED, HIGH);
+      delay(250);
+      digitalWrite(BUTTON_LED, LOW);
 
-      // disable the MAX31865 ISRs
-      //handleRTDISRs(true);
-      
       //
       // put the status_interval back to the not-running-state rate
       //
       status_interval = GET_STATUS_INTERVAL;
     }
+    
+    //
+    // always adjust the  LEDs
+    //
+    digitalWrite(FAULT_LED, LOW);
+    delay(250);
+    digitalWrite(NO_FAULT_LED, HIGH);
+    delay(250);
+    digitalWrite(BUTTON_LED, LOW);
   }
 
   else if(
@@ -4352,6 +4366,8 @@ systemStatus setSystemStatus(void)
 
     if( (RUNNING != sysStates.sysStatus) )
     {
+      enableButtonISR();
+
       // disable the MAX31865 ISRs
       configureAdafruitsBySysteState(RUNNING);
 
@@ -4364,22 +4380,26 @@ systemStatus setSystemStatus(void)
       buttonOnOff     = true;
       currentButtonOnOff  = buttonOnOff;
      
+
       //
-      // adjust the button LED
-      //
-      digitalWrite(BUTTON_LED, HIGH);
-  
-      //
-      // adjust the FAULT/NO-FAULT LEDs
+      // adjust the  LEDs
       //
       digitalWrite(FAULT_LED, LOW);
-      digitalWrite(NO_FAULT_LED, HIGH); // this is LOW in Infineon ..
+      digitalWrite(NO_FAULT_LED, HIGH);
+      digitalWrite(BUTTON_LED, HIGH);
 
       //
       // put the status_interval back to the not-running-state rate
       //
       status_interval = GET_STATUS_INTERVAL_RUNNING;
     }
+    
+    //
+    // always adjust the  LEDs
+    //
+    digitalWrite(FAULT_LED, LOW);
+    digitalWrite(NO_FAULT_LED, HIGH);
+    digitalWrite(BUTTON_LED, HIGH);
   }
 
   // set the system status
@@ -5142,7 +5162,7 @@ bool calculateAndWritePVOF(void)
     pvof = 0;
   }
 
-  #if defined(__DEBUG_RTD_READS__) || defined(__DEBUG_VIA_SERIAL__)
+  #if defined(__DEBUG_RTD_READS2__) || defined(__DEBUG_VIA_SERIAL__)
   Serial.print("highRTDTemp is: "); Serial.print(sysStates.highRTDTemp, 1);
   Serial.print(" DDR_RTD PV is : "); Serial.println(sysStates.DDR_RTD.temperature, 1);
   Serial.print("pvof to write is : "); Serial.println(pvof, 1);
@@ -5161,12 +5181,12 @@ bool calculateAndWritePVOF(void)
       return(false);
     }
   
-    #if defined(__DEBUG_RTD_READS__) || defined(__DEBUG_VIA_SERIAL__)
+    #if defined(__DEBUG_RTD_READS2__) || defined(__DEBUG_VIA_SERIAL__)
     Serial.println("SUCCESS writePVOF");
     #endif
   } else
   {
-    #if defined(__DEBUG_RTD_READS__) || defined(__DEBUG_VIA_SERIAL__)
+    #if defined(__DEBUG_RTD_READS2__) || defined(__DEBUG_VIA_SERIAL__)
     Serial.println("no need to writePVOF, same as last write");
     #endif
   }
@@ -5840,7 +5860,10 @@ bool getHumidityLevel(void)
     // update status and take a reading
     //
     if( (sysStates.sensor.online == offline) )
+    {
       digitalWrite(FAULT_LED, HIGH);
+      digitalWrite(NO_FAULT_LED, LOW);
+    }
 
     sysStates.sensor.online = online;
 

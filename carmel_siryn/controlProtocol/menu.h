@@ -8,8 +8,8 @@
 #include "events.h"
 
 
-#define __USING_CHILLER__
-#define __USING_HUMIDITY__
+//#define __USING_CHILLER__
+//#define __USING_HUMIDITY__
     
 
 using namespace std;
@@ -251,7 +251,7 @@ class menuSetACUTemperature : public menuItemBase
     pSetACUTemperature_t m_pSetACUTemperature;
     bool getParameters(void)
     {
-        cout << "enter ACU address (i.e. 1, 2, or 3):  ";
+        cout << "enter ACU address:  ";
         cin >> ACUAddress;
 /*
         if( !(cin >> ACUAddress) )
@@ -260,7 +260,7 @@ class menuSetACUTemperature : public menuItemBase
           return(false);
         }
 */
-        cout << "enter temperature (i.e. 5.0 or -5.0): ";
+        cout << "enter temperature: ";
         cin >> temperature;
 /*
         if( !(cin >> temperature) )
@@ -467,7 +467,7 @@ class menuSetChillerTemperature : public menuItemBase
     pSetChillerTemperature_t m_pSetChillerTemperature  = &controlProtocol::SetChillerTemperature;
     bool getParameters(void)
     {
-        cout << "enter temperature (i.e. 24.0 or -10.5): ";
+        cout << "enter temperature: ";
 
         //
         // check if cin got a float ??
@@ -913,7 +913,7 @@ class menuSetH20AlarmASIC : public menuItemBase
     pSetH20AlarmASIC_t m_pSetH20AlarmASIC  = &controlProtocol::SetH20AlarmASIC;
     bool getParameters(void)
     {
-        cout << "enter temperature (i.e. 24.0 or -10.5): ";
+        cout << "enter temperature: ";
 
         cin >> temperature;
 /*
@@ -980,7 +980,7 @@ class menuSetH20AlarmDDR : public menuItemBase
     pSetH20AlarmDDR_t m_pSetH20AlarmDDR  = &controlProtocol::SetH20AlarmDDR;
     bool getParameters(void)
     {
-        cout << "enter temperature (i.e. 24.0 or -10.5): ";
+        cout << "enter temperature: ";
 
         cin >> temperature;
 /*
