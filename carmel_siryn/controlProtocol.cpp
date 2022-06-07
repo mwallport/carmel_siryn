@@ -5433,12 +5433,12 @@ bool controlProtocol::verifyMessageCRC(uint16_t buffLength, uint16_t pktCRC)
         #ifndef __RUNNING_ON_CONTROLLINO__
         fprintf(stderr, "ERROR: %s CRC mismatch 0x%x:0x%x\n", __PRETTY_FUNCTION__, CRC, pktCRC);
         #else
-        Serial.print(__PRETTY_FUNCTION__);
-        Serial.print(" ERROR: CRC mismatch: 0x");
-        Serial.print(CRC, HEX);
-        Serial.print(":");
-        Serial.println(pktCRC, HEX);
-        Serial.flush();
+        //Serial.print(__PRETTY_FUNCTION__);
+        //Serial.print(" ERROR: CRC mismatch: 0x");
+        //Serial.print(CRC, HEX);
+        //Serial.print(":");
+        //Serial.println(pktCRC, HEX);
+        //Serial.flush();
         #endif
         retVal  = false;
     }

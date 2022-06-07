@@ -77,15 +77,15 @@ class menuStartUpCmd : public menuItemBase
     pStartUpCmd_t m_pStartUpCmd  = &controlProtocol::StartUpCmd;
 
     menuStartUpCmd()
-        :   menuItemBase("startup system", "start ACUs"),     // TODO: add chiller back for other
+        :   menuItemBase("startup system", "start temp control"),     // TODO: add chiller back for other
             m_pStartUpCmd(&controlProtocol::StartUpCmd) {}
 
     void execute(controlProtocol* pCP)
     {
         if( (pCP->*m_pStartUpCmd)(m_destId) )
-            cout << "\nstartup successful" << endl;
+            cout << "\nstart temp control successful" << endl;
         else
-            cout << "\nstartup failed" << endl;
+            cout << "\nstart temp control failed" << endl;
     }
     
     private:
@@ -101,15 +101,15 @@ class menuStartUpATCmd : public menuItemBase
     pStartUpATCmd_t m_pStartUpATCmd  = &controlProtocol::StartUpATCmd;
 
     menuStartUpATCmd()
-        :   menuItemBase("autotune", "autotune ASIC and DDR temp control"),     // TODO: add chiller back for other
+        :   menuItemBase("autotune", "start autotune temp control"),     // TODO: add chiller back for other
             m_pStartUpATCmd(&controlProtocol::StartUpATCmd) {}
 
     void execute(controlProtocol* pCP)
     {
         if( (pCP->*m_pStartUpATCmd)(m_destId) )
-            cout << "\nautotune successful" << endl;
+            cout << "\nstart autotune temp control successful" << endl;
         else
-            cout << "\nautotune failed" << endl;
+            cout << "\nstart autotune temp control failed" << endl;
     }
     
     private:
@@ -125,15 +125,15 @@ class menuShutDownCmd : public menuItemBase
     pShutDownCmd_t m_pShutDownCmd;
 
     menuShutDownCmd()
-        :   menuItemBase("shutdown system", "stop ACUs"), // TODO : add back 'chiller not affected'
+        :   menuItemBase("shutdown system", "stop temp control"), // TODO : add back 'chiller not affected'
             m_pShutDownCmd(&controlProtocol::ShutDownCmd) {}
 
     void execute(controlProtocol* pCP)
     {
         if( (pCP->*m_pShutDownCmd)(m_destId) )
-            cout << "\nshutdown successful" << endl;
+            cout << "\nstop temp control successful" << endl;
         else
-            cout << "\nshutdown failed" << endl;
+            cout << "\nstop temp control failed" << endl;
     }
     
     private:
@@ -753,9 +753,9 @@ class menuGetEventLogCmd : public menuItemBase
           memset(&ltime, '\0', sizeof(ltime));
           ltime.tm_sec  = eventlog[i].ts.sec;
           ltime.tm_min  = eventlog[i].ts.min;
-          ltime.tm_hour = eventlog[i].ts.hour;
+          ltime.tm_hour = eventlog[i].ts.hour + 1;
           ltime.tm_mon  = eventlog[i].ts.mon - 1;
-          ltime.tm_year = eventlog[i].ts.year + 100;
+          ltime.tm_year = eventlog[i].ts.year + 101;
           ltime.tm_wday = eventlog[i].ts.wday;
           ltime.tm_mday = eventlog[i].ts.mday;
 

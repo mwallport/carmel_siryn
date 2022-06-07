@@ -117,12 +117,6 @@ void createMenu(void)
     p_menuItem  = new menuGetACUObjTemperature;
     menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
 
-    p_menuItem  = new menuEnableACUs;
-    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
-
-    p_menuItem  = new menuDisableACUs;
-    menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
-
     p_menuItem  = new menuSetH20AlarmASIC;
     menuItems.insert(pair<int, menuItemBase*>(i++, p_menuItem));
 

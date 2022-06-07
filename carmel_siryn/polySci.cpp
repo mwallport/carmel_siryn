@@ -38,12 +38,12 @@ bool  polySci::SetCommandEcho(char OnOff)
     // uses class' Buff which was set up above
     if( (TxCommand()) )
     {
-        Serial.println("Tx succes");
+        //Serial.println("Tx succes");
 
         // puts the response into the class' Buff
         if( (RxResponse(0, 3000)) ) // 3000ms and no retBuff
         {
-            Serial.println("SetCommandEcho Rx success");
+            //Serial.println("SetCommandEcho Rx success");
 
             //
             // parse Buff - this is speciffic to this function
@@ -52,23 +52,25 @@ bool  polySci::SetCommandEcho(char OnOff)
             //
             if( ('!' == Buff[0]) )
             {
-                Serial.println("SetCommandEcho got !, success");
+                //Serial.println("SetCommandEcho got !, success");
                 retVal = true;
-            } else if( ('?' == Buff[0]) )
-                Serial.println("SetCommandEcho got ?, failed");
+            } /*else if( ('?' == Buff[0]) )
+                Serial.println("SetCommandEcho got ?, failed"); */
 
             // expecting total length of 2
+/*
             if( (2 == strlen(Buff)) )
                 Serial.println("SetCommandEcho got expected length");
             else
                 Serial.println("SetCommandEcho got unexpected length");
+*/
         } else
         {
-            Serial.println("SetCommandEcho Rx failed");
+            //Serial.println("SetCommandEcho Rx failed");
         }
     } else
     {
-        Serial.println("SetCommandEcho Tx failed");
+        //Serial.println("SetCommandEcho Tx failed");
     }
 
     return(retVal);
@@ -96,12 +98,12 @@ bool  polySci::SetOnOff(char OnOff)
     // uses class' Buff which was set up above
     if( (TxCommand()) )
     {
-        Serial.println("SetOnOff Tx succes");
+        //Serial.println("SetOnOff Tx succes");
 
         // puts the response into the class' Buff
         if( (RxResponse(0, 3000)) ) // 3000ms and no retBuff
         {
-            Serial.println("SetOnOff Rx success");
+            //Serial.println("SetOnOff Rx success");
 
             //
             // parse Buff - this is speciffic to this function
@@ -110,23 +112,25 @@ bool  polySci::SetOnOff(char OnOff)
             //
             if( ('!' == Buff[0]) )
             {
-                Serial.println("got !, success");
+                //Serial.println("got !, success");
                 retVal = true;
-            } else if( ('?' == Buff[0]) )
-                Serial.println("SetOnOff got ?, failed");
+            } /*else if( ('?' == Buff[0]) )
+                Serial.println("SetOnOff got ?, failed"); */
 
             // expecting total length of 2
+/*
             if( (2 == strlen(Buff)) )
                 Serial.println("SetOnOff got expected length");
             else
                 Serial.println("SetOnOff got unexpected length");
+*/
         } else
         {
-            Serial.println("SetOnOff Rx failed");
+            //Serial.println("SetOnOff Rx failed");
         }
     } else
     {
-        Serial.println("SetOnOff Tx failed");
+        //Serial.println("SetOnOff Tx failed");
     }
 
     return(retVal);
@@ -156,12 +160,12 @@ bool  polySci::SetSetPoint(char* temp) // where temp is 3 ASCII digits
     // uses class' Buff which was set up above
     if( (TxCommand()) )
     {
-        Serial.println("SetSetPoint Tx succes");
+        //Serial.println("SetSetPoint Tx succes");
 
         // puts the response into the class' Buff
         if( (RxResponse(0, 3000)) ) // 3000ms and no retBuff
         {
-            Serial.println("SetSetPoint Rx success");
+            //Serial.println("SetSetPoint Rx success");
 
             //
             // parse Buff - this is speciffic to this function
@@ -170,28 +174,30 @@ bool  polySci::SetSetPoint(char* temp) // where temp is 3 ASCII digits
             //
             if( ('!' == Buff[0]) )
             {
-                Serial.println("SetSetPoint got !, success");
+                //Serial.println("SetSetPoint got !, success");
 
                 //
                 // TODO:  read the setpoint back and verify
                 //
 
                 retVal = true;
-            } else if( ('?' == Buff[0]) )
-                Serial.println("SetSetPoint got ?, failed");
+            } /*else if( ('?' == Buff[0]) )
+                Serial.println("SetSetPoint got ?, failed");*/
 
             // expecting total length of 2
+/*
             if( (2 == strlen(Buff)) )
                 Serial.println("SetSetPoint got expected length");
             else
                 Serial.println("SetSetPoint got unexpected length");
+*/
         } else
         {
-            Serial.println("SetSetPoint Rx failed");
+            //Serial.println("SetSetPoint Rx failed");
         }
     } else
     {
-        Serial.println("SetSetPoint Tx failed");
+        //Serial.println("SetSetPoint Tx failed");
     }
 
     return(retVal);
@@ -244,11 +250,11 @@ bool  polySci::ReadSetPointTemperature(char* pRetStr)
                 strcpy(pRetStr, Buff);
         } else
         {
-            Serial.println("ReadSetPointTemperature Rx failed");
+            //Serial.println("ReadSetPointTemperature Rx failed");
         }
     } else
     {
-        Serial.println("ReadSetPointTemperature Tx failed");
+        //Serial.println("ReadSetPointTemperature Tx failed");
     }
 
     return(retVal);
@@ -309,11 +315,11 @@ bool  polySci::ReadTemperature(char* pRetStr)
                 strcpy(pRetStr, Buff);
         } else
         {
-            Serial.println("ReadTemperature Rx failed");
+            //Serial.println("ReadTemperature Rx failed");
         }
     } else
     {
-        Serial.println("ReadTemperature Tx failed");
+        //Serial.println("ReadTemperature Tx failed");
     }
 
     return(retVal);
@@ -339,12 +345,12 @@ bool  polySci::ReadTemperatureUnits(char* pRetStr)
     // uses class' Buff which was set up above
     if( (TxCommand()) )
     {
-        Serial.println("ReadTemperatureUnits Tx succes");
+        //Serial.println("ReadTemperatureUnits Tx succes");
 
         // puts the response into the class' Buff
         if( (RxResponse(0, 3000)) ) // 3000ms and no retBuff
         {
-            Serial.println("ReadTemperatureUnits Rx success");
+            //Serial.println("ReadTemperatureUnits Rx success");
 
             //
             // parse Buff - this is speciffic to this function
@@ -353,27 +359,29 @@ bool  polySci::ReadTemperatureUnits(char* pRetStr)
             //
             if( ('!' == Buff[0]) )
             {
-                Serial.println("ReadTemperatureUnits got !, success");
+                //Serial.println("ReadTemperatureUnits got !, success");
                 retVal = true;
-            } else if( ('?' == Buff[0]) )
-                Serial.println("ReadTemperatureUnits got ?, failed");
+            } /*else if( ('?' == Buff[0]) )
+                Serial.println("ReadTemperatureUnits got ?, failed"); */
 
             // expecting total length of 6
+/*
             if( (2 == strlen(Buff)) )
                 Serial.println("ReadTemperatureUnits got expected length");
             else
                 Serial.println("ReadTemperatureUnits got unexpected length");
+*/
 
             // set the return parameter
             if( 0 != pRetStr )
                 strcpy(pRetStr, Buff);
         } else
         {
-            Serial.println("ReadTemperatureUnits Rx failed");
+            //Serial.println("ReadTemperatureUnits Rx failed");
         }
     } else
     {
-        Serial.println("ReadTemperatureUnits Tx failed");
+        //Serial.println("ReadTemperatureUnits Tx failed");
     }
 
     return(retVal);
@@ -417,18 +425,18 @@ bool  polySci::ReadStatus(char* pRetStr)
                 retVal = true;
                 //Serial.println("ReadStatus got expected length");
             } else
-                Serial.println("ReadStatus got unexpected length");
+                //Serial.println("ReadStatus got unexpected length");
 
             // set the return parameter
             if( 0 != pRetStr )
                 strcpy(pRetStr, Buff);
         } else
         {
-            Serial.println("ReadStatus Rx failed");
+            //Serial.println("ReadStatus Rx failed");
         }
     } else
     {
-        Serial.println("ReadStatus Tx failed");
+        //Serial.println("ReadStatus Tx failed");
     }
 
     return(retVal);
@@ -455,12 +463,12 @@ bool  polySci::ReadCompressorDischargeTemperature(char* pRetStr)
     // uses class' Buff which was set up above
     if( (TxCommand()) )
     {
-        Serial.println("ReadCompressorDischargeTemperature Tx succes");
+        //Serial.println("ReadCompressorDischargeTemperature Tx succes");
 
         // puts the response into the class' Buff
         if( (RxResponse(0, 3000)) ) // 3000ms and no retBuff
         {
-            Serial.println("ReadCompressorDischargeTemperature Rx success");
+            //Serial.println("ReadCompressorDischargeTemperature Rx success");
 
             //
             // parse Buff - this is speciffic to this function
@@ -469,27 +477,29 @@ bool  polySci::ReadCompressorDischargeTemperature(char* pRetStr)
             //
             if( ('!' == Buff[0]) )
             {
-                Serial.println("ReadCompressorDischargeTemperature got !, success");
+                //Serial.println("ReadCompressorDischargeTemperature got !, success");
                 retVal = true;
-            } else if( ('?' == Buff[0]) )
-                Serial.println("ReadCompressorDischargeTemperature got ?, failed");
+            } /*else if( ('?' == Buff[0]) )
+                Serial.println("ReadCompressorDischargeTemperature got ?, failed"); */
 
             // expecting total length of 6
+/*
             if( (6 == strlen(Buff)) )
                 Serial.println("ReadCompressorDischargeTemperature got expected length");
             else
                 Serial.println("ReadCompressorDischargeTemperature got unexpected length");
+*/
 
             // set the return parameter
             if( 0 != pRetStr )
                 strcpy(pRetStr, Buff);
         } else
         {
-            Serial.println("ReadCompressorDischargeTemperature Rx failed");
+            //Serial.println("ReadCompressorDischargeTemperature Rx failed");
         }
     } else
     {
-        Serial.println("ReadCompressorDischargeTemperature Tx failed");
+        //Serial.println("ReadCompressorDischargeTemperature Tx failed");
     }
 
     return(retVal);
@@ -517,12 +527,12 @@ bool  polySci::ReadFaultStatus(char* pRetStr)
     // uses class' Buff which was set up above
     if( (TxCommand()) )
     {
-        Serial.println("ReadFaultStatus Tx succes");
+        //Serial.println("ReadFaultStatus Tx succes");
 
         // puts the response into the class' Buff
         if( (RxResponse(0, 3000)) ) // 3000ms and no retBuff
         {
-            Serial.println("ReadFaultStatus Rx success");
+            //Serial.println("ReadFaultStatus Rx success");
 
             //
             // parse Buff - this is speciffic to this function
@@ -531,16 +541,18 @@ bool  polySci::ReadFaultStatus(char* pRetStr)
             //
             if( ('!' == Buff[0]) )
             {
-                Serial.println("ReadFaultStatus got !, success");
+                //Serial.println("ReadFaultStatus got !, success");
                 retVal = true;
-            } else if( ('?' == Buff[0]) )
-                Serial.println("ReadFaultStatus got ?, failed");
+            } /*else if( ('?' == Buff[0]) )
+                Serial.println("ReadFaultStatus got ?, failed"); */
 
             // expecting total length of 4 TODO:what is this expected length
+/*
             if( (4 == strlen(Buff)) )
                 Serial.println("ReadFaultStatus got expected length");
             else
                 Serial.println("ReadFaultStatus got unexpected length");
+*/
 
             // set the return parameter
             if( 0 != pRetStr )
@@ -548,11 +560,11 @@ bool  polySci::ReadFaultStatus(char* pRetStr)
 
         } else
         {
-            Serial.println("ReadFaultStatus Rx failed");
+            //Serial.println("ReadFaultStatus Rx failed");
         }
     } else
     {
-        Serial.println("ReadFaultStatus Tx failed");
+        //Serial.println("ReadFaultStatus Tx failed");
     }
 
     return(retVal);
@@ -579,12 +591,12 @@ bool  polySci::ReadEvaporatorInletTemperature(char* pRetStr)
     // uses class' Buff which was set up above
     if( (TxCommand()) )
     {
-        Serial.println("ReadEvaporatorInletTemperature Tx succes");
+        //Serial.println("ReadEvaporatorInletTemperature Tx succes");
 
         // puts the response into the class' Buff
         if( (RxResponse(0, 3000)) ) // 3000ms and no retBuff
         {
-            Serial.println("ReadEvaporatorInletTemperature Rx success");
+            //Serial.println("ReadEvaporatorInletTemperature Rx success");
 
             //
             // parse Buff - this is speciffic to this function
@@ -593,27 +605,29 @@ bool  polySci::ReadEvaporatorInletTemperature(char* pRetStr)
             //
             if( ('!' == Buff[0]) )
             {
-                Serial.println("ReadEvaporatorInletTemperature got !, success");
+                //Serial.println("ReadEvaporatorInletTemperature got !, success");
                 retVal = true;
-            } else if( ('?' == Buff[0]) )
-                Serial.println("ReadEvaporatorInletTemperature got ?, failed");
+            }/* else if( ('?' == Buff[0]) )
+                Serial.println("ReadEvaporatorInletTemperature got ?, failed"); */
 
             // expecting total length of 6
+/*
             if( (6 == strlen(Buff)) )
                 Serial.println("ReadEvaporatorInletTemperature got expected length");
             else
                 Serial.println("ReadEvaporatorInletTemperature got unexpected length");
+*/
 
             // set the return parameter
             if( 0 != pRetStr )
                 strcpy(pRetStr, Buff);
         } else
         {
-            Serial.println("ReadEvaporatorInletTemperature Rx failed");
+            //Serial.println("ReadEvaporatorInletTemperature Rx failed");
         }
     } else
     {
-        Serial.println("ReadEvaporatorInletTemperature Tx failed");
+        //Serial.println("ReadEvaporatorInletTemperature Tx failed");
     }
 
     return(retVal);
@@ -640,12 +654,12 @@ bool  polySci::ReadEvaporatorOutletTemperature(char* pRetStr)
     // uses class' Buff which was set up above
     if( (TxCommand()) )
     {
-        Serial.println("ReadEvaporatorOutletTemperature Tx succes");
+        //Serial.println("ReadEvaporatorOutletTemperature Tx succes");
 
         // puts the response into the class' Buff
         if( (RxResponse(0, 3000)) ) // 3000ms and no retBuff
         {
-            Serial.println("ReadEvaporatorOutletTemperature Rx success");
+            //Serial.println("ReadEvaporatorOutletTemperature Rx success");
 
             //
             // parse Buff - this is speciffic to this function
@@ -654,27 +668,29 @@ bool  polySci::ReadEvaporatorOutletTemperature(char* pRetStr)
             //
             if( ('!' == Buff[0]) )
             {
-                Serial.println("ReadEvaporatorOutletTemperature got !, success");
+                //Serial.println("ReadEvaporatorOutletTemperature got !, success");
                 retVal = true;
-            } else if( ('?' == Buff[0]) )
-                Serial.println("ReadEvaporatorOutletTemperature got ?, failed");
+            } /*else if( ('?' == Buff[0]) )
+                Serial.println("ReadEvaporatorOutletTemperature got ?, failed"); */
 
             // expecting total length of 6
+/*
             if( (6 == strlen(Buff)) )
                 Serial.println("ReadEvaporatorOutletTemperature got expected length");
             else
                 Serial.println("ReadEvaporatorOutletTemperature got unexpected length");
+*/
 
             // set the return parameter
             if( 0 != pRetStr )
                 strcpy(pRetStr, Buff);
         } else
         {
-            Serial.println("ReadEvaporatorOutletTemperature Rx failed");
+            //Serial.println("ReadEvaporatorOutletTemperature Rx failed");
         }
     } else
     {
-        Serial.println("ReadEvaporatorOutletTemperature Tx failed");
+        //Serial.println("ReadEvaporatorOutletTemperature Tx failed");
     }
 
     return(retVal);
@@ -704,12 +720,12 @@ bool  polySci::OutputContinuousDataStream(char OnOff)
     // uses class' Buff which was set up above
     if( (TxCommand()) )
     {
-        Serial.println("OutputContinuousDataStream Tx succes");
+        //Serial.println("OutputContinuousDataStream Tx succes");
 
         // puts the response into the class' Buff
         if( (RxResponse(0, 3000)) ) // 3000ms and no retBuff
         {
-            Serial.println("OutputContinuousDataStream Rx success");
+            //Serial.println("OutputContinuousDataStream Rx success");
 
             //
             // parse Buff - this is speciffic to this function
@@ -718,23 +734,25 @@ bool  polySci::OutputContinuousDataStream(char OnOff)
             //
             if( ('!' == Buff[0]) )
             {
-                Serial.println("OutputContinuousDataStream got !, success");
+                //Serial.println("OutputContinuousDataStream got !, success");
                 retVal = true;
-            } else if( ('?' == Buff[0]) )
-                Serial.println("OutputContinuousDataStream got ?, failed");
+            } /*else if( ('?' == Buff[0]) )
+                Serial.println("OutputContinuousDataStream got ?, failed");*/
 
             // expecting total length of 2
+/*
             if( (2 == strlen(Buff)) )
                 Serial.println("OutputContinuousDataStream got expected length");
             else
                 Serial.println("OutputContinuousDataStream got unexpected length");
+*/
         } else
         {
-            Serial.println("OutputContinuousDataStream Rx failed");
+            //Serial.println("OutputContinuousDataStream Rx failed");
         }
     } else
     {
-        Serial.println("OutputContinuousDataStream Tx failed");
+        //Serial.println("OutputContinuousDataStream Tx failed");
     }
 
     return(retVal);
@@ -753,12 +771,12 @@ bool polySci::TxCommand()
 
     if( (lenWritten != strlen(Buff)) )
     {
-        Serial.println("__pretty_function__ failed");
+        //Serial.println("__pretty_function__ failed");
         retVal  = false;
     #ifdef __DEBUG_PKT_TX__
     } else
     {
-        Serial.println("__prettty_function__ success");
+        //Serial.println("__prettty_function__ success");
     #endif
     }
     
@@ -962,12 +980,12 @@ bool polySci::ChillerPresent(char* pRetStr)
 
     if( (true == ReadStatus(pRetStr)) )
     {
-        Serial.println("ChillerPresent got true from ReadStatus");
+        //Serial.println("ChillerPresent got true from ReadStatus");
         retVal = true;
-    } else
+    } /*else
     {
       Serial.println("ChillerPresent got false from ReadStatus");
-    }
+    } */
 
     return(retVal);
 }

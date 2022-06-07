@@ -180,8 +180,8 @@ unsigned long  status_interval;
 // move this - and ask Rick what the correct initial settings should be
 // high RTD chiller temperature, if hit this, go to SHUTDOWN state
 // and don't start if RTD chiller temperature is this
-float ASIC_HIGH   = 35.5;
-float DDR_HIGH    = 35.5;
+float ASIC_HIGH   = 28.0;
+float DDR_HIGH    = 28.0;
 
 
 //
@@ -394,7 +394,7 @@ volatile int bp_count = -2;  // button press 1
 //
 // splash screen conents - shown during boot while the system is coming on-line
 //
-const char deftDevise[16] = "deftDevise   ";
-const char buildInfo[16]  = "220117       ";
+const char deftDevise[16] = "Thermic Rule ";
+const char buildInfo[16]  = "220605       ";
 
 #endif

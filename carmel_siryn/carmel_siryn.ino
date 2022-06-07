@@ -226,12 +226,59 @@ void initSystem(void)
 
 
   //
+  // read the 50/60 Hz switch
+  //
+  pinMode(HZ_POWER_SWITCHPIN, INPUT);
+  int mode = digitalRead(HZ_POWER_SWITCHPIN);
+  
+  #ifdef __DEBUG2_VIA_SERIAL__
+  if( (HIGH == mode) )
+    Serial.println("50 60 Hz switch is HIGH");
+  else if( (LOW == mode ) )
+    Serial.println("50 60 Hz switch is LOW");
+  else
+    Serial.println("50 60 Hz switch not HIGH and not LOW");
+  #endif
+
+
+  //
   // initialize the Adafruits
   //
   DDR1_RTD.begin(MAX31865_4WIRE);
   DDR2_RTD.begin(MAX31865_4WIRE);
   ASIC_Chiller_RTD.begin(MAX31865_4WIRE);
   DDR_Chiller_RTD.begin(MAX31865_4WIRE);
+
+  if( (HIGH == mode) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.println("enabling 50hz on Adafruilt MAX31865s");
+    #endif
+    DDR1_RTD.enable50Hz(true);
+    DDR2_RTD.enable50Hz(true);
+    ASIC_Chiller_RTD.enable50Hz(true);
+    DDR_Chiller_RTD.enable50Hz(true);
+    
+  } else if( (LOW == mode) )
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.println("enabling 60hz on Adafruilt MAX31865s");
+    #endif
+    DDR1_RTD.enable50Hz(false);
+    DDR2_RTD.enable50Hz(false);
+    ASIC_Chiller_RTD.enable50Hz(false);
+    DDR_Chiller_RTD.enable50Hz(false);
+    
+  } else // default to 50Hz ?
+  {
+    #ifdef __DEBUG2_VIA_SERIAL__
+    Serial.println("defaulting to 50hz on Adafruilt MAX31865s");
+    #endif
+    DDR1_RTD.enable50Hz(true);
+    DDR2_RTD.enable50Hz(true);
+    ASIC_Chiller_RTD.enable50Hz(true);
+    DDR_Chiller_RTD.enable50Hz(true);
+  }
 
   //
   // set Celcius on the Accuthermos
@@ -748,16 +795,16 @@ bool shutDownSys(bool stopChillerCmd)
 #if defined(__USING_HUMIDITY__) && defined(__USING_CHILLER__)
   if( (stopChillerCmd) || (humidityHigh()) )
   {
-    Serial.println("have stopChillerCmd || humidityHigh()");
+    //Serial.println("have stopChillerCmd || humidityHigh()");
 #elif defined(__USING_CHILLER__) &&  ! defined(__USING_HUMIDITY__)
   if( (stopChillerCmd) )
   {
-    Serial.println("have stopChillerCmd");
+    //Serial.println("have stopChillerCmd");
 #endif
 #if defined(__USING_CHILLER__)
     for(uint8_t i = 0; i < MAX_SHUTDOWN_ATTEMPTS; i++)
     {
-      Serial.println("stopping the chiller...");
+      //Serial.println("stopping the chiller...");
       if( !(chiller.StopChiller()) )
         retVal  = false;
       else
@@ -2083,8 +2130,10 @@ void handleShutDownCmd(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+        #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+        #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2141,33 +2190,33 @@ void handleGetStatusCmd(void)
       #if defined(__USING_CHILLER__)
       if(offline == sysStates.chiller.online)
       {
-        Serial.println("      setting chiller offline...");
+        //Serial.println("      setting chiller offline...");
         chiller_humidity |= 0x1000;
-      } else
-        Serial.println("      setting chiller online...");
+      } //else
+        //Serial.println("      setting chiller online...");
         
       if(running == sysStates.chiller.state)
       {
         chiller_humidity |= 0x0100;
-        Serial.println("      setting chiller running...");
-      } else
-        Serial.println("      setting chiller not running...");
+        //Serial.println("      setting chiller running...");
+      } //else
+        //Serial.println("      setting chiller not running...");
       #endif
 
       #if defined(__USING_HUMIDITY__)
       if(offline == sysStates.sensor.online)
       {
         chiller_humidity  |= 0x0010;
-        Serial.println("      setting humidity offline...");
-      } else
-        Serial.println("      stting humidity online...");
+        //Serial.println("      setting humidity offline...");
+      } //else
+        //Serial.println("      stting humidity online...");
           
       if( sysStates.sensor.humidity > sysStates.sensor.threshold )
       {
         chiller_humidity  |= 0x0001;
-        Serial.println("      setting humidity high...");
-      } else
-        Serial.println("      setting humidity low...");
+        //Serial.println("      setting humidity high...");
+      } //else
+        //Serial.println("      setting humidity low...");
       #endif
       
       respLength = cp.Make_getStatusResp(cp.m_peerAddress, cp.m_buff,
@@ -2184,8 +2233,8 @@ void handleGetStatusCmd(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
-        Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
-        Serial.flush();
+        //Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
+        //Serial.flush();
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2296,8 +2345,6 @@ void handleSetACUTemperature(void)
       Serial.println(ACUAddress);
       #endif
 
-      Serial.flush();
-      
       //
       // use the sysStates conentent to respond, send back the received seqNum
       //
@@ -2312,8 +2359,10 @@ void handleSetACUTemperature(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+        #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+        #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2401,8 +2450,10 @@ void handleGetACUTemperature(bool getObjTemp)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2473,8 +2524,10 @@ void handlGetACUInfo(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2547,8 +2600,10 @@ void handleEnableACUs(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2621,8 +2676,10 @@ void handleDisableACUs(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2697,8 +2754,10 @@ void handleStartChillerMsg(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2771,8 +2830,10 @@ void handleStopChiller(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2834,8 +2895,10 @@ void handleGetChillerInfo(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2914,8 +2977,10 @@ void handleSetChillerTemperature(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -2978,8 +3043,10 @@ void handleGetChillerTemperature(bool GetSetPoint)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -3027,6 +3094,7 @@ void handleSetRTCCmd(void)
         if( (cp.verifyMessage(len_setRTCCmd_t,
                                 ntohs(psetRTCCmd->crc), ntohs(psetRTCCmd->eop))) )
         {
+      #ifdef __DEBUG2_VIA_SERIAL__
           Serial.print("year:mon:mday:wday:hour:min:sec");
           Serial.print(psetRTCCmd->tv.year); Serial.print(":");
           Serial.print(psetRTCCmd->tv.mon); Serial.print(":");
@@ -3035,6 +3103,7 @@ void handleSetRTCCmd(void)
           Serial.print(psetRTCCmd->tv.hour); Serial.print(":");
           Serial.print(psetRTCCmd->tv.min); Serial.print(":");
           Serial.println(psetRTCCmd->tv.sec);
+      #endif
             //
             // set the RTC - don't know if there is a 'bad' return code from this call
             //
@@ -3060,8 +3129,10 @@ void handleSetRTCCmd(void)
             //
             if( !(cp.doTxResponse(respLength)))
             {
+              #ifdef __DEBUG_VIA_SERIAL__
                 Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
                 Serial.flush();
+              #endif
             #ifdef __DEBUG2_VIA_SERIAL__
             } else
             {
@@ -3133,8 +3204,10 @@ void handleGetRTCCmd(void)
             //
             if( !(cp.doTxResponse(respLength)))
             {
+              #ifdef __DEBUG_VIA_SERIAL__
                 Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
                 Serial.flush();
+              #endif
             #ifdef __DEBUG2_VIA_SERIAL__
             } else
             {
@@ -3197,8 +3270,10 @@ void handleClrEventLogCmd(void)
             //
             if( !(cp.doTxResponse(respLength)))
             {
+              #ifdef __DEBUG_VIA_SERIAL__
                 Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
                 Serial.flush();
+              #endif
             #ifdef __DEBUG2_VIA_SERIAL__
             } else
             {
@@ -3259,8 +3334,10 @@ void handleGetEventLogCmd(void)
             
             if( !(cp.doTxResponse(respLength)))
             {
+              #ifdef __DEBUG_VIA_SERIAL__
                 Serial.print(__PRETTY_FUNCTION__); Serial.println(" ERROR: failed to send response");
                 Serial.flush();
+              #endif
             #ifdef __DEBUG2_VIA_SERIAL__
             } else
             {
@@ -3303,8 +3380,10 @@ void sendNACK(void)
   //
   if( !(cp.doTxResponse(respLength)))
   {
+  #ifdef __DEBUG_VIA_SERIAL__
     Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
     Serial.flush();
+  #endif
   #ifdef __DEBUG2_VIA_SERIAL__
   } else
   {
@@ -3926,19 +4005,6 @@ bool getRTDDataDRDY(bool getFaults, bool getDDROnly)
   bool  retVal  = false;
   bool  guard_timer = false;
   
- /* delete block
-  // arm the DRDY on DDR1 to and start a conversion
-  if( (0 == RTD_DDR1_DRDY_StartTime) )
-  {
-    Serial.println("================ resetting ================");
-    handleRTDISRs(false);
-    RTD_DDR1_DRDY_StartTime = newStartTime;
-    RTD_DDR1_DRDY = false;
-    DDR1_RTD.setOneShot_dd();
-    DDR1_RTD.readRTD_dd();
-    handleRTDISRs(true);
-  }
-*/
 
   guard_timer = (DRDY_GUARD_TIMER < (currTime - RTD_DDR1_DRDY_StartTime)) ? true : false;
 
@@ -4385,7 +4451,7 @@ systemStatus setSystemStatus(void)
       // adjust the  LEDs
       //
       digitalWrite(FAULT_LED, LOW);
-      digitalWrite(NO_FAULT_LED, HIGH);
+      digitalWrite(NO_FAULT_LED, LOW);
       digitalWrite(BUTTON_LED, HIGH);
 
       //
@@ -4398,7 +4464,7 @@ systemStatus setSystemStatus(void)
     // always adjust the  LEDs
     //
     digitalWrite(FAULT_LED, LOW);
-    digitalWrite(NO_FAULT_LED, HIGH);
+    digitalWrite(NO_FAULT_LED, LOW);
     digitalWrite(BUTTON_LED, HIGH);
   }
 
@@ -5328,7 +5394,7 @@ void handleSetH20AlarmASIC(void)
         ASIC_HIGH = temp;
       }
       
-      Serial.print("ASIC_HIGH: "); Serial.println(ASIC_HIGH, 2);
+      //Serial.print("ASIC_HIGH: "); Serial.println(ASIC_HIGH, 2);
 
       respLength = cp.Make_setH20AlarmASICResp(cp.m_peerAddress, cp.m_buff,
         result, psetH20AlarmASIC->header.seqNum
@@ -5341,8 +5407,10 @@ void handleSetH20AlarmASIC(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -5401,8 +5469,10 @@ void handleGetH20AlarmASIC()
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -5466,7 +5536,7 @@ void handleSetH20AlarmDDR(void)
         DDR_HIGH = temp;
       }
       
-      Serial.print("DDR_HIGH: "); Serial.println(DDR_HIGH, 2);
+      //Serial.print("DDR_HIGH: "); Serial.println(DDR_HIGH, 2);
       respLength = cp.Make_setH20AlarmDDRResp(cp.m_peerAddress, cp.m_buff,
         result, psetH20AlarmDDR->header.seqNum
       );
@@ -5478,8 +5548,10 @@ void handleSetH20AlarmDDR(void)
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -5538,8 +5610,10 @@ void handleGetH20AlarmDDR()
       //
       if( !(cp.doTxResponse(respLength)))
       {
+      #ifdef __DEBUG_VIA_SERIAL__
         Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
         Serial.flush();
+      #endif
       #ifdef __DEBUG2_VIA_SERIAL__
       } else
       {
@@ -5613,8 +5687,10 @@ void handleSetHumidityThreshold(void)
             //
             if( !(cp.doTxResponse(respLength)))
             {
+              #ifdef __DEBUG_VIA_SERIAL__
                 Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
                 Serial.flush();
+              #endif
             #ifdef __DEBUG2_VIA_SERIAL__
             } else
             {
@@ -5680,8 +5756,10 @@ void handleGetHumidityThreshold(void)
             //
             if( !(cp.doTxResponse(respLength)))
             {
+              #ifdef __DEBUG_VIA_SERIAL__
                 Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
                 Serial.flush();
+              #endif
             #ifdef __DEBUG2_VIA_SERIAL__
             } else
             {
@@ -5747,8 +5825,10 @@ void handleGetHumidity(void)
             //
             if( !(cp.doTxResponse(respLength)))
             {
+              #ifdef __DEBUG_VIA_SERIAL__
                 Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
                 Serial.flush();
+              #endif
             #ifdef __DEBUG2_VIA_SERIAL__
             } else
             {
@@ -5822,8 +5902,10 @@ void handleGetTempCmd(void)
             //
             if( !(cp.doTxResponse(respLength)))
             {
+              #ifdef __DEBUG_VIA_SERIAL__
                 Serial.println(__PRETTY_FUNCTION__); Serial.print(" ERROR: failed to send response");
                 Serial.flush();
+              #endif
             #ifdef __DEBUG2_VIA_SERIAL__
             } else
             {
