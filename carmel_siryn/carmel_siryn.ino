@@ -228,7 +228,7 @@ void initSystem(void)
   //
   // read the 50/60 Hz switch
   //
-  pinMode(HZ_POWER_SWITCHPIN, INPUT);
+  pinMode(HZ_POWER_SWITCHPIN, INPUT_PULLUP);
   int mode = digitalRead(HZ_POWER_SWITCHPIN);
   
   #ifdef __DEBUG2_VIA_SERIAL__
@@ -269,15 +269,15 @@ void initSystem(void)
     ASIC_Chiller_RTD.enable50Hz(false);
     DDR_Chiller_RTD.enable50Hz(false);
     
-  } else // default to 50Hz ?
+  } else // default to 60Hz
   {
     #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.println("defaulting to 50hz on Adafruilt MAX31865s");
+    Serial.println("defaulting to 60hz on Adafruilt MAX31865s");
     #endif
-    DDR1_RTD.enable50Hz(true);
-    DDR2_RTD.enable50Hz(true);
-    ASIC_Chiller_RTD.enable50Hz(true);
-    DDR_Chiller_RTD.enable50Hz(true);
+    DDR1_RTD.enable50Hz(false);
+    DDR2_RTD.enable50Hz(false);
+    ASIC_Chiller_RTD.enable50Hz(false);
+    DDR_Chiller_RTD.enable50Hz(false);
   }
 
   //
