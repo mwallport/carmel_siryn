@@ -692,9 +692,6 @@ class menuGetRTCCmd : public menuItemBase
         if( (pCP->*m_pGetRTCCmd)(m_destId, &ltime) )
         {
             ltime.tm_mon   -=1;
-            #ifndef __USING_WINDOWS_USB__
-            ltime.tm_year  -= 1;
-            #endif
             // output the time 
             cout << "time : " << asctime(&ltime) << endl;
         }
