@@ -187,13 +187,13 @@ class menuGetStatus : public menuItemBase
             cout << " has no faults" << endl;
 
           cout << "DDR1 RTD";
-          if( (RTDErrors & (1 << 12)) )
+          if( (RTDErrors & (1 << 8)) )
             cout << " has faults" << endl;
           else
             cout << " has no faults" << endl;
 
           cout << "DDR2 RTD";
-          if( (RTDErrors & (1 << 8)) )
+          if( (RTDErrors & (1 << 4)) )
             cout << " has faults" << endl;
           else
             cout << " has no faults" << endl;
