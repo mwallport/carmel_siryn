@@ -5052,6 +5052,8 @@ void resetRTDState(RTDState& rtdState)
 bool checkRTDStatus(void)
 {
   bool retVal = true;
+  static int rtd_fail_count = 0;
+  static int chill_fail_count = 0;
 
   
   //
@@ -5064,22 +5066,60 @@ bool checkRTDStatus(void)
   if( (sysStates.ASIC_Chiller_RTD.fault || sysStates.DDR_Chiller_RTD.fault || sysStates.DDR_RTD.fault ||
       (sysStates.DDR1_RTD.fault && sysStates.DDR2_RTD.fault)) )
   {
+
+    //
+    // have issue w/ release product in which we're getting
+    // spurious RTD fails
+    // try to keep the system running by letting the RTDs fail
+    // and recover a few times
+    //
+    ++rtd_fail_count;
+
     #ifdef __DEBUG_VIA_SERIAL__
-    Serial.println("checkRTDStatus returning bad status");
+    Serial.print("checkRTDStatus may return bad status, count is: "); Serial.println(rtd_fail_count);
     #endif
-    
-    retVal = false;
+
+    delay(250);
+
+    if( ( 20 < rtd_fail_count) )
+    {
+      rtd_fail_count = 0;
+      retVal = false;
+
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.println("rtd_fail_count high returning bad status");
+      #endif
+    }
+  } else
+  {
+    rtd_fail_count = 0;
   }
 
   if( (ASIC_HIGH < sysStates.ASIC_Chiller_RTD.temperature) || 
       (DDR_HIGH < sysStates.DDR_Chiller_RTD.temperature) )
   {
+    
+    ++chill_fail_count;
+    
     #ifdef __DEBUG_VIA_SERIAL__
-    Serial.println("RTD chiller temp too high returning bad status");
+    Serial.print("RTD chiller temp too high may return bad status, count is: "); Serial.println(chill_fail_count);
     Serial.print(sysStates.ASIC_Chiller_RTD.temperature,2); Serial.print(":"); Serial.println(sysStates.DDR_Chiller_RTD.temperature,2);
     #endif
 
-    retVal = false;
+    delay(250);
+
+    if( ( 20 < chill_fail_count) )
+    {
+      chill_fail_count = 0;
+      retVal = false;
+
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.println("chill_fail_count high returning bad status");
+      #endif
+    }
+  } else
+  {
+    chill_fail_count = 0;
   }
 
   return(retVal);
