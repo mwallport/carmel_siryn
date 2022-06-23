@@ -1494,7 +1494,7 @@ void lcd_ACUsRunning(void)
   else
     lcd.setCursor(16,1);
   lcd.print(sysStates.ACU[ASIC_ACU_IDX].temperature,1);
-    
+
 
   // if the SV is negative, scoot left one position
   if( (sysStates.ACU[DDR_ACU_IDX].setpoint < 0) )
@@ -1509,7 +1509,7 @@ void lcd_ACUsRunning(void)
   else
     lcd.setCursor(16,3);
   lcd.print(sysStates.ACU[DDR_ACU_IDX].temperature,1);
-  
+
   lcd.display();
 }
 
@@ -4122,8 +4122,8 @@ systemStatus setSystemStatus(void)
     //
     // checking against index 0 because they should all be the same
     //
-    if( (sysStates.ACU[(i - MIN_ACU_ADDRESS)].online != sysStates.ACU[ASIC_ACU_IDX].online) ||
-      (sysStates.ACU[(i - MIN_ACU_ADDRESS)].state != sysStates.ACU[ASIC_ACU_IDX].state) )
+    if( (sysStates.ACU[(i - MIN_ACU_ADDRESS)].online != sysStates.ACU[ASIC_ACU_IDX].online) ) // ||
+    //  (sysStates.ACU[(i - MIN_ACU_ADDRESS)].state != sysStates.ACU[ASIC_ACU_IDX].state) )
     {
       ACUMismatch = true;
       logEvent(ACUIsMismatch);  // this should not repeat in the eventlog as 
@@ -4520,11 +4520,6 @@ void disableButtonISR(void)
 //
 void buttonISR(void)
 {
-  #ifdef __DEBUG2_VIA_SERIAL__
-  Serial.println("---------------------------------------");
-  Serial.println(__PRETTY_FUNCTION__);
-  #endif
-
   // de-bounce
   unsigned long         interruptTime   = millis();
 
@@ -4885,6 +4880,10 @@ bool GetACUTempPV(uint8_t id, float* pv)
 {
   uint16_t  pvpvof  = 0;
   uint32_t  pvof    = 0;
+  uint16_t val1;
+  float     f1;
+  uint16_t val2;
+  float     f2;
 
 
   // get the pv+pvof - this returns 2 bytes of PVPVOF
@@ -4900,13 +4899,10 @@ bool GetACUTempPV(uint8_t id, float* pv)
     
   } else
   {
-    pvpvof = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
-    
-    #ifdef __DEBUG_RTD_READS__
-    Serial.println("readPVPVOF a success");
-    Serial.print("readProcess PVPVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readPVPVOF.bufflen()); Serial.println(" bytes returned");
-    Serial.print("read value is: 0x"); Serial.print(pvpvof, 16); Serial.print(", "); Serial.println(htons((*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])))));
-    #endif
+//    pvpvof = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
+
+    val1  = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
+    f1    = float((val1+512)&1023) - 512.0 ;
   }
 
 
@@ -4923,16 +4919,14 @@ bool GetACUTempPV(uint8_t id, float* pv)
     
   } else
   {
-    pvof = htons(*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])));
-    
-    #ifdef __DEBUG_RTD_READS__
-    Serial.println("readPVOF a success");
-    Serial.print("readProcess PVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readPVOF.bufflen()); Serial.println(" bytes returned");
-    Serial.print("read value is: 0x"); Serial.print(pvof, 16); Serial.print(", "); Serial.println(htons((*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])))));
-    #endif
+//    pvof = htons(*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])));
+
+    val2  = htons(*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])));
+    f2    = float((val2+512)&1023) - 512.0 ;
   }
 
-  *pv = pvpvof - pvof;
+//  *pv = pvpvof - pvof;
+  *pv = f1 - f2;
   *pv = (float)*pv / (float)10;
 
   return(true);
@@ -4944,8 +4938,9 @@ bool GetACUTempPV(uint8_t id, float* pv)
 //
 bool GetACUTempSV(uint8_t id, float* sv)
 {
+  uint16_t val;
 
-
+  
   // do the read, request 2 bytes back
   cmdResp readSVSVOF = RS485Bus.readProcess(id, SVSVOF, 2);  // get response w/ SV and SVOF
   if( (false == readSVSVOF.retCode()) )
@@ -4958,13 +4953,16 @@ bool GetACUTempSV(uint8_t id, float* sv)
     
   } else
   {
-    *sv = htons(*(reinterpret_cast<uint16_t*>(&readSVSVOF.buff()[0])));
-    *sv = (float)*sv / (float)10;
+    val = htons(*(reinterpret_cast<uint16_t*>(&readSVSVOF.buff()[0])));
+
+    float f = float((val+512)&1023) - 512.0 ;
+
+    *sv = f / (float)10;
 
     #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("readSV success");
     Serial.print("readProcess SVSVOF from id: "); Serial.print(id); Serial.print(" success, got "); Serial.print(readSVSVOF.bufflen()); Serial.println(" bytes returned");
-    Serial.print("read value is: 0x"); Serial.print(*sv);  Serial.print(", "); Serial.println(htons((*(reinterpret_cast<uint16_t*>(readSVSVOF.buff()[1])))));
+    Serial.print("read value is: "); Serial.print(*sv);  Serial.print(", 0x"); Serial.println( (htons((*(reinterpret_cast<uint16_t*>(&readSVSVOF.buff()[0]))))),16);
     #endif
   }
 
@@ -4978,7 +4976,8 @@ bool GetACUTempSV(uint8_t id, float* sv)
 bool SetACUSetPointValue(uint16_t id, float temp)
 {
   bool      retCode = true;
-  uint16_t  val, retVal;
+  int16_t   val; 
+  uint16_t  retVal;
 
 
   //
@@ -4986,7 +4985,8 @@ bool SetACUSetPointValue(uint16_t id, float temp)
   // we only want 1 decimal place
   // then we multiply by 10 to no decimal
   //
-  val = (uint16_t) ((float)temp * (float)10);
+  val = (int16_t) ((float)temp * (float)10);
+  val &= 0x0000ffff;
 
     #ifdef __DEBUG2_VIA_SERIAL__
     Serial.print("SetACUSetPointValue got input temp: "); Serial.println(temp);
@@ -5073,6 +5073,7 @@ bool checkRTDStatus(void)
     // try to keep the system running by letting the RTDs fail
     // and recover a few times
     //   
+
     ++rtd_fail_count;
 
     #ifdef __DEBUG_VIA_SERIAL__
@@ -5084,6 +5085,7 @@ bool checkRTDStatus(void)
     if( ( 20 < rtd_fail_count) )
     {    
       rtd_fail_count = 0; 
+
       retVal = false;
 
       #ifdef __DEBUG_VIA_SERIAL__
@@ -5334,10 +5336,6 @@ void RTD_DDR1_ISR(void)
 
 void handleRTDISRs(bool on)
 {
-  #ifdef __DEBUG2_VIA_SERIAL__
-  Serial.println("---------------------------------------");
-  Serial.println(__PRETTY_FUNCTION__);
-  #endif
 
   
   // set the the flag to known state  
