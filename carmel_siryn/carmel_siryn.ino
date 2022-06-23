@@ -5072,7 +5072,8 @@ bool checkRTDStatus(void)
     // spurious RTD fails
     // try to keep the system running by letting the RTDs fail
     // and recover a few times
-    //
+    //   
+
     ++rtd_fail_count;
 
     #ifdef __DEBUG_VIA_SERIAL__
@@ -5082,25 +5083,27 @@ bool checkRTDStatus(void)
     delay(250);
 
     if( ( 20 < rtd_fail_count) )
-    {
-      rtd_fail_count = 0;
+    {    
+      rtd_fail_count = 0; 
+
       retVal = false;
 
       #ifdef __DEBUG_VIA_SERIAL__
       Serial.println("rtd_fail_count high returning bad status");
       #endif
-    }
-  } else
+    }    
+  } else 
   {
-    rtd_fail_count = 0;
+    rtd_fail_count = 0; 
   }
+
 
   if( (ASIC_HIGH < sysStates.ASIC_Chiller_RTD.temperature) || 
       (DDR_HIGH < sysStates.DDR_Chiller_RTD.temperature) )
   {
-    
+
     ++chill_fail_count;
-    
+
     #ifdef __DEBUG_VIA_SERIAL__
     Serial.print("RTD chiller temp too high may return bad status, count is: "); Serial.println(chill_fail_count);
     Serial.print(sysStates.ASIC_Chiller_RTD.temperature,2); Serial.print(":"); Serial.println(sysStates.DDR_Chiller_RTD.temperature,2);
