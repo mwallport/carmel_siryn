@@ -4041,7 +4041,7 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state, bool getAl
     #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("GETTING ALL DATA");
     #endif
-//    state.rtd         = afmaxRTD.readRTD(); // this one has the 75ms hard coded delay AND IS CALLED by temperature, don't call this everytime
+    state.rtd         = afmaxRTD.readRTD(); // this one has the 75ms hard coded delay AND IS CALLED by temperature, don't call this everytime
     state.fault       = afmaxRTD.readFault(); // reads a register
   }
 
@@ -4068,6 +4068,9 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state, bool getAl
     Serial.print("fault: "); Serial.print(state.fault); Serial.print(" rtd: "); Serial.print(state.rtd);
     Serial.print(" keeping prior temperature: "); Serial.println(state.temperature, 1);
     #endif
+
+    // then clear it ..
+    state.fault = 0;
   }
 
   #ifdef __DEBUG2_VIA_SERIAL__
