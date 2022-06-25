@@ -5016,7 +5016,7 @@ bool GetACUTempPV(uint8_t id, float* pv)
 //    pvpvof = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
 
     val1  = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
-    f1    = float((val1+512)&1023) - 512.0 ;
+    f1    = (float)((val1+512)&1023) - 512.0 ;
   }
 
 
@@ -5036,7 +5036,7 @@ bool GetACUTempPV(uint8_t id, float* pv)
 //    pvof = htons(*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])));
 
     val2  = htons(*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])));
-    f2    = float((val2+512)&1023) - 512.0 ;
+    f2    = (float)((val2+512)&1023) - 512.0 ;
   }
 
 //  *pv = pvpvof - pvof;
@@ -5069,7 +5069,7 @@ bool GetACUTempSV(uint8_t id, float* sv)
   {
     val = htons(*(reinterpret_cast<uint16_t*>(&readSVSVOF.buff()[0])));
 
-    float f = float((val+512)&1023) - 512.0 ;
+    float f = (float)((val+512)&1023) - 512.0 ;
 
     *sv = f / (float)10;
 
