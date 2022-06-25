@@ -5016,7 +5016,22 @@ bool GetACUTempPV(uint8_t id, float* pv)
 //    pvpvof = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
 
     val1  = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
-    f1    = (float)((val1+512)&1023) - 512.0 ;
+
+    if( (0x8000 & val1) )
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling negative number conversion");
+      #endif
+
+      f1    = (float)((val1+512)&1023) - 512.0 ;
+    } else
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling positive number conversion");
+      #endif
+      pvpvof = val1;
+    }
+
   }
 
 
@@ -5036,12 +5051,29 @@ bool GetACUTempPV(uint8_t id, float* pv)
 //    pvof = htons(*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])));
 
     val2  = htons(*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])));
-    f2    = (float)((val2+512)&1023) - 512.0 ;
+
+    if( (0x8000 & val2) )
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling negative number conversion rhs");
+      #endif
+
+      f2    = (float)((val2+512)&1023) - 512.0 ;
+      *pv = f1 - f2;
+      *pv = (float)*pv / (float)10;
+
+    } else
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling positive number conversion rhs");
+      #endif
+      pvof = val2;
+
+      *pv = pvpvof - pvof;
+      *pv = (float)*pv / (float)10;
+    }
   }
 
-//  *pv = pvpvof - pvof;
-  *pv = f1 - f2;
-  *pv = (float)*pv / (float)10;
 
   return(true);
 }
@@ -5067,11 +5099,25 @@ bool GetACUTempSV(uint8_t id, float* sv)
     
   } else
   {
+
     val = htons(*(reinterpret_cast<uint16_t*>(&readSVSVOF.buff()[0])));
 
-    float f = (float)((val+512)&1023) - 512.0 ;
+    if( (0x8000 & val) )
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling negative number conversion rhs SV");
+      #endif
 
-    *sv = f / (float)10;
+      float f = (float)((val+512)&1023) - 512.0 ;
+
+      *sv = f / (float)10;
+    } else
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling negative number conversion rhs SV");
+      #endif
+       *sv = (float)val / (float)10;
+    }
 
     #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("readSV success");
