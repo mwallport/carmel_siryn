@@ -804,7 +804,7 @@ class menuGetEventLogCmd : public menuItemBase
             }
             case ASIC_Chiller_RTDFault:
             {
-              printf("%-26s : %-18s ASCIC chiller RTD fault\n",
+              printf("%-26s : %-18s ASIC chiller RTD fault\n",
                 time_buff, "ASIC_Chiller_RTDFault");
                 //asctime(&ltime), "ChillerOffline");
 

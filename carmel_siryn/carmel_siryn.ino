@@ -3828,6 +3828,8 @@ bool handleRTDStatus(bool getFaults, bool getDDROnly)
   bool  NON_DDR_RTDsRunning = true;  // becomes false if at least one RTD has fault
   bool  DDR_RTDsRunning     = true;  // becomes false if at least one RTD has fault
   bool  retVal              = false; // true if the RTDs were read
+  static int asic_chiller_rtd_fail_count = 0;
+  static int ddr_chiller_rtd_fail_count = 0;
 
   
   //
@@ -3869,20 +3871,93 @@ bool handleRTDStatus(bool getFaults, bool getDDROnly)
 
   if( (sysStates.ASIC_Chiller_RTD.fault) )
   {
-    sysStates.ASIC_Chiller_RTD.online  = offline;
-    NON_DDR_RTDsRunning  = false;  
+    //
+    // de-bounce this !
+    // there is some RTD failure in the ASIC that happens during auto-tune
+    // and the issue is transient, until we figure that out, let see if
+    // the problem 'goes away' after a few iterations
+    //
+
+    ++asic_chiller_rtd_fail_count;
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("asic_chiller_rtd_fail_count count is: "); Serial.println(asic_chiller_rtd_fail_count);
+    #endif
+
+    delay(250);
+
+    if( ( 20 < asic_chiller_rtd_fail_count) )
+    {
+      asic_chiller_rtd_fail_count = 0;
+
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.println("asic_chiller_rtd_fail_count high returning bad status");
+      #endif
+
+      sysStates.ASIC_Chiller_RTD.online  = offline;
+      NON_DDR_RTDsRunning  = false;  
+
+    } else
+    {
+      //
+      // clear the fault, we havent' gotten enough faults in a row yet
+      //
+      sysStates.ASIC_Chiller_RTD.fault = 0;
+
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.println("asic_chiller_rtd_fail_count not high enough keeping good status");
+      #endif
+    }
   } else
   {
+    asic_chiller_rtd_fail_count = 0;  // clear the count - there are no faults
     sysStates.ASIC_Chiller_RTD.prior_fault = 0;
   }
 
   if( (sysStates.DDR_Chiller_RTD.fault) )
   {
-    sysStates.DDR_Chiller_RTD.online  = offline;
-    sysStates.DDR_Chiller_RTD.state   = stopped;    
-    NON_DDR_RTDsRunning  = false;  
+    //
+    // de-bounce this !
+    // there is some RTD failure in the ASIC that happens during auto-tune
+    // and the issue is transient, until we figure that out, let see if
+    // the problem 'goes away' after a few iterations
+    //
+
+    ++ddr_chiller_rtd_fail_count;
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("ddr_chiller_rtd_fail_count count is: "); Serial.println(ddr_chiller_rtd_fail_count);
+    #endif
+
+    delay(250);
+
+    if( ( 20 < ddr_chiller_rtd_fail_count) )
+    {
+      ddr_chiller_rtd_fail_count = 0;
+
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.println("ddr_chiller_rtd_fail_count high returning bad status");
+      #endif
+
+      sysStates.DDR_Chiller_RTD.online  = offline;
+      sysStates.DDR_Chiller_RTD.state   = stopped;    
+      NON_DDR_RTDsRunning  = false;  
+
+    } else
+    {
+      //
+      // clear the fault, we havent' gotten enough faults in a row yet
+      //
+      sysStates.DDR_Chiller_RTD.fault = 0;
+
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.println("ddr_chiller_rtd_fail_count not high enough keeping good status");
+      #endif
+    }
+
   } else
   {
+    ddr_chiller_rtd_fail_count = 0;
     sysStates.DDR_Chiller_RTD.prior_fault = 0;
   }
 
@@ -3970,20 +4045,29 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state, bool getAl
     state.fault       = afmaxRTD.readFault(); // reads a register
   }
 
-  // always get temperature
-  if( (RUNNING == sysStates.sysStatus) )
+  // dont always get temperature - if there is a faul, don't update the temp
+  if( (0 == state.fault) )
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.println("IN ACTIVE STATE calling temperature_dd");
-    #endif
-    state.temperature = afmaxRTD.temperature_dd(RNOMINAL, RREF);  // this call is optimized for deftDevise
-    
+    if( (RUNNING == sysStates.sysStatus) )
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("IN ACTIVE STATE calling temperature_dd");
+      #endif
+      state.temperature = afmaxRTD.temperature_dd(RNOMINAL, RREF);  // this call is optimized for deftDevise
+      
+    } else
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("NOT IN ACTIVE STATE calling temperature");
+      #endif
+      state.temperature = afmaxRTD.temperature(RNOMINAL, RREF);     // this call is standard Adafruite, delays and all
+    }
   } else
   {
     #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.println("NOT IN ACTIVE STATE calling temperature");
+    Serial.print("fault: "); Serial.print(state.fault); Serial.print(" rtd: "); Serial.print(state.rtd);
+    Serial.print(" keeping prior temperature: "); Serial.println(state.temperature, 1);
     #endif
-    state.temperature = afmaxRTD.temperature(RNOMINAL, RREF);     // this call is standard Adafruite, delays and all
   }
 
   #ifdef __DEBUG2_VIA_SERIAL__
