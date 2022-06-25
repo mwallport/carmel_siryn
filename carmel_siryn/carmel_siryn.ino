@@ -5020,14 +5020,14 @@ bool GetACUTempPV(uint8_t id, float* pv)
     if( (0x8000 & val1) )
     {
       #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.println("handling negative number conversion");
+      Serial.println("handling negative number conversion pv");
       #endif
 
       f1    = (float)((val1+512)&1023) - 512.0 ;
     } else
     {
       #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.println("handling positive number conversion");
+      Serial.println("handling positive number conversion rhs");
       #endif
       pvpvof = val1;
     }
@@ -5055,7 +5055,7 @@ bool GetACUTempPV(uint8_t id, float* pv)
     if( (0x8000 & val2) )
     {
       #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.println("handling negative number conversion rhs");
+      Serial.println("handling negative number conversion pv rhs");
       #endif
 
       f2    = (float)((val2+512)&1023) - 512.0 ;
@@ -5065,7 +5065,7 @@ bool GetACUTempPV(uint8_t id, float* pv)
     } else
     {
       #ifdef __DEBUG2_VIA_SERIAL__
-      Serial.println("handling positive number conversion rhs");
+      Serial.println("handling positive number conversion pv rhs");
       #endif
       pvof = val2;
 
