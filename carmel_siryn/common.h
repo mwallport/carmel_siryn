@@ -5,7 +5,7 @@
 //
 // process defines
 //
-#define _READ_TIME_OUT_  3000
+#define _READ_TIME_OUT_  6000
 
 
 // there are 6 bytes that must be in a Rx'ed response packet other than the id(1)

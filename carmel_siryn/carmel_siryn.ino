@@ -3587,7 +3587,9 @@ void handleACURunningStatus(uint8_t id)
   bool  ACUsOnline  = true;
   bool  ACUsRunning = true;
   bool  Running     = false;
+  bool  got_a_read  = false;
   uint8_t idx       = id - 1;  // array index is id - 1
+  static int acu_running_fail_count = 0;
 
   //Serial.println("handleACURunningStatus called...");
   
@@ -3613,48 +3615,73 @@ void handleACURunningStatus(uint8_t id)
   Running = false;
   if( (false == ACURunning(id, Running)) )
   {
-    #ifdef __DEBUG_VIA_SERIAL__
-    Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
-    Serial.print(id, DEC); Serial.println(" unable to get running");
-    Serial.flush();
-    #endif
+    ++acu_running_fail_count;
 
-    ACUsOnline  = false;
-    ACUsRunning = false;
+    if( (4 < acu_running_fail_count) )
+    {
+      acu_running_fail_count = 0;
 
-    sysStates.ACU[idx].online = offline;
-    sysStates.ACU[idx].state  = stopped;
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
+      Serial.print(id, DEC); Serial.println(" unable to get running");
+      Serial.flush();
+      #endif
 
-  } else if( (false == Running) )
+      ACUsOnline  = false;
+      ACUsRunning = false;
+
+      sysStates.ACU[idx].online = offline;
+      sysStates.ACU[idx].state  = stopped;
+    } else
+    {
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING:ACU ");
+      Serial.print(id, DEC); Serial.print(" unable to get running, fail count: ");
+      Serial.println(acu_running_fail_count);
+      Serial.flush();
+      #endif
+    }
+  }
+  else
   {
-    #ifdef __DEBUG_VIA_SERIAL__
-    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: ACU ");
-    Serial.print(id); Serial.println(" is not running");
-    Serial.flush();
-    #endif
-    //
-    // keep track of whether all ACUs are running
-    //
-    ACUsOnline  = true;
-    ACUsRunning = false;
+    // reset the count
+    got_a_read = true;
+    acu_running_fail_count = 0;
+  }
 
-    // update sysStates
-    sysStates.ACU[idx].online = online;
-    sysStates.ACU[idx].state  = stopped;
+  if( (true == got_a_read) )
+  {
+    if( (false == Running) )
+    {
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: ACU ");
+      Serial.print(id); Serial.println(" is not running");
+      Serial.flush();
+      #endif
+      //
+      // keep track of whether all ACUs are running
+      //
+      ACUsOnline  = true;
+      ACUsRunning = false;
+
+      // update sysStates
+      sysStates.ACU[idx].online = online;
+      sysStates.ACU[idx].state  = stopped;
     
-  } else
-  {
-    #ifdef __DEBUG_VIA_SERIAL__
-    Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: ACU ");
-    Serial.print(id); Serial.println(" is running");
-    Serial.flush();
-    #endif
+    } else
+    {
+        #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING: ACU ");
+      Serial.print(id); Serial.println(" is running");
+      Serial.flush();
+      #endif
 
-    ACUsOnline  = true;
-    ACUsRunning = true;
+      ACUsOnline  = true;
+      ACUsRunning = true;
 
-    sysStates.ACU[idx].online = online;
-    sysStates.ACU[idx].state  = running;
+      sysStates.ACU[idx].online = online;
+      sysStates.ACU[idx].state  = running;
+    }
   }
 
   //
