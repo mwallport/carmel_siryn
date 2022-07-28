@@ -1,9 +1,13 @@
 // file controlProtocol.cpp
+#include "pch.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include "controlProtocol.h"
 
+
+extern "C"
+{
 
 // crc16.cpp
 uint16_t getCRC16(uint16_t CRC, uint8_t byte)
@@ -52,64 +56,73 @@ bool controlProtocol::openUSBPort(const char* usbPort, uint32_t Speed)
         //
         // and set 9600N81
         //
-        tcgetattr(m_fd, &options);
-    
-        switch(Speed)
+        if( (0 == tcgetattr(m_fd, &options)) )
         {
-            case 19200:
-                cfsetispeed(&options, B19200);
-                cfsetospeed(&options, B19200);
-                break;
-    
-            case 38400:
-                cfsetispeed(&options, B38400);
-                cfsetospeed(&options, B38400);
-                break;
-    
-            case 57600:
-                cfsetispeed(&options, B57600);
-                cfsetospeed(&options, B57600);
-                break;
-    
-            default:
-            case 9600:
-                cfsetispeed(&options, B9600);
-                cfsetospeed(&options, B9600);
-                break;
+          switch(Speed)
+          {
+              case 19200:
+                  cfsetispeed(&options, B19200);
+                  cfsetospeed(&options, B19200);
+                  break;
+      
+              case 38400:
+                  cfsetispeed(&options, B38400);
+                  cfsetospeed(&options, B38400);
+                  break;
+      
+              case 57600:
+                  cfsetispeed(&options, B57600);
+                  cfsetospeed(&options, B57600);
+                  break;
+      
+              default:
+              case 9600:
+                  cfsetispeed(&options, B9600);
+                  cfsetospeed(&options, B9600);
+                  break;
+          }
+      
+          // Enable the receiver and set local mode...
+          options.c_cflag |= (CLOCAL | CREAD);
+      
+          // 8 data bits
+          //options.c_cflag &= ~CSIZE; /* Mask the character size bits */
+          //options.c_cflag |= CS8;    /* Select 8 data bits */
+      
+          // no parity
+          options.c_cflag &= ~PARENB;
+          options.c_cflag &= ~CSTOPB;
+          options.c_cflag &= ~CSIZE;
+          options.c_cflag |= CS8;
+      
+          // no hardware flow control
+          options.c_cflag &= ~CRTSCTS;
+      
+          // use raw input
+          //options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+          options.c_lflag &= ~(ICANON | ISIG);
+      
+          // no software flow control
+          options.c_iflag &= ~(IXON | IXOFF | IXANY | INLCR | ICRNL);
+      
+          // raw output
+          options.c_oflag &= ~(OPOST | ONLCR);
+      
+          // have 5 second timeout
+          options.c_cc[VMIN] = 0;
+          options.c_cc[VTIME]= 50;
+      
+          //Set the new options for the port...
+          if( (0 != tcsetattr(m_fd, TCSANOW, &options)) )
+          {
+            fprintf(stderr, "unable to tcsetattr\n");
+            retVal = false;
+          }
+        } else
+        {
+          fprintf(stderr, "unable to tcgetattr\n");
+          retVal = false;
         }
-    
-        // Enable the receiver and set local mode...
-        options.c_cflag |= (CLOCAL | CREAD);
-    
-        // 8 data bits
-        //options.c_cflag &= ~CSIZE; /* Mask the character size bits */
-        //options.c_cflag |= CS8;    /* Select 8 data bits */
-    
-        // no parity
-        options.c_cflag &= ~PARENB;
-        options.c_cflag &= ~CSTOPB;
-        options.c_cflag &= ~CSIZE;
-        options.c_cflag |= CS8;
-    
-        // no hardware flow control
-        options.c_cflag &= ~CRTSCTS;
-    
-        // use raw input
-        //options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-        options.c_lflag &= ~(ICANON | ISIG);
-    
-        // no software flow control
-        options.c_iflag &= ~(IXON | IXOFF | IXANY | INLCR | ICRNL);
-    
-        // raw output
-        options.c_oflag &= ~(OPOST | ONLCR);
-    
-        // have 5 second timeout
-        options.c_cc[VMIN] = 0;
-        options.c_cc[VTIME]= 50;
-    
-        //Set the new options for the port...
-        tcsetattr(m_fd, TCSANOW, &options);
     }
 
 #endif
@@ -119,8 +132,20 @@ bool controlProtocol::openUSBPort(const char* usbPort, uint32_t Speed)
     // Initializing DCB structure
     DCB dcbSerialParams = { 0 };
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+
+    //
+    // convert to wide string
+    //
+    wchar_t* wString = new wchar_t[512];
+    MultiByteToWideChar(CP_ACP, 0, usbPort, -1, wString, 512);
+
+    /*
+    Also please note that for COM port 10 and above, you need to open them with the command \\.\\COMn,
+    which corresponds to the C string \\\\.\\COMn
+    (where n is the 1 or 2 digits specifying the COM port number). See http://support2.microsoft.com/kb/115831.
+    */
     
-    m_fd = CreateFile(usbPort,                //port name
+    m_fd = CreateFile(wString,                //port name as wide string
                       GENERIC_READ | GENERIC_WRITE, //Read/Write
                       0,                            // No Sharing
                       NULL,                         // No Security
@@ -129,8 +154,10 @@ bool controlProtocol::openUSBPort(const char* usbPort, uint32_t Speed)
                       NULL);        // Null for Comm Devices
                       
     if (m_fd == INVALID_HANDLE_VALUE)
+    {
         fprintf(stderr, "unable to open %s\n", usbPort);
-    else
+        retVal  = false;
+    } else
     {
         retVal  = true;
         
@@ -225,7 +252,7 @@ controlProtocol::controlProtocol(HardwareSerial& so, uint16_t myAddress, uint16_
 #else
 
 controlProtocol::controlProtocol(uint16_t myAddress, uint16_t peerAddress, const char* usbPort, uint32_t Speed)
-    : m_seqNum(0x0000), m_myAddress(myAddress), m_peerAddress(peerAddress)
+    : m_seqNum(0x0000), m_myAddress(myAddress), m_peerAddress(peerAddress), m_serialConnected(false)
 {
     //
     // only coding this for the master for now .. 
@@ -236,7 +263,7 @@ controlProtocol::controlProtocol(uint16_t myAddress, uint16_t peerAddress, const
     //
     // assuming this always passes TODO: don't assume
     //
-    openUSBPort(usbPort, Speed);
+    m_serialConnected = openUSBPort(usbPort, Speed);
 };
 
 #endif
@@ -270,7 +297,7 @@ bool controlProtocol::doTxResponse(uint16_t length)
 bool controlProtocol::TxCommandUSB(uint16_t length)
 {
     #ifdef __DEBUG_CTRL_PROTO__
-    printf("%s", __PRETTY_FUNCTION__);
+    printf("%s", __FUNCTION__);
     printf("\n");
     printf("writing %u bytes: ", length);
     for(int i = 0; i < length; i++)
@@ -285,7 +312,8 @@ bool controlProtocol::TxCommandUSB(uint16_t length)
 
     if( (n < 0) )
     {
-        fprintf(stderr, "%s write() failed\n", __PRETTY_FUNCTION__);
+      fprintf(stderr, "%s write() failed\n", __FUNCTION__);
+      return(false);
     }
     #endif
 
@@ -295,8 +323,10 @@ bool controlProtocol::TxCommandUSB(uint16_t length)
     
     if( false == WriteFile(m_fd, m_buff, length, &dNoOfBytesWritten, NULL) )
     {
-        fprintf(stderr, "%s WriteFile() failed\n", __PRETTY_FUNCTION__);
+      fprintf(stderr, "%s WriteFile() failed\n", __FUNCTION__);
+      return(false);
     }
+
     #endif
 
     return(true);
@@ -492,7 +522,7 @@ bool controlProtocol::RxCommandSerial(uint16_t TimeoutMs)
 
     // debug stuff
     #ifdef __DEBUG_CONTROL_PKT_RX__
-    Serial.print(__PRETTY_FUNCTION__);
+    Serial.print(__FUNCTION__);
     Serial.flush();
     Serial.print(" received ");
     Serial.flush();
@@ -548,7 +578,7 @@ bool controlProtocol::TxResponseSerial(uint16_t length)
     } else
     {
         Serial.flush();
-        Serial.print(__PRETTY_FUNCTION__);
+        Serial.print(__FUNCTION__);
         Serial.print(" sent: ");
         for(int i = 0; i < length; i++)
         {
@@ -608,8 +638,8 @@ bool controlProtocol::GetStatus(uint16_t destAddress, uint16_t* RTDsRunning,
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getStatusResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -630,7 +660,7 @@ bool controlProtocol::GetStatus(uint16_t destAddress, uint16_t* RTDsRunning,
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -652,12 +682,12 @@ bool controlProtocol::GetStatus(uint16_t destAddress, uint16_t* RTDsRunning,
             retVal  = true;
         } else
         {
-            fprintf(stderr, "ERROR: did not get a m_buffer back\n");
+            //fprintf(stderr, "ERROR: did not get a m_buffer back\n");
         }
 
     } else
     {
-        fprintf(stderr, "ERROR: unable to Make_getStatus\n");
+        //fprintf(stderr, "ERROR: unable to Make_getStatus\n");
     }
 
     return(retVal);
@@ -705,8 +735,8 @@ bool controlProtocol::GetHumidity(uint16_t destAddress, float* humidity)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getHumidityResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -727,7 +757,7 @@ bool controlProtocol::GetHumidity(uint16_t destAddress, float* humidity)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -745,12 +775,12 @@ bool controlProtocol::GetHumidity(uint16_t destAddress, float* humidity)
             retVal  = true;
         } else
         {
-            fprintf(stderr, "ERROR: did not get a m_buffer back\n");
+            //fprintf(stderr, "ERROR: did not get a m_buffer back\n");
         }
 
     } else
     {
-        fprintf(stderr, "ERROR: unable to Make_getStatus\n");
+        //fprintf(stderr, "ERROR: unable to Make_getStatus\n");
     }
 
     return(retVal);
@@ -800,8 +830,8 @@ bool controlProtocol::SetHumidityThreshold(uint16_t destAddress, uint16_t thresh
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (setHumidityThresholdResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -823,7 +853,7 @@ bool controlProtocol::SetHumidityThreshold(uint16_t destAddress, uint16_t thresh
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -847,12 +877,12 @@ bool controlProtocol::SetHumidityThreshold(uint16_t destAddress, uint16_t thresh
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "ERROR: did not get a m_buffer back\n");
+            //fprintf(stderr, "ERROR: did not get a m_buffer back\n");
         }
 
     } else
     {
-        fprintf(stderr, "ERROR: unable to Make_getStatus\n");
+        //fprintf(stderr, "ERROR: unable to Make_getStatus\n");
     }
 
     return(retVal);
@@ -900,8 +930,8 @@ bool controlProtocol::GetHumidityThreshold(uint16_t destAddress, uint16_t* thres
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getHumidityThresholdResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -922,7 +952,7 @@ bool controlProtocol::GetHumidityThreshold(uint16_t destAddress, uint16_t* thres
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -943,12 +973,12 @@ bool controlProtocol::GetHumidityThreshold(uint16_t destAddress, uint16_t* thres
             retVal  = true;
         } else
         {
-            fprintf(stderr, "ERROR: did not get a m_buffer back\n");
+            //fprintf(stderr, "ERROR: did not get a m_buffer back\n");
         }
 
     } else
     {
-        fprintf(stderr, "ERROR: unable to Make_getStatus\n");
+        //fprintf(stderr, "ERROR: unable to Make_getStatus\n");
     }
 
     return(retVal);
@@ -1001,8 +1031,8 @@ bool controlProtocol::SetACUTemperature(uint16_t destAddress, uint16_t acu_addre
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (setACUTemperatureResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -1023,7 +1053,7 @@ bool controlProtocol::SetACUTemperature(uint16_t destAddress, uint16_t acu_addre
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -1047,12 +1077,12 @@ bool controlProtocol::SetACUTemperature(uint16_t destAddress, uint16_t acu_addre
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "ERROR: did not get a m_buffer back\n");
+            //fprintf(stderr, "ERROR: did not get a m_buffer back\n");
         }
 
     } else
     {
-        fprintf(stderr, "ERROR: unable to Make_getStatus\n");
+        //fprintf(stderr, "ERROR: unable to Make_getStatus\n");
     }
 
     return(retVal);
@@ -1100,8 +1130,8 @@ bool controlProtocol::GetACUTemperature(uint16_t destAddress, uint16_t acu_addre
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getACUTemperatureResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -1122,7 +1152,7 @@ bool controlProtocol::GetACUTemperature(uint16_t destAddress, uint16_t acu_addre
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -1146,12 +1176,12 @@ bool controlProtocol::GetACUTemperature(uint16_t destAddress, uint16_t acu_addre
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -1198,8 +1228,8 @@ bool controlProtocol::GetACUObjTemperature(uint16_t destAddress, uint16_t acu_ad
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getACUObjTemperatureResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -1220,7 +1250,7 @@ bool controlProtocol::GetACUObjTemperature(uint16_t destAddress, uint16_t acu_ad
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -1244,12 +1274,12 @@ bool controlProtocol::GetACUObjTemperature(uint16_t destAddress, uint16_t acu_ad
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -1298,8 +1328,8 @@ bool controlProtocol::StartChiller(uint16_t destAddress)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (startChillerMsgResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -1320,7 +1350,7 @@ bool controlProtocol::StartChiller(uint16_t destAddress)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -1344,12 +1374,12 @@ bool controlProtocol::StartChiller(uint16_t destAddress)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -1398,8 +1428,8 @@ bool controlProtocol::StopChiller(uint16_t destAddress)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (stopChillerResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -1420,7 +1450,7 @@ bool controlProtocol::StopChiller(uint16_t destAddress)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -1444,12 +1474,12 @@ bool controlProtocol::StopChiller(uint16_t destAddress)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -1498,8 +1528,8 @@ bool controlProtocol::SetChillerTemperature(uint16_t destAddress, float temperat
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (setChillerTemperatureResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -1520,7 +1550,7 @@ bool controlProtocol::SetChillerTemperature(uint16_t destAddress, float temperat
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -1544,12 +1574,12 @@ bool controlProtocol::SetChillerTemperature(uint16_t destAddress, float temperat
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -1597,8 +1627,8 @@ bool controlProtocol::GetChillerTemperature(uint16_t destAddress, float* tempera
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getChillerTemperatureResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -1619,7 +1649,7 @@ bool controlProtocol::GetChillerTemperature(uint16_t destAddress, float* tempera
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -1640,12 +1670,12 @@ bool controlProtocol::GetChillerTemperature(uint16_t destAddress, float* tempera
             retVal  = true;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -1693,8 +1723,8 @@ bool controlProtocol::GetChillerObjTemperature(uint16_t destAddress, float* temp
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getChillerObjTemperatureResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -1715,7 +1745,7 @@ bool controlProtocol::GetChillerObjTemperature(uint16_t destAddress, float* temp
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -1736,12 +1766,12 @@ bool controlProtocol::GetChillerObjTemperature(uint16_t destAddress, float* temp
             retVal  = true;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -1790,8 +1820,8 @@ bool controlProtocol::GetChillerInfo(uint16_t destAddress, char* info, uint8_t l
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getChillerInfoResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -1812,7 +1842,7 @@ bool controlProtocol::GetChillerInfo(uint16_t destAddress, char* info, uint8_t l
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -1836,12 +1866,12 @@ bool controlProtocol::GetChillerInfo(uint16_t destAddress, char* info, uint8_t l
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -1891,8 +1921,8 @@ bool controlProtocol::EnableACUs(uint16_t destAddress)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (enableACUsResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -1913,7 +1943,7 @@ bool controlProtocol::EnableACUs(uint16_t destAddress)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -1937,12 +1967,12 @@ bool controlProtocol::EnableACUs(uint16_t destAddress)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -1991,8 +2021,8 @@ bool controlProtocol::DisableACUs(uint16_t destAddress)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (disableACUsResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -2013,7 +2043,7 @@ bool controlProtocol::DisableACUs(uint16_t destAddress)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -2037,12 +2067,12 @@ bool controlProtocol::DisableACUs(uint16_t destAddress)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -2092,8 +2122,8 @@ bool controlProtocol::GetACUInfo(uint16_t destAddress, uint16_t acu_address,
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getACUInfoMsgResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -2114,7 +2144,7 @@ bool controlProtocol::GetACUInfo(uint16_t destAddress, uint16_t acu_address,
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -2140,12 +2170,12 @@ bool controlProtocol::GetACUInfo(uint16_t destAddress, uint16_t acu_address,
 
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -2194,8 +2224,8 @@ bool controlProtocol::StartUpCmd(uint16_t destAddress)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (startUpCmdResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -2216,7 +2246,7 @@ bool controlProtocol::StartUpCmd(uint16_t destAddress)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -2240,12 +2270,12 @@ bool controlProtocol::StartUpCmd(uint16_t destAddress)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -2294,8 +2324,8 @@ bool controlProtocol::StartUpATCmd(uint16_t destAddress)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (startUpATCmdResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -2316,7 +2346,7 @@ bool controlProtocol::StartUpATCmd(uint16_t destAddress)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -2340,12 +2370,12 @@ bool controlProtocol::StartUpATCmd(uint16_t destAddress)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -2394,8 +2424,8 @@ bool controlProtocol::ShutDownCmd(uint16_t destAddress)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (shutDownCmdResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -2416,7 +2446,7 @@ bool controlProtocol::ShutDownCmd(uint16_t destAddress)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -2440,12 +2470,12 @@ bool controlProtocol::ShutDownCmd(uint16_t destAddress)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -2514,8 +2544,8 @@ bool controlProtocol::SetRTCCmd(uint16_t destAddress)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (setRTCCmdResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -2536,7 +2566,7 @@ bool controlProtocol::SetRTCCmd(uint16_t destAddress)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -2560,12 +2590,12 @@ bool controlProtocol::SetRTCCmd(uint16_t destAddress)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_setRTCCMD\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_setRTCCMD\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -2614,8 +2644,8 @@ bool controlProtocol::GetRTCCmd(uint16_t destAddress, struct tm* ltime)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getRTCCmdResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -2636,7 +2666,7 @@ bool controlProtocol::GetRTCCmd(uint16_t destAddress, struct tm* ltime)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -2660,12 +2690,12 @@ bool controlProtocol::GetRTCCmd(uint16_t destAddress, struct tm* ltime)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getRTCCMD\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getRTCCMD\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -2714,8 +2744,8 @@ bool controlProtocol::ClrEventLogCmd(uint16_t destAddress)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (clrEventLogCmdResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -2736,7 +2766,7 @@ bool controlProtocol::ClrEventLogCmd(uint16_t destAddress)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -2760,12 +2790,12 @@ bool controlProtocol::ClrEventLogCmd(uint16_t destAddress)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -2802,10 +2832,10 @@ bool controlProtocol::GetEventLogCmd(uint16_t destAddress, elogentry* eventlog)
             // dump out what we got
             //
             for(uint16_t i = 0; i < sizeof(getEventLogCmdResp_t); i++)
-           {
-                printf("0x%02X ", m_buff[i]);
+            {
+                fprintf(stderr, "0x%02X ", m_buff[i]);
             }
-            printf("\n");
+            fprintf(stderr, "\n");
             #endif
 
             //
@@ -2814,8 +2844,9 @@ bool controlProtocol::GetEventLogCmd(uint16_t destAddress, elogentry* eventlog)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getEventLogCmdResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                #ifdef __DEBUG_CTRL_PROTO__
+                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n", __FUNCTION__, pMsgHeader->msgNum);
+                #endif
 
                 //
                 // no need to continue processing
@@ -2835,8 +2866,9 @@ bool controlProtocol::GetEventLogCmd(uint16_t destAddress, elogentry* eventlog)
                                         seqNum, ntohs(pgetEventLogCmdResp->eop))) )
             {
                 // TODO: drop the packet
-                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                #ifdef __DEBUG_CTRL_PROTO__
+                fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n", __FUNCTION__);
+                #endif
 
                 //
                 // no need to continue processing
@@ -2851,7 +2883,7 @@ bool controlProtocol::GetEventLogCmd(uint16_t destAddress, elogentry* eventlog)
             Parse_getEventLogCmdResp(m_buff, &result, eventlog, &seqNum);
 
             #ifdef __DEBUG_CTRL_PROTO__
-            printf("found in packet result %d seqNumer 0x%02x\n", result, seqNum);
+            fprintf(stderr, "found in packet result %d seqNumer 0x%02x\n", result, seqNum);
             #endif
 
             if( (result) )
@@ -2860,12 +2892,14 @@ bool controlProtocol::GetEventLogCmd(uint16_t destAddress, elogentry* eventlog)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            #ifdef __DEBUG_CTRL_PROTO__
+            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
+            #endif      
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -2914,8 +2948,8 @@ bool controlProtocol::SetH20AlarmASIC(uint16_t destAddress, float temperature)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (setH20AlarmASICResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -2936,7 +2970,7 @@ bool controlProtocol::SetH20AlarmASIC(uint16_t destAddress, float temperature)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -2960,12 +2994,12 @@ bool controlProtocol::SetH20AlarmASIC(uint16_t destAddress, float temperature)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -3013,8 +3047,8 @@ bool controlProtocol::GetH20AlarmASIC(uint16_t destAddress, float* temperature)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getH20AlarmASICResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -3035,7 +3069,7 @@ bool controlProtocol::GetH20AlarmASIC(uint16_t destAddress, float* temperature)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -3056,12 +3090,12 @@ bool controlProtocol::GetH20AlarmASIC(uint16_t destAddress, float* temperature)
             retVal  = true;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -3110,8 +3144,8 @@ bool controlProtocol::SetH20AlarmDDR(uint16_t destAddress, float temperature)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (setH20AlarmDDRResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -3132,7 +3166,7 @@ bool controlProtocol::SetH20AlarmDDR(uint16_t destAddress, float temperature)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -3156,12 +3190,12 @@ bool controlProtocol::SetH20AlarmDDR(uint16_t destAddress, float temperature)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -3209,8 +3243,8 @@ bool controlProtocol::GetH20AlarmDDR(uint16_t destAddress, float* temperature)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getH20AlarmDDRResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -3231,7 +3265,7 @@ bool controlProtocol::GetH20AlarmDDR(uint16_t destAddress, float* temperature)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -3252,12 +3286,12 @@ bool controlProtocol::GetH20AlarmDDR(uint16_t destAddress, float* temperature)
             retVal  = true;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            //fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        //fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
@@ -3670,11 +3704,15 @@ void controlProtocol::Parse_getHumidityResp(uint8_t* m_buff, float* humidity, ui
 
     #ifdef __RUNNING_ON_CONTROLLINO__
     //
-    // on uC use atof, sscanf support is dodgy
+    // on uC use atof, sscanf_s support is dodgy
     //
     *humidity = atof(reinterpret_cast<char*>(pResponse->humidity));
     #else
-    sscanf(reinterpret_cast<char*>(pResponse->humidity), "%6f", humidity);
+        #ifdef __USING_WINDOWS_USB__
+        sscanf_s(reinterpret_cast<char*>(pResponse->humidity), "%6f", humidity);
+        #else
+        sscanf(reinterpret_cast<char*>(pResponse->humidity), "%6f", humidity);
+        #endif
     #endif
 
     *pSeqNum    = pResponse->header.seqNum;
@@ -3973,11 +4011,15 @@ void controlProtocol::Parse_getACUTemperatureResp(uint8_t* m_buff, uint16_t* res
 
     #ifdef __RUNNING_ON_CONTROLLINO__
     //
-    // on uC use atof, sscanf support is dodgy
+    // on uC use atof, sscanf_s support is dodgy
     //
     *temperature = atof(reinterpret_cast<char*>(pResponse->temperature));
     #else
-    sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #ifdef __USING_WINDOWS_USB__
+        sscanf_s(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #else
+        sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #endif
     #endif
 
     *pSeqNum    = pResponse->header.seqNum;
@@ -4061,11 +4103,15 @@ void controlProtocol::Parse_getACUObjTemperatureResp(uint8_t* m_buff, uint16_t* 
 
     #ifdef __RUNNING_ON_CONTROLLINO__
     //
-    // on uC use atof, sscanf support is dodgy
+    // on uC use atof, sscanf_s support is dodgy
     //
     *temperature = atof(reinterpret_cast<char*>(pResponse->temperature));
     #else
-    sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #ifdef __USING_WINDOWS_USB__
+        sscanf_s(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #else
+        sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #endif
     #endif
 
     *pSeqNum    = pResponse->header.seqNum;
@@ -4100,7 +4146,7 @@ uint16_t controlProtocol::Make_getACUInfoMsg(uint16_t Address, uint8_t* pBuff, u
 }
 
 
-uint16_t controlProtocol::Make_getACUInfoMsgResp(uint16_t Address, uint8_t* pBuff, uint16_t acu_address,
+uint16_t controlProtocol::Make_getACUInfoMsgResp(uint16_t Address, uint8_t * pBuff, uint16_t acu_address,
         uint16_t result, uint32_t OutL, uint32_t WkErno, uint32_t Ver,
         uint32_t SerialNo, uint16_t SeqNum)
 {
@@ -4115,7 +4161,7 @@ uint16_t controlProtocol::Make_getACUInfoMsgResp(uint16_t Address, uint8_t* pBuf
     msg->header.msgNum          = getACUInfoMsgResp;
     msg->result                 = htons(result);
     msg->acu_address            = htons(acu_address);
-    msg->OutL             = htonl(OutL);
+    msg->OutL             = htonl(OutL);       
     msg->WkErno              = htonl(WkErno);
     msg->Ver              = htonl(Ver);
     msg->SerialNo           = htonl(SerialNo);
@@ -4865,11 +4911,15 @@ void controlProtocol::Parse_getChillerTemperatureResp(uint8_t* m_buff, float* te
 
     #ifdef __RUNNING_ON_CONTROLLINO__
     //
-    // on uC use atof, sscanf support is dodgy
+    // on uC use atof, sscanf_s support is dodgy
     //
     *temperature = atof(reinterpret_cast<char*>(pResponse->temperature));
     #else
-    sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #ifdef __USING_WINDOWS_USB__
+        sscanf_s(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #else
+        sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #endif
     #endif
 
     *pSeqNum    = pResponse->header.seqNum;
@@ -4947,11 +4997,15 @@ void controlProtocol::Parse_getChillerObjTemperatureResp(uint8_t* m_buff, float*
 
     #ifdef __RUNNING_ON_CONTROLLINO__
     //
-    // on uC use atof, sscanf support is dodgy
+    // on uC use atof, sscanf_s support is dodgy
     //
     *temperature = atof(reinterpret_cast<char*>(pResponse->temperature));
     #else
-    sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #ifdef __USING_WINDOWS_USB__
+        sscanf_s(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #else
+        sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #endif
     #endif
 
     *pSeqNum    = pResponse->header.seqNum;
@@ -5176,11 +5230,15 @@ void controlProtocol::Parse_getH20AlarmASICResp(uint8_t* m_buff, float* temperat
 
     #ifdef __RUNNING_ON_CONTROLLINO__
     //
-    // on uC use atof, sscanf support is dodgy
+    // on uC use atof, sscanf_s support is dodgy
     //
     *temperature = atof(reinterpret_cast<char*>(pResponse->temperature));
     #else
-    sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #ifdef __USING_WINDOWS_USB__
+        sscanf_s(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #else
+        sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #endif
     #endif
 
     *pSeqNum    = pResponse->header.seqNum;
@@ -5331,11 +5389,15 @@ void controlProtocol::Parse_getH20AlarmDDRResp(uint8_t* m_buff, float* temperatu
 
     #ifdef __RUNNING_ON_CONTROLLINO__
     //
-    // on uC use atof, sscanf support is dodgy
+    // on uC use atof, sscanf_s support is dodgy
     //
     *temperature = atof(reinterpret_cast<char*>(pResponse->temperature));
     #else
-    sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #ifdef __USING_WINDOWS_USB__
+        sscanf_s(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #else
+        sscanf(reinterpret_cast<char*>(pResponse->temperature), "%f", temperature);
+        #endif
     #endif
 
     *pSeqNum    = pResponse->header.seqNum;
@@ -5414,7 +5476,7 @@ bool controlProtocol::verifyMessageSeqNum(uint16_t buffLength, uint16_t expSeqNu
     //
     if( (expSeqNum != pMsgHeader->seqNum) )
     {
-        fprintf(stderr, "ERROR: %s seqNum mismatch\n", __PRETTY_FUNCTION__);
+        fprintf(stderr, "ERROR: %s seqNum mismatch\n", __FUNCTION__);
         retVal  = false;
     }
 
@@ -5431,9 +5493,9 @@ bool controlProtocol::verifyMessageCRC(uint16_t buffLength, uint16_t pktCRC)
     if( (CRC != pktCRC) ) 
     {
         #ifndef __RUNNING_ON_CONTROLLINO__
-        fprintf(stderr, "ERROR: %s CRC mismatch 0x%x:0x%x\n", __PRETTY_FUNCTION__, CRC, pktCRC);
+        fprintf(stderr, "ERROR: %s CRC mismatch 0x%x:0x%x\n", __FUNCTION__, CRC, pktCRC);
         #else
-        Serial.print(__PRETTY_FUNCTION__);
+        Serial.print(__FUNCTION__);
         Serial.print(" ERROR: CRC mismatch: 0x");
         Serial.print(CRC, HEX);
         Serial.print(":");
@@ -5507,8 +5569,8 @@ bool controlProtocol::GetTempCmd(uint16_t destAddress, uint16_t* temp)
             pMsgHeader = reinterpret_cast<msgHeader_t*>(m_buff);
             if( (getTempCmdResp != pMsgHeader->msgNum) )
             {
-                fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
-                    __PRETTY_FUNCTION__, pMsgHeader->msgNum);
+                //fprintf(stderr, "ERROR: %s got unexpected msg %hu\n",
+                    //__FUNCTION__, pMsgHeader->msgNum);
 
                 //
                 // no need to continue processing
@@ -5529,7 +5591,7 @@ bool controlProtocol::GetTempCmd(uint16_t destAddress, uint16_t* temp)
             {
                 // TODO: drop the packet
                 fprintf(stderr, "ERROR: %s CRC bad, seqNum mismatch, or wrong address\n",
-                        __PRETTY_FUNCTION__);
+                        __FUNCTION__);
 
                 //
                 // no need to continue processing
@@ -5553,13 +5615,15 @@ bool controlProtocol::GetTempCmd(uint16_t destAddress, uint16_t* temp)
                 retVal  = false;
         } else
         {
-            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __PRETTY_FUNCTION__);
+            fprintf(stderr, "%s ERROR: did not get a m_buffer back\n", __FUNCTION__);
         }
 
     } else
     {
-        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __PRETTY_FUNCTION__);
+        fprintf(stderr, "%s ERROR: unable to Make_getStatus\n", __FUNCTION__);
     }
 
     return(retVal);
+}
+
 }
