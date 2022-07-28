@@ -5468,7 +5468,7 @@ void enableRTD_DDR1_ISR(void)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
-  pinMode(RTD_DDR1_ISR_PIN, INPUT_PULLUP);
+  pinMode(RTD_DDR1_ISR_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(RTD_DDR1_ISR_PIN), RTD_DDR1_ISR, FALLING);
 }
 
@@ -5481,7 +5481,7 @@ void disableRTD_DDR1_ISR(void)
   #endif
 
   detachInterrupt(digitalPinToInterrupt(RTD_DDR1_ISR_PIN));
-  pinMode(RTD_DDR1_ISR_PIN, OUTPUT);
+//  pinMode(RTD_DDR1_ISR_PIN, OUTPUT); //do not set as ouput - will cause contention with RDRY pin
 }
 
 
