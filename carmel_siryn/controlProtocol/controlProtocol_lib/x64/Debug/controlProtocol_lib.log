@@ -1,0 +1,1123 @@
+﻿     0>Search paths being used for $(MSBuildExtensionsPath) are D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild;$(MSBuildProgramFiles32)\MSBuild
+       Trying to import D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\$(MSBuildToolsVersion)\Microsoft.Common.props using extensions path D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild
+       Property reassignment: $(MSBuildProjectExtensionsPath)="D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\obj\" (previous value: "obj\") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Microsoft.Common.props (57,5)
+       Search paths being used for $(MSBuildExtensionsPath) are D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild;$(MSBuildProgramFiles32)\MSBuild
+       Trying to import D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\$(MSBuildToolsVersion)\Imports\Microsoft.Common.props\ImportBefore\* using extensions path D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild
+       The "Configuration" property is a global property, and cannot be modified.
+       Search paths being used for $(MSBuildExtensionsPath) are D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild;$(MSBuildProgramFiles32)\MSBuild
+       Search paths being used for $(MSBuildExtensionsPath) are D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild;$(MSBuildProgramFiles32)\MSBuild
+       The "Configuration" property is a global property, and cannot be modified.
+       The "LangID" property is a global property, and cannot be modified.
+       The "SolutionDir" property is a global property, and cannot be modified.
+       Property reassignment: $(ConfigurationType)="DynamicLibrary" (previous value: "Application") at D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj (43,5)
+       Property reassignment: $(UseDebugLibraries)="true" (previous value: "false") at D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj (44,5)
+       Property reassignment: $(CharacterSet)="Unicode" (previous value: "NotSet") at D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj (46,5)
+       Property reassignment: $(WindowsSdkDir_10)="D:\Windows Kits\10\" (previous value: "") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.WindowsSDK.props (18,5)
+       Property reassignment: $(NETFXSDK_Version)="4.7.3" (previous value: "4.8") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.WindowsSDK.props (46,5)
+       Property reassignment: $(NETFXSDK_Version)="4.7.2" (previous value: "4.7.3") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.WindowsSDK.props (56,5)
+       Property reassignment: $(NETFXSDK_Version)="4.7.1" (previous value: "4.7.2") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.WindowsSDK.props (66,5)
+       Property reassignment: $(NETFXSDK_Version)="4.6.2" (previous value: "4.7.1") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.WindowsSDK.props (76,5)
+       Property reassignment: $(NETFXSDK_Version)="4.6.1" (previous value: "4.6.2") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.WindowsSDK.props (86,5)
+       Property reassignment: $(TargetExt)=".dll" (previous value: "") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (37,5)
+       Property reassignment: $(VC_ExecutablePath_Loc)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (108,5)
+       Property reassignment: $(VC_ExecutablePath_Loc)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (109,5)
+       Property reassignment: $(VC_ExecutablePath_Loc)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (110,5)
+       Property reassignment: $(VC_ExecutablePath_Loc)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (111,5)
+       Property reassignment: $(VC_ExecutablePath_Loc)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (112,5)
+       Property reassignment: $(VC_ExecutablePath_Loc)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (113,5)
+       Property reassignment: $(VC_ExecutablePath_Loc)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;;;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (114,5)
+       Property reassignment: $(VC_ExecutablePath_Loc)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;;;;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;;;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (115,5)
+       Property reassignment: $(VC_ExecutablePath_Loc)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;;;;;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;;;;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (116,5)
+       Property reassignment: $(VC_ExecutablePath_Loc)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;;;;;;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostArm64\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\arm\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\1033;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x86\1033;;;;;;;;;;;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (117,5)
+       Property reassignment: $(MSBuild_ExecutablePath)="D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64;C:\WINDOWS\Microsoft.NET\Framework64\v4.0.30319\;C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319\;D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin;C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319\" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin;C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319\") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (144,5)
+       Property reassignment: $(RemoteDebuggerDeployDebugCppRuntime)="true" (previous value: "false") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (173,5)
+       Property reassignment: $(MultiProcMaxCount)="0" (previous value: "") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Common.props (234,5)
+       Property reassignment: $(EspXtensions)="EnumIndex.dll;CppCoreCheck.dll;" (previous value: "CppCoreCheck.dll;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CodeAnalysis.Extensions.props (21,5)
+       Property reassignment: $(EspXtensions)="HResultCheck.dll;EnumIndex.dll;CppCoreCheck.dll;" (previous value: "EnumIndex.dll;CppCoreCheck.dll;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CodeAnalysis.Extensions.props (24,5)
+       Property reassignment: $(EspXtensions)="VariantClear.dll;HResultCheck.dll;EnumIndex.dll;CppCoreCheck.dll;" (previous value: "HResultCheck.dll;EnumIndex.dll;CppCoreCheck.dll;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CodeAnalysis.Extensions.props (27,5)
+       Property reassignment: $(ConcurrencyCheckPath)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\ConcurrencyCheck.dll" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX86\x86\ConcurrencyCheck.dll") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CodeAnalysis.Extensions.props (31,5)
+       Property reassignment: $(EspXtensions)="ConcurrencyCheck.dll;VariantClear.dll;HResultCheck.dll;EnumIndex.dll;CppCoreCheck.dll;" (previous value: "VariantClear.dll;HResultCheck.dll;EnumIndex.dll;CppCoreCheck.dll;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CodeAnalysis.Extensions.props (32,5)
+       Property reassignment: $(_PropertySheetDisplayName)="Unicode Support" (previous value: "Core Windows Libraries") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.unicodesupport.props (15,5)
+       Property reassignment: $(_PropertySheetDisplayName)="Windows Dynamic Link Library" (previous value: "Unicode Support") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.WinDLL.props (15,5)
+       The "SolutionExt" property is a global property, and cannot be modified.
+       Property reassignment: $(ExtensionsToDeleteOnClean)="*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi;D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\controlProtocol_lib.dll.manifest;D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\controlProtocol_lib.tlb;D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\controlProtocol_lib.pdb;D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\controlProtocol_lib.dll;D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\controlProtocol_lib.bsc;D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\controlProtocol_lib.ilk;D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\controlProtocol_lib.dll.intermediate.manifest;x64\Debug\controlProtocol_lib.vcxproj.FileListAbsolute.txt" (previous value: "*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets (40,5)
+       Property reassignment: $(DebugType)="none" (previous value: "") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets (32,5)
+       Search paths being used for $(MSBuildExtensionsPath) are D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild;$(MSBuildProgramFiles32)\MSBuild
+       Search paths being used for $(MSBuildExtensionsPath) are D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild;$(MSBuildProgramFiles32)\MSBuild
+       The "Configuration" property is a global property, and cannot be modified.
+       Property reassignment: $(_DocumentationFileProduced)="false" (previous value: "true") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (186,5)
+       The "DevEnvDir" property is a global property, and cannot be modified.
+       The "SolutionName" property is a global property, and cannot be modified.
+       The "SolutionFileName" property is a global property, and cannot be modified.
+       The "SolutionPath" property is a global property, and cannot be modified.
+       The "SolutionDir" property is a global property, and cannot be modified.
+       The "SolutionExt" property is a global property, and cannot be modified.
+       Property reassignment: $(ProcessorArchitecture)="amd64" (previous value: "x64") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (508,5)
+       Property reassignment: $(DelaySign)="" (previous value: "false") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (560,5)
+       Property reassignment: $(AssemblySearchPaths)="{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;" (previous value: "{CandidateAssemblyFiles}") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (629,5)
+       Property reassignment: $(AssemblySearchPaths)="{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem}" (previous value: "{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (630,5)
+       Property reassignment: $(AssemblySearchPaths)="{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory}" (previous value: "{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem}") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (631,5)
+       Property reassignment: $(AssemblySearchPaths)="{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};" (previous value: "{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory}") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (632,5)
+       Property reassignment: $(AssemblySearchPaths)="{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};;{Registry:Software\Microsoft\,,AssemblyFoldersEx}" (previous value: "{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (633,5)
+       Property reassignment: $(AssemblySearchPaths)="{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};;{Registry:Software\Microsoft\,,AssemblyFoldersEx};{AssemblyFolders}" (previous value: "{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};;{Registry:Software\Microsoft\,,AssemblyFoldersEx}") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (634,5)
+       Property reassignment: $(AssemblySearchPaths)="{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};;{Registry:Software\Microsoft\,,AssemblyFoldersEx};{AssemblyFolders};{GAC}" (previous value: "{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};;{Registry:Software\Microsoft\,,AssemblyFoldersEx};{AssemblyFolders}") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (635,5)
+       Property reassignment: $(AssemblySearchPaths)="{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};;{Registry:Software\Microsoft\,,AssemblyFoldersEx};{AssemblyFolders};{GAC};{RawFileName}" (previous value: "{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};;{Registry:Software\Microsoft\,,AssemblyFoldersEx};{AssemblyFolders};{GAC}") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (636,5)
+       Property reassignment: $(AssemblySearchPaths)="{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};;{Registry:Software\Microsoft\,,AssemblyFoldersEx};{AssemblyFolders};{GAC};{RawFileName};D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\" (previous value: "{CandidateAssemblyFiles};D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;{HintPathFromItem};{TargetFrameworkDirectory};{AssemblyFoldersFromConfig:D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\AssemblyFolders.config,};;{Registry:Software\Microsoft\,,AssemblyFoldersEx};{AssemblyFolders};{GAC};{RawFileName}") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (637,5)
+       Property reassignment: $(_SGenGenerateSerializationAssembliesConfig)="Auto" (previous value: "") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (3739,5)
+       Property reassignment: $(_SGenGenerateSerializationAssembliesConfig)="Off" (previous value: "Auto") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (3740,5)
+       Property reassignment: $(_TargetsThatPrepareProjectReferences)="
+             AssignProjectConfiguration;
+             _SplitProjectReferencesByFileExistence
+           " (previous value: "_SplitProjectReferencesByFileExistence") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets (4874,5)
+       Property reassignment: $(_CodeAnalysisTreatWarningsAsErrors)="false" (previous value: "") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\v17.0\CodeAnalysis\Microsoft.CodeAnalysis.targets (125,5)
+       Property reassignment: $(CAExcludePath)="D:\Windows Kits\10\Include\10.0.19041.0\ucrt;;D:\Windows Kits\10\Include\10.0.19041.0\um;D:\Windows Kits\10\Include\10.0.19041.0\shared;D:\Windows Kits\10\Include\10.0.19041.0\winrt;D:\Windows Kits\10\Include\10.0.19041.0\cppwinrt;Include\um;" (previous value: "D:\Windows Kits\10\Include\10.0.19041.0\um;D:\Windows Kits\10\Include\10.0.19041.0\shared;D:\Windows Kits\10\Include\10.0.19041.0\winrt;D:\Windows Kits\10\Include\10.0.19041.0\cppwinrt;Include\um;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\v17.0\CodeAnalysis\Microsoft.CodeAnalysis.targets (235,5)
+       Property reassignment: $(CAExcludePath)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\include;D:\Windows Kits\10\Include\10.0.19041.0\ucrt;;D:\Windows Kits\10\Include\10.0.19041.0\um;D:\Windows Kits\10\Include\10.0.19041.0\shared;D:\Windows Kits\10\Include\10.0.19041.0\winrt;D:\Windows Kits\10\Include\10.0.19041.0\cppwinrt;Include\um;" (previous value: "D:\Windows Kits\10\Include\10.0.19041.0\ucrt;;D:\Windows Kits\10\Include\10.0.19041.0\um;D:\Windows Kits\10\Include\10.0.19041.0\shared;D:\Windows Kits\10\Include\10.0.19041.0\winrt;D:\Windows Kits\10\Include\10.0.19041.0\cppwinrt;Include\um;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\v17.0\CodeAnalysis\Microsoft.CodeAnalysis.targets (236,5)
+       Property reassignment: $(CAExcludePath)="D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\include;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\include;D:\Windows Kits\10\Include\10.0.19041.0\ucrt;;D:\Windows Kits\10\Include\10.0.19041.0\um;D:\Windows Kits\10\Include\10.0.19041.0\shared;D:\Windows Kits\10\Include\10.0.19041.0\winrt;D:\Windows Kits\10\Include\10.0.19041.0\cppwinrt;Include\um;" (previous value: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\include;D:\Windows Kits\10\Include\10.0.19041.0\ucrt;;D:\Windows Kits\10\Include\10.0.19041.0\um;D:\Windows Kits\10\Include\10.0.19041.0\shared;D:\Windows Kits\10\Include\10.0.19041.0\winrt;D:\Windows Kits\10\Include\10.0.19041.0\cppwinrt;Include\um;") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\v17.0\CodeAnalysis\Microsoft.CodeAnalysis.targets (237,5)
+       Property reassignment: $(PrepareForBuildDependsOn)=";GetFrameworkPaths;GetReferenceAssemblyPaths;AssignLinkMetadata;SetCABuildNativeEnvironmentVariables" (previous value: ";GetFrameworkPaths;GetReferenceAssemblyPaths;AssignLinkMetadata") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\v17.0\CodeAnalysis\Microsoft.CodeAnalysis.targets (240,5)
+       Property reassignment: $(PrepareResourcesDependsOn)="
+             XamlMarkupCompilePass1;
+             XamlMarkupCompilePass2;
+             
+             ;
+             PrepareResourceNames;
+             ResGen;
+             CompileLicxFiles
+            
+           " (previous value: "
+             ;
+             PrepareResourceNames;
+             ResGen;
+             CompileLicxFiles
+           ") at C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319\Microsoft.Xaml.targets (35,5)
+       Property reassignment: $(ResolveReferencesDependsOn)="
+             
+             BeforeResolveReferences;
+             AssignProjectConfiguration;
+             ResolveProjectReferences;
+             FindInvalidProjectReferences;
+             ResolveNativeReferences;
+             ResolveAssemblyReferences;
+             GenerateBindingRedirects;
+             ResolveComReferences;
+             AfterResolveReferences
+           ;
+             ResolveTestReferences
+           " (previous value: "
+             BeforeResolveReferences;
+             AssignProjectConfiguration;
+             ResolveProjectReferences;
+             FindInvalidProjectReferences;
+             ResolveNativeReferences;
+             ResolveAssemblyReferences;
+             GenerateBindingRedirects;
+             ResolveComReferences;
+             AfterResolveReferences
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\v17.0\TeamTest\Microsoft.TeamTest.targets (4,5)
+       Search paths being used for $(MSBuildExtensionsPath) are D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild;$(MSBuildProgramFiles32)\MSBuild
+       Trying to import D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\$(MSBuildToolsVersion)\Microsoft.Common.targets\ImportAfter\* using extensions path D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild
+       Property reassignment: $(ProjectLockFile)="obj\project.assets.json" (previous value: "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\obj\project.assets.json") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\NuGet\17.0\Microsoft.NuGet.targets (74,5)
+       Property reassignment: $(ResolveAssemblyReferencesDependsOn)="
+             ResolveProjectReferences;
+             FindInvalidProjectReferences;
+             GetFrameworkPaths;
+             GetReferenceAssemblyPaths;
+             PrepareForBuild;
+             ResolveSDKReferences;
+             ExpandSDKReferences;
+           ;ResolveNuGetPackageAssets" (previous value: "
+             ResolveProjectReferences;
+             FindInvalidProjectReferences;
+             GetFrameworkPaths;
+             GetReferenceAssemblyPaths;
+             PrepareForBuild;
+             ResolveSDKReferences;
+             ExpandSDKReferences;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\NuGet\17.0\Microsoft.NuGet.targets (185,5)
+       Property reassignment: $(PrepareResourcesDependsOn)="ResolveNuGetPackageAssets;
+             XamlMarkupCompilePass1;
+             XamlMarkupCompilePass2;
+             
+             ;
+             PrepareResourceNames;
+             ResGen;
+             CompileLicxFiles
+            
+           " (previous value: "
+             XamlMarkupCompilePass1;
+             XamlMarkupCompilePass2;
+             
+             ;
+             PrepareResourceNames;
+             ResGen;
+             CompileLicxFiles
+            
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\NuGet\17.0\Microsoft.NuGet.targets (186,5)
+       Search paths being used for $(MSBuildExtensionsPath) are D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild;$(MSBuildProgramFiles32)\MSBuild
+       Property reassignment: $(DebugType)="" (previous value: "none") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets (39,5)
+       Property reassignment: $(BuildDependsOn)="
+             _PrepareForBuild;
+             
+             ResolveReferences;
+             PrepareForBuild;
+             InitializeBuildStatus;
+             BuildGenerateSources;
+             BuildCompile;
+             BuildLink;
+           ;
+             AfterBuild;
+             IncrementalClean;
+             FinalizeBuildStatus;
+           " (previous value: "
+             BeforeBuild;
+             CoreBuild;
+             AfterBuild
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets (121,5)
+       Property reassignment: $(RebuildDependsOn)="
+             _PrepareForRebuild;
+             
+             BeforeRebuild;
+             Clean;
+             Build;
+             AfterRebuild;
+           ;
+           " (previous value: "
+             BeforeRebuild;
+             Clean;
+             Build;
+             AfterRebuild;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets (129,5)
+       Property reassignment: $(CleanDependsOn)="
+             _PrepareForClean;
+             
+             BeforeClean;
+             UnmanagedUnregistration;
+             CoreClean;
+             CleanReferencedProjects;
+             CleanPublishFolder;
+             AfterClean
+           ;
+           " (previous value: "
+             BeforeClean;
+             UnmanagedUnregistration;
+             CoreClean;
+             CleanReferencedProjects;
+             CleanPublishFolder;
+             AfterClean
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets (134,5)
+       Property reassignment: $(_TLogProjectName)="controlP.11f5bec0" (previous value: "controlProtocol_lib") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets (216,5)
+       Property reassignment: $(BeforeBuildGenerateSourcesTargets)="
+             
+             ;
+             BeforeBuildGenerateSources;
+           ;
+           " (previous value: "
+             ;
+             BeforeBuildGenerateSources;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (59,5)
+       Property reassignment: $(AfterBuildGenerateSourcesTargets)="
+             
+             ;
+             AfterBuildGenerateSources;
+           ;
+             AfterBuildGenerateSourcesEvent;
+           " (previous value: "
+             ;
+             AfterBuildGenerateSources;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (70,5)
+       Property reassignment: $(BuildGenerateSourcesAction)="_BuildGenerateSourcesAction" (previous value: "Build") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (140,5)
+       Property reassignment: $(BuildCompileAction)="_BuildCompileAction" (previous value: "Build") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (141,5)
+       Property reassignment: $(BuildLinkAction)="_BuildLinkAction" (previous value: "Build") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (142,5)
+       Property reassignment: $(DetermineProjectTypeTargets)="_PrepareForReferenceResolution;
+             ;
+             AddExternalIncludDirectoriesToPaths
+           " (previous value: "
+             ;
+             AddExternalIncludDirectoriesToPaths
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (249,5)
+       Property reassignment: $(ResolveReferencesDependsOn)="_PrepareForReferenceResolution;ComputeCrtSDKReference;
+             
+             BeforeResolveReferences;
+             AssignProjectConfiguration;
+             ResolveProjectReferences;
+             FindInvalidProjectReferences;
+             ResolveNativeReferences;
+             ResolveAssemblyReferences;
+             GenerateBindingRedirects;
+             ResolveComReferences;
+             AfterResolveReferences
+           ;
+             ResolveTestReferences
+           " (previous value: "
+             
+             BeforeResolveReferences;
+             AssignProjectConfiguration;
+             ResolveProjectReferences;
+             FindInvalidProjectReferences;
+             ResolveNativeReferences;
+             ResolveAssemblyReferences;
+             GenerateBindingRedirects;
+             ResolveComReferences;
+             AfterResolveReferences
+           ;
+             ResolveTestReferences
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (311,5)
+       Property reassignment: $(ResolveAssemblyReferencesDependsOn)="_PrepareForReferenceResolution;
+             ResolveProjectReferences;
+             FindInvalidProjectReferences;
+             GetFrameworkPaths;
+             GetReferenceAssemblyPaths;
+             PrepareForBuild;
+             ResolveSDKReferences;
+             ExpandSDKReferences;
+           ;ResolveNuGetPackageAssets" (previous value: "
+             ResolveProjectReferences;
+             FindInvalidProjectReferences;
+             GetFrameworkPaths;
+             GetReferenceAssemblyPaths;
+             PrepareForBuild;
+             ResolveSDKReferences;
+             ExpandSDKReferences;
+           ;ResolveNuGetPackageAssets") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (312,5)
+       Property reassignment: $(ResolveSDKReferencesDependsOn)="_PrepareForReferenceResolution;ComputeCrtSDKReference;
+             GetInstalledSDKLocations
+           " (previous value: "
+             GetInstalledSDKLocations
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (313,5)
+       Property reassignment: $(ComputeCompileInputsTargets)="
+             
+             ;
+             GenerateTargetFrameworkMonikerAttribute;
+           ;
+             ComputeMIDLGeneratedCompileInputs;
+           " (previous value: "
+             ;
+             GenerateTargetFrameworkMonikerAttribute;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (619,5)
+       Property reassignment: $(ComputeLinkInputsTargets)="
+             
+             ;
+             ComputeRCGeneratedLinkInputs;
+           ;
+             ComputeManifestGeneratedLinkerInputs;
+           " (previous value: "
+             ;
+             ComputeRCGeneratedLinkInputs;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (932,5)
+       Property reassignment: $(GetTargetPathDependsOn)="_PrepareForReferenceResolution;GetResolvedWinMD;" (previous value: "") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1102,5)
+       Property reassignment: $(ComputeCompileInputsTargets)="
+             
+             
+             ;
+             GenerateTargetFrameworkMonikerAttribute;
+           ;
+             ComputeMIDLGeneratedCompileInputs;
+           ;
+             ComputeCLInputPDBName;
+             ComputeReferenceCLInput;
+             WarnCompileDuplicatedFilename
+           " (previous value: "
+             
+             ;
+             GenerateTargetFrameworkMonikerAttribute;
+           ;
+             ComputeMIDLGeneratedCompileInputs;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1128,5)
+       Property reassignment: $(ComputeLinkInputsTargets)="
+             
+             
+             ;
+             ComputeRCGeneratedLinkInputs;
+           ;
+             ComputeManifestGeneratedLinkerInputs;
+           ;
+             ComputeCustomBuildOutput;
+           " (previous value: "
+             
+             ;
+             ComputeRCGeneratedLinkInputs;
+           ;
+             ComputeManifestGeneratedLinkerInputs;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1180,5)
+       Property reassignment: $(ComputeLibInputsTargets)="
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           " (previous value: "
+             ;
+             ComputeRCGeneratedLibInputs;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1187,5)
+       Property reassignment: $(ComputeImpLibInputsTargets)="
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeRCGeneratedImpLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           " (previous value: "
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeRCGeneratedImpLibInputs;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1194,5)
+       Property reassignment: $(ComputeLinkInputsTargets)="
+             
+             
+             
+             ;
+             ComputeRCGeneratedLinkInputs;
+           ;
+             ComputeManifestGeneratedLinkerInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLinkInputs;
+           " (previous value: "
+             
+             
+             ;
+             ComputeRCGeneratedLinkInputs;
+           ;
+             ComputeManifestGeneratedLinkerInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1255,5)
+       Property reassignment: $(ComputeLibInputsTargets)="
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLibInputs;
+           " (previous value: "
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1270,5)
+       Property reassignment: $(ComputeImpLibInputsTargets)="
+             
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeRCGeneratedImpLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedImpLibInputs;
+           " (previous value: "
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeRCGeneratedImpLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1285,5)
+       Property reassignment: $(ComputeLinkInputsTargets)="
+             
+             
+             
+             
+             ;
+             ComputeRCGeneratedLinkInputs;
+           ;
+             ComputeManifestGeneratedLinkerInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLinkInputs;
+           ;
+             ComputeLinkInputsFromProject;
+           " (previous value: "
+             
+             
+             
+             ;
+             ComputeRCGeneratedLinkInputs;
+           ;
+             ComputeManifestGeneratedLinkerInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLinkInputs;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1316,5)
+       Property reassignment: $(ComputeLibInputsTargets)="
+             
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLibInputs;
+           ;
+             ComputeLibInputsFromProject;
+           " (previous value: "
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLibInputs;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1334,5)
+       Property reassignment: $(ComputeImpLibInputsTargets)="
+             
+             
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeRCGeneratedImpLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedImpLibInputs;
+           ;
+             ComputeImpLibInputsFromProject;
+           " (previous value: "
+             
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeRCGeneratedImpLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedImpLibInputs;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1352,5)
+       Property reassignment: $(ComputeLinkInputsTargets)="
+             
+             
+             
+             
+             
+             ;
+             ComputeRCGeneratedLinkInputs;
+           ;
+             ComputeManifestGeneratedLinkerInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLinkInputs;
+           ;
+             ComputeLinkInputsFromProject;
+           ;
+             ComputeReferenceLinkInputs;
+           " (previous value: "
+             
+             
+             
+             
+             ;
+             ComputeRCGeneratedLinkInputs;
+           ;
+             ComputeManifestGeneratedLinkerInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLinkInputs;
+           ;
+             ComputeLinkInputsFromProject;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1496,5)
+       Property reassignment: $(ComputeLibInputsTargets)="
+             
+             
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLibInputs;
+           ;
+             ComputeLibInputsFromProject;
+           ;
+             ComputeReferenceLibInputs;
+           " (previous value: "
+             
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLibInputs;
+           ;
+             ComputeLibInputsFromProject;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1534,5)
+       Property reassignment: $(ComputeLibInputsTargets)="
+             ComputeLibAdditionalOptions;
+             
+             
+             
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLibInputs;
+           ;
+             ComputeLibInputsFromProject;
+           ;
+             ComputeReferenceLibInputs;
+           
+           " (previous value: "
+             
+             
+             
+             
+             ;
+             ComputeRCGeneratedLibInputs;
+           ;
+             ComputeCustomBuildOutput;
+           ;
+             ComputeCLGeneratedLibInputs;
+           ;
+             ComputeLibInputsFromProject;
+           ;
+             ComputeReferenceLibInputs;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1591,5)
+       Property reassignment: $(GetProjectInfoForReferenceDependsOn)="
+             
+             ;
+             AddPublicIncludeDirectoriesToProjectsInfoForReference;
+           ;
+             AddPublicBMIsToProjectsInfoForReference;
+             AddDeployRecipeFileToProjectsInfoForReference;
+             AddLibrariesToProjectsInfoForReference;
+           " (previous value: "
+             ;
+             AddPublicIncludeDirectoriesToProjectsInfoForReference;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (1778,5)
+       Property reassignment: $(DocumentationProjectOutputGroupDependsOn)="ResolvedXDCMake;ComputeCLCompileGeneratedXDCFiles" (previous value: "") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (2165,5)
+       Property reassignment: $(ContentFilesProjectOutputGroupDependsOn)="PrepareForBuild;AssignTargetPaths;PrepareForBuild;AssignTargetPaths;MakeDirsForFxc" (previous value: "PrepareForBuild;AssignTargetPaths") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets (2231,5)
+       Property reassignment: $(ComputeCompileInputsTargets)="
+             
+             
+             
+             ;
+             GenerateTargetFrameworkMonikerAttribute;
+           ;
+             ComputeMIDLGeneratedCompileInputs;
+           ;
+             ComputeCLInputPDBName;
+             ComputeReferenceCLInput;
+             WarnCompileDuplicatedFilename
+           ;
+             ;
+             FixupCLCompileOptions;
+           " (previous value: "
+             
+             
+             ;
+             GenerateTargetFrameworkMonikerAttribute;
+           ;
+             ComputeMIDLGeneratedCompileInputs;
+           ;
+             ComputeCLInputPDBName;
+             ComputeReferenceCLInput;
+             WarnCompileDuplicatedFilename
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets (306,5)
+       Property reassignment: $(BuildingProject)="true" (previous value: "false") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets (2003,5)
+       Property reassignment: $(ContentFilesProjectOutputGroupDependsOn)="PrepareForBuild;AssignTargetPaths;PrepareForBuild;AssignTargetPaths;MakeDirsForFxc;_CreateCopyFileItems;" (previous value: "PrepareForBuild;AssignTargetPaths;PrepareForBuild;AssignTargetPaths;MakeDirsForFxc") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets (2553,5)
+       Property reassignment: $(PrepareForBuildDependsOn)="_CheckWindowsSDKInstalled;;GetFrameworkPaths;GetReferenceAssemblyPaths;AssignLinkMetadata;SetCABuildNativeEnvironmentVariables" (previous value: ";GetFrameworkPaths;GetReferenceAssemblyPaths;AssignLinkMetadata;SetCABuildNativeEnvironmentVariables") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.WindowsSDK.targets (16,5)
+       Property reassignment: $(CleanDependsOn)="
+             
+             _PrepareForClean;
+             
+             BeforeClean;
+             UnmanagedUnregistration;
+             CoreClean;
+             CleanReferencedProjects;
+             CleanPublishFolder;
+             AfterClean
+           ;
+           ;
+             CppClean
+           " (previous value: "
+             _PrepareForClean;
+             
+             BeforeClean;
+             UnmanagedUnregistration;
+             CoreClean;
+             CleanReferencedProjects;
+             CleanPublishFolder;
+             AfterClean
+           ;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppClean.targets (22,5)
+       Property reassignment: $(CppCleanDependsOn)="
+             BeforeCppClean;
+             ;
+             CoreCppClean;
+             AfterCppClean;
+           ;PGInstrumentedClean" (previous value: "
+             BeforeCppClean;
+             ;
+             CoreCppClean;
+             AfterCppClean;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppClean.targets (92,5)
+       Property reassignment: $(BuildDependsOn)="SetTelemetryEnvironmentVariables;
+             _PrepareForBuild;
+             
+             ResolveReferences;
+             PrepareForBuild;
+             InitializeBuildStatus;
+             BuildGenerateSources;
+             BuildCompile;
+             BuildLink;
+           ;
+             AfterBuild;
+             IncrementalClean;
+             FinalizeBuildStatus;
+           " (previous value: "
+             _PrepareForBuild;
+             
+             ResolveReferences;
+             PrepareForBuild;
+             InitializeBuildStatus;
+             BuildGenerateSources;
+             BuildCompile;
+             BuildLink;
+           ;
+             AfterBuild;
+             IncrementalClean;
+             FinalizeBuildStatus;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.DesignTime.targets (539,5)
+       Property reassignment: $(RebuildDependsOn)="SetTelemetryEnvironmentVariables;
+             _PrepareForRebuild;
+             
+             BeforeRebuild;
+             Clean;
+             Build;
+             AfterRebuild;
+           ;
+           " (previous value: "
+             _PrepareForRebuild;
+             
+             BeforeRebuild;
+             Clean;
+             Build;
+             AfterRebuild;
+           ;
+           ") at D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.DesignTime.targets (540,5)
+       Overriding target "GenerateTargetFrameworkMonikerAttribute" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "GenerateTargetFrameworkMonikerAttribute" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets".
+       Overriding target "Build" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "Build" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets".
+       Overriding target "Rebuild" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "Rebuild" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets".
+       Overriding target "AfterBuild" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "AfterBuild" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets".
+       Overriding target "PrepareForBuild" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "PrepareForBuild" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "GetTargetPath" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "GetTargetPath" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "ComputeIntermediateSatelliteAssemblies" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "ComputeIntermediateSatelliteAssemblies" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "ClCompile" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "ClCompile" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "ResourceCompile" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "ResourceCompile" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "Lib" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "Lib" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "Link" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "Link" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "AllProjectOutputGroups" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "AllProjectOutputGroups" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "BuiltProjectOutputGroup" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "BuiltProjectOutputGroup" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "DebugSymbolsProjectOutputGroup" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "DebugSymbolsProjectOutputGroup" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "DocumentationProjectOutputGroup" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "DocumentationProjectOutputGroup" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "SourceFilesProjectOutputGroup" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "SourceFilesProjectOutputGroup" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "ContentFilesProjectOutputGroup" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "ContentFilesProjectOutputGroup" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "AllProjectOutputGroupsDependencies" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "AllProjectOutputGroupsDependencies" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "BuiltProjectOutputGroupDependencies" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "BuiltProjectOutputGroupDependencies" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "DebugSymbolsProjectOutputGroupDependencies" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "DebugSymbolsProjectOutputGroupDependencies" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "DocumentationProjectOutputGroupDependencies" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "DocumentationProjectOutputGroupDependencies" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets".
+       Overriding target "PreBuildEvent" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "PreBuildEvent" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "PostBuildEvent" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "PostBuildEvent" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "ClCompile" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "ClCompile" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "Link" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "Link" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "Lib" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "Lib" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "ImpLib" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "ImpLib" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "Midl" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "Midl" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "ResourceCompile" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "ResourceCompile" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "BeforeResGen" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "BeforeResGen" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "ResGen" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "ResGen" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "GenerateSatelliteAssemblies" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "GenerateSatelliteAssemblies" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "Manifest" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "Manifest" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "XdcMake" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "XdcMake" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "BscMake" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" with target "BscMake" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "ComputeMetaGenInputs" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.MetaGen.targets" with target "ComputeMetaGenInputs" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "GetNativeManifest" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "GetNativeManifest" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets".
+       Overriding target "GetTargetPathWithTargetPlatformMoniker" in project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" with target "GetTargetPathWithTargetPlatformMoniker" from project "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.DesignTime.targets".
+Build started 7/26/2022 8:17:07 PM.
+Logging verbosity is set to: Detailed.     1>Project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" on node 2 (Build target(s)).
+     1>Target "EnableIntermediateOutputPathMismatchWarning" skipped, due to false condition; ('$(RestoreProjectStyle)' == 'PackageReference') was evaluated as ('' == 'PackageReference').
+     1>Target "_CheckForInvalidConfigurationAndPlatform" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "SetTelemetryEnvironmentVariables" depends on it):
+       Task "Error" skipped, due to false condition; ( '$(_InvalidConfigurationError)' == 'true' ) was evaluated as ( '' == 'true' ).
+       Task "Warning" skipped, due to false condition; ( '$(_InvalidConfigurationWarning)' == 'true' ) was evaluated as ( '' == 'true' ).
+       Using "Message" task from assembly "Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a".
+       Task "Message"
+         Configuration=Debug
+       Done executing task "Message".
+       Task "Message"
+         Platform=x64
+       Done executing task "Message".
+       Task "Error" skipped, due to false condition; ('$(OutDir)' != '' and !HasTrailingSlash('$(OutDir)')) was evaluated as ('D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\' != '' and !HasTrailingSlash('D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\')).
+       Task "Error" skipped, due to false condition; ('$(IntermediateOutputPath)' != '' and !HasTrailingSlash('$(IntermediateOutputPath)')) was evaluated as ('x64\Debug\' != '' and !HasTrailingSlash('x64\Debug\')).
+       Task "Error" skipped, due to false condition; ('$(BaseIntermediateOutputPath)' != '' and !HasTrailingSlash('$(BaseIntermediateOutputPath)')) was evaluated as ('obj\' != '' and !HasTrailingSlash('obj\')).
+       Task "Error" skipped, due to false condition; ( '$(_InitialMSBuildProjectExtensionsPath)' != '' And '$(MSBuildProjectExtensionsPath)' != '$(_InitialMSBuildProjectExtensionsPath)' ) was evaluated as ( 'D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\obj\' != '' And 'D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\obj\' != 'D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\obj\' ).
+       Task "Warning" skipped, due to false condition; ( '$(EnableBaseIntermediateOutputPathMismatchWarning)' == 'true' And '$(_InitialBaseIntermediateOutputPath)' != '$(BaseIntermediateOutputPath)' And '$(BaseIntermediateOutputPath)' != '$(MSBuildProjectExtensionsPath)' ) was evaluated as ( '' == 'true' And 'obj\' != 'obj\' And 'obj\' != 'D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\obj\' ).
+     1>Done building target "_CheckForInvalidConfigurationAndPlatform" in project "controlProtocol_lib.vcxproj".
+       Target "_CheckForInvalidConfigurationAndPlatform" skipped. Previously built successfully.
+     1>Target "SetTelemetryEnvironmentVariables" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.DesignTime.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "Build" depends on it):
+       Using "SetEnv" task from assembly "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Build.CppTasks.Common.dll".
+       Task "SetEnv"
+         VSTEL_SolutionSessionID={84A26049-EF72-45A3-9AC5-CE8FACFBE3A9}
+       Done executing task "SetEnv".
+       Task "SetEnv"
+         VSTEL_CurrentSolutionBuildID=418792151
+       Done executing task "SetEnv".
+       Task "SetEnv"
+         VSTEL_ProjectID={11f5bec0-4b6f-4f50-a040-8416fa873d63}
+       Done executing task "SetEnv".
+     1>Done building target "SetTelemetryEnvironmentVariables" in project "controlProtocol_lib.vcxproj".
+     1>Target "_PrepareForBuild" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "Build" depends on it):
+       Task "CreateItem" skipped, due to false condition; ('%(CustomBuild.IncludeFileToTool)'!='') was evaluated as (''!='').
+     1>Done building target "_PrepareForBuild" in project "controlProtocol_lib.vcxproj".
+     1>Target "_PrepareForReferenceResolution" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveReferences" depends on it):
+       Task "VCMessage" skipped, due to false condition; ('$(WarnAboutIndividualManagedFiles)' == 'true') was evaluated as ('' == 'true').
+       Task "Message" skipped, due to false condition; ('$(_REFERENCE_DEBUG)'=='true') was evaluated as (''=='true').
+     1>Done building target "_PrepareForReferenceResolution" in project "controlProtocol_lib.vcxproj".
+       Target "ComputeCrtSDKReference" skipped, due to false condition; ('@(ClCompile)'!='' and '$(WindowsAppContainer)'=='true' and '$(UseCrtSDKReference)' != 'false') was evaluated as ('..\controlProtocol_lib.cpp;dllmain.cpp;pch.cpp'!='' and 'false'=='true' and '' != 'false').
+     1>Target "BeforeResolveReferences" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveReferences" depends on it):
+     1>Done building target "BeforeResolveReferences" in project "controlProtocol_lib.vcxproj".
+     1>Target "AssignProjectConfiguration" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveReferences" depends on it):
+       Using "AssignProjectConfiguration" task from assembly "Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a".
+       Task "AssignProjectConfiguration"
+       Done executing task "AssignProjectConfiguration".
+     1>Done building target "AssignProjectConfiguration" in project "controlProtocol_lib.vcxproj".
+       Target "AssignProjectConfiguration" skipped. Previously built successfully.
+     1>Target "_SplitProjectReferencesByFileExistence" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "PrepareProjectReferences" depends on it):
+       Task "ResolveNonMSBuildProjectOutput" skipped, due to false condition; ('$(BuildingInsideVisualStudio)'=='true' and '@(ProjectReferenceWithConfiguration)'!='') was evaluated as ('true'=='true' and ''!='').
+     1>Done building target "_SplitProjectReferencesByFileExistence" in project "controlProtocol_lib.vcxproj".
+     1>Target "_AddOutputPathToGlobalPropertiesToRemove" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_GetProjectReferenceTargetFrameworkProperties" depends on it):
+     1>Done building target "_AddOutputPathToGlobalPropertiesToRemove" in project "controlProtocol_lib.vcxproj".
+     1>Target "_GetProjectReferenceTargetFrameworkProperties" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "PrepareProjectReferences" depends on it):
+       Using "MSBuild" task from assembly "Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a".
+       Task "MSBuild"
+       Done executing task "MSBuild".
+       Task "GetReferenceNearestTargetFrameworkTask" skipped, due to false condition; ('@(_ProjectReferenceTargetFrameworkPossibilities)' != '' and '$(ReferringTargetFrameworkForProjectReferences)' != ''
+                                                               And '$(GetReferenceNearestTargetFrameworkTaskSupportsTargetPlatformParameter)' == 'true' and '%(_ProjectReferenceTargetFrameworkPossibilities.IsVcxOrNativeProj)' != 'true') was evaluated as ('' != '' and '' != ''
+                                                               And 'true' == 'true' and '' != 'true').
+       Task "GetReferenceNearestTargetFrameworkTask" skipped, due to false condition; ('@(_ProjectReferenceTargetFrameworkPossibilities)' != '' and '$(ReferringTargetFrameworkForProjectReferences)' != ''
+                                                               And '$(GetReferenceNearestTargetFrameworkTaskSupportsTargetPlatformParameter)' != 'true' and '%(_ProjectReferenceTargetFrameworkPossibilities.IsVcxOrNativeProj)' != 'true') was evaluated as ('' != '' and '' != ''
+                                                               And 'true' != 'true' and '' != 'true').
+     1>Done building target "_GetProjectReferenceTargetFrameworkProperties" in project "controlProtocol_lib.vcxproj".
+       Target "_GetProjectReferencePlatformProperties" skipped, due to false condition; ('$(EnableDynamicPlatformResolution)' == 'true'
+                            and '$(BuildingInsideVisualStudio)' != 'true'
+                            and '@(_MSBuildProjectReferenceExistent)' != '') was evaluated as ('' == 'true'
+                            and 'true' != 'true'
+                            and '' != '').
+     1>Target "PrepareProjectReferences" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveProjectReferences" depends on it):
+     1>Done building target "PrepareProjectReferences" in project "controlProtocol_lib.vcxproj".
+       Target "_RemoveNameMetadataFromProjectReferenceItems" skipped, due to false condition; ('@(ProjectReference)'!='') was evaluated as (''!='').
+     1>Target "ResolveProjectReferences" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveReferences" depends on it):
+       Task "MSBuild" skipped, due to false condition; ('%(_MSBuildProjectReferenceExistent.BuildReference)' == 'true' and '@(ProjectReferenceWithConfiguration)' != '' and ('$(BuildingInsideVisualStudio)' == 'true' or '$(BuildProjectReferences)' != 'true') and '$(VisualStudioVersion)' != '10.0' and '@(_MSBuildProjectReferenceExistent)' != '') was evaluated as ('' == 'true' and '' != '' and ('true' == 'true' or 'true' != 'true') and '17.0' != '10.0' and '' != '').
+       Task "MSBuild" skipped, due to false condition; ('%(_MSBuildProjectReferenceExistent.BuildReference)' == 'true' and '@(ProjectReferenceWithConfiguration)' != '' and '$(BuildingInsideVisualStudio)' != 'true' and '$(BuildProjectReferences)' == 'true' and '@(_MSBuildProjectReferenceExistent)' != '') was evaluated as ('' == 'true' and '' != '' and 'true' != 'true' and 'true' == 'true' and '' != '').
+       Task "MSBuild" skipped, due to false condition; ('%(_MSBuildProjectReferenceExistent.BuildReference)' == 'true' and '@(ProjectReferenceWithConfiguration)' != '' and '$(BuildingProject)' == 'true' and '@(_MSBuildProjectReferenceExistent)' != '') was evaluated as ('' == 'true' and '' != '' and 'true' == 'true' and '' != '').
+       Task "Warning" skipped, due to false condition; ('@(ProjectReferenceWithConfiguration)' != '' and '@(_MSBuildProjectReferenceNonexistent)' != '') was evaluated as ('' != '' and '' != '').
+     1>Done building target "ResolveProjectReferences" in project "controlProtocol_lib.vcxproj".
+       Target "FindInvalidProjectReferences" skipped, due to false condition; ('$(FindInvalidProjectReferences)' == 'true') was evaluated as ('' == 'true').
+       Target "ResolveNativeReferences" skipped, due to false condition; ('@(NativeReference)'!='') was evaluated as (''!='').
+       Target "_PrepareForReferenceResolution" skipped. Previously built successfully.
+       Target "ResolveProjectReferences" skipped. Previously built successfully.
+       Target "FindInvalidProjectReferences" skipped, due to false condition; ('$(FindInvalidProjectReferences)' == 'true') was evaluated as ('' == 'true').
+     1>Target "GetFrameworkPaths" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveAssemblyReferences" depends on it):
+     1>Done building target "GetFrameworkPaths" in project "controlProtocol_lib.vcxproj".
+       Target "_PrepareForReferenceResolution" skipped. Previously built successfully.
+       Target "GetFrameworkPaths" skipped. Previously built successfully.
+     1>Target "GetReferenceAssemblyPaths" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveAssemblyReferences" depends on it):
+       Task "GetReferenceAssemblyPaths" skipped, due to false condition; ('$(TargetFrameworkMoniker)' != '' and ('$(_TargetFrameworkDirectories)' == '' or '$(_FullFrameworkReferenceAssemblyPaths)' == '')) was evaluated as ('' != '' and ('' == '' or '' == '')).
+     1>Done building target "GetReferenceAssemblyPaths" in project "controlProtocol_lib.vcxproj".
+     1>Target "AddExternalIncludDirectoriesToPaths" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Current.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "SetBuildDefaultEnvironmentVariables" depends on it):
+     1>Done building target "AddExternalIncludDirectoriesToPaths" in project "controlProtocol_lib.vcxproj".
+     1>Target "SetBuildDefaultEnvironmentVariables" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Current.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "PrepareForBuild" depends on it):
+       Task "SetEnv"
+         PATH=D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64;D:\Windows Kits\10\bin\10.0.19041.0\x64;;D:\Windows Kits\10\bin\10.0.19041.0\x86;;D:\Program Files\Microsoft Visual Studio\2022\Community\Common7\tools;D:\Program Files\Microsoft Visual Studio\2022\Community\Common7\ide;C:\Program Files (x86)\HTML Help Workshop;;D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64;C:\WINDOWS\Microsoft.NET\Framework64\v4.0.30319\;C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319\;D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin;C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319\;;C:\TwinCAT\Common64;C:\TwinCAT\Common32;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Users\mike\AppData\Local\Microsoft\WindowsApps;;
+       Done executing task "SetEnv".
+       Task "SetEnv"
+         LIB=D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\VS\lib\x64;;D:\Windows Kits\10\lib\10.0.19041.0\ucrt\x64;;;D:\Windows Kits\10\lib\10.0.19041.0\um\x64;lib\um\x64;
+       Done executing task "SetEnv".
+       Task "SetEnv"
+         LIBPATH=D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\x64;
+       Done executing task "SetEnv".
+       Task "SetEnv"
+         INCLUDE=D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\include;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\include;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\VS\include;;D:\Windows Kits\10\Include\10.0.19041.0\ucrt;;;D:\Windows Kits\10\Include\10.0.19041.0\um;D:\Windows Kits\10\Include\10.0.19041.0\shared;D:\Windows Kits\10\Include\10.0.19041.0\winrt;D:\Windows Kits\10\Include\10.0.19041.0\cppwinrt;Include\um;
+       Done executing task "SetEnv".
+       Task "SetEnv"
+         EXTERNAL_INCLUDE=D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\include;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\include;;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\VS\include;;D:\Windows Kits\10\Include\10.0.19041.0\ucrt;;;D:\Windows Kits\10\Include\10.0.19041.0\um;D:\Windows Kits\10\Include\10.0.19041.0\shared;D:\Windows Kits\10\Include\10.0.19041.0\winrt;D:\Windows Kits\10\Include\10.0.19041.0\cppwinrt;Include\um;
+       Done executing task "SetEnv".
+     1>Done building target "SetBuildDefaultEnvironmentVariables" in project "controlProtocol_lib.vcxproj".
+       Target "SetUserMacroEnvironmentVariables" skipped, due to false condition; ('@(BuildMacro)' != '' and '$(DesignTimeBuild)' != 'true') was evaluated as ('' != '' and '' != 'true').
+       Target "_PrepareForReferenceResolution" skipped. Previously built successfully.
+     1>Target "GetResolvedWinMD" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "PrepareForBuild" depends on it):
+     1>Done building target "GetResolvedWinMD" in project "controlProtocol_lib.vcxproj".
+     1>Target "_CheckWindowsSDKInstalled" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.WindowsSDK.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "PrepareForBuild" depends on it):
+       Task "VCMessage" skipped, due to false condition; ('$(WindowsSDKInstalled)' != 'true') was evaluated as ('true' != 'true').
+       Task "VCMessage" skipped, due to false condition; ('$(WindowsAppContainer)' != 'true' and '$(WindowsSDK_Desktop_Support)' != true) was evaluated as ('false' != 'true' and 'true' != true).
+     1>Done building target "_CheckWindowsSDKInstalled" in project "controlProtocol_lib.vcxproj".
+       Target "GetFrameworkPaths" skipped. Previously built successfully.
+       Target "GetReferenceAssemblyPaths" skipped. Previously built successfully.
+       Target "AssignLinkMetadata" skipped, due to false condition; ( '$(SynthesizeLinkMetadata)' == 'true' ) was evaluated as ( '' == 'true' ).
+     1>Target "SetCABuildNativeEnvironmentVariables" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\v17.0\CodeAnalysis\Microsoft.CodeAnalysis.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "PrepareForBuild" depends on it):
+       Task "SetEnv"
+         CAExcludePath=D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\include;D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\include;D:\Windows Kits\10\Include\10.0.19041.0\ucrt;;D:\Windows Kits\10\Include\10.0.19041.0\um;D:\Windows Kits\10\Include\10.0.19041.0\shared;D:\Windows Kits\10\Include\10.0.19041.0\winrt;D:\Windows Kits\10\Include\10.0.19041.0\cppwinrt;Include\um;
+       Done executing task "SetEnv".
+       Task "SetEnv" skipped, due to false condition; ('$(RunMsvcAnalysis)'=='true' and '$(VCCodeAnalysisUX)'=='true') was evaluated as ('false'=='true' and 'true'=='true').
+     1>Done building target "SetCABuildNativeEnvironmentVariables" in project "controlProtocol_lib.vcxproj".
+     1>Target "PrepareForBuild" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveAssemblyReferences" depends on it):
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)' != 'true' and '$(ConfigurationPlatformExists)' != 'true') was evaluated as ('' != 'true' and 'true' != 'true').
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)' != 'true' and '$(_ToolsetFound)' != 'true') was evaluated as ('' != 'true' and 'true' != 'true').
+       Using "MakeDir" task from assembly "Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a".
+       Task "MakeDir"
+       Done executing task "MakeDir".
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)'!='true' and '$(WindowsAppContainer)'=='true' and '$(ConfigurationType)'!='Application' and '$(ConfigurationType)'!='DynamicLibrary' and '$(ConfigurationType)'!='StaticLibrary') was evaluated as (''!='true' and 'false'=='true' and 'DynamicLibrary'!='Application' and 'DynamicLibrary'!='DynamicLibrary' and 'DynamicLibrary'!='StaticLibrary').
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)'!='true' and '$(VCToolsInstallDir)'=='' and '$(UseEnv)' != 'true' and ('$(TargetFrameworkVersion)'=='v3.5' or '$(TargetFrameworkVersion)'=='v3.0' or '$(TargetFrameworkVersion)'=='v2.0' )) was evaluated as (''!='true' and 'D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\'=='' and '' != 'true' and (''=='v3.5' or ''=='v3.0' or ''=='v2.0' )).
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)'!='true' and '$(VCToolsInstallDir)'=='' and '$(UseEnv)' != 'true' and '$(PlatformToolset)'=='v90') was evaluated as (''!='true' and 'D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\'=='' and '' != 'true' and 'v143'=='v90').
+       Using "CheckVCToolsetVersion" task from assembly "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Build.CppTasks.Common.dll".
+       Task "CheckVCToolsetVersion"
+       Done executing task "CheckVCToolsetVersion".
+       Task "VCMessage" skipped, due to false condition; ('$(CheckMFCInstalled)' == 'true' and !Exists($(MFC_KeyFile)) and '$(SpectreLibs)' == '') was evaluated as ('' == 'true' and !Exists(D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64\mfcs140.lib) and '' == '').
+       Task "VCMessage" skipped, due to false condition; ('$(CheckMFCInstalled)' == 'true' and !Exists($(MFC_KeyFile)) and '$(SpectreLibs)' != '') was evaluated as ('' == 'true' and !Exists(D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64\mfcs140.lib) and '' != '').
+       Task "VCMessage" skipped, due to false condition; ('$(CheckATLInstalled)' == 'true' and !Exists($(ATL_KeyFile)) and '$(SpectreLibs)' == '') was evaluated as ('' == 'true' and !Exists(D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64\atls.lib) and '' == '').
+       Task "VCMessage" skipped, due to false condition; ('$(CheckATLInstalled)' == 'true' and !Exists($(ATL_KeyFile)) and '$(SpectreLibs)' != '') was evaluated as ('' == 'true' and !Exists(D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\atlmfc\lib\x64\atls.lib) and '' != '').
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)' != 'true' and
+                                                               '$(CheckMSVCComponents)'=='true' and
+                                                               '$(SpectreMitigation)' != '' and
+                                                               '$(SpectreMitigation)' != 'false' and
+                                                               (('$(VC_Target_Library_Platform)' == 'OneCore' and !Exists('$(VC_LibraryPath_VC_OneCore_CurrentPlatform_spectre)')) or
+                                                                ('$(VC_Target_Library_Platform)' == 'Desktop' and !Exists('$(VC_LibraryPath_VC_Desktop_CurrentPlatform_spectre)')))) was evaluated as ('' != 'true' and
+                                                               'true'=='true' and
+                                                               'false' != '' and
+                                                               'false' != 'false' and
+                                                               (('Desktop' == 'OneCore' and !Exists('D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\spectre\onecore\x64')) or
+                                                                ('Desktop' == 'Desktop' and !Exists('D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\lib\spectre\x64')))).
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)'!='true' and '$(VCToolsInstallDir)'=='' and '$(UseEnv)' != 'true') was evaluated as (''!='true' and 'D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\'=='' and '' != 'true').
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)'!='true' and '$(WindowsSDKDir)'=='' and '$(UseEnv)' != 'true') was evaluated as (''!='true' and 'D:\Windows Kits\10\'=='' and '' != 'true').
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)'!='true' and '$(IntDirTrailingSlashWarning)'=='true') was evaluated as (''!='true' and ''=='true').
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)'!='true' and '$(OutDirTrailingSlashWarning)'=='true') was evaluated as (''!='true' and ''=='true').
+       Task "VCMessage" skipped, due to false condition; ('%(CompatibilityIssues.Identity)' != '' and '$(DesignTimeBuild)'!='true') was evaluated as ('' != '' and ''!='true').
+       Task "VCMessage" skipped, due to false condition; ('$(IgnoreWarnIntDirSharingDetected)' != 'true' and '$(IntDirSharingDetected)' == 'true') was evaluated as ('' != 'true' and '' == 'true').
+       Task "VCMessage" skipped, due to false condition; ('$(DesignTimeBuild)'!='true' and '$(IgnoreWarnIntDirInTempDetected)' != 'true' and ('$(IntDirFullPath.StartsWith($(_Tmp), true, null))' == 'true' or '$(IntDirFullPath.StartsWith($(_Temp), true, null))' == 'true' or '$(OutDirFullPath.StartsWith($(_Tmp), true, null))' == 'true' or '$(OutDirFullPath.StartsWith($(_Temp), true, null))' == 'true')) was evaluated as (''!='true' and '' != 'true' and ('False' == 'true' or 'False' == 'true' or 'False' == 'true' or 'False' == 'true')).
+       Task "MakeDir"
+       Done executing task "MakeDir".
+     1>Done building target "PrepareForBuild" in project "controlProtocol_lib.vcxproj".
+       Target "_PrepareForReferenceResolution" skipped. Previously built successfully.
+       Target "ComputeCrtSDKReference" skipped, due to false condition; ('@(ClCompile)'!='' and '$(WindowsAppContainer)'=='true' and '$(UseCrtSDKReference)' != 'false') was evaluated as ('..\controlProtocol_lib.cpp;dllmain.cpp;pch.cpp'!='' and 'false'=='true' and '' != 'false').
+       Target "GetInstalledSDKLocations" skipped, due to false condition; ('@(SDKReference)' != '') was evaluated as ('' != '').
+     1>Target "ResolveSDKReferences" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveAssemblyReferences" depends on it):
+       Task "ResolveSDKReference" skipped, due to false condition; ('@(SDKReference)'!='') was evaluated as (''!='').
+     1>Done building target "ResolveSDKReferences" in project "controlProtocol_lib.vcxproj".
+       Target "ResolveSDKReferences" skipped. Previously built successfully.
+     1>Target "ExpandSDKReferences" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveAssemblyReferences" depends on it):
+       Task "GetSDKReferenceFiles" skipped, due to false condition; ('@(ResolvedSDKReference)'!='') was evaluated as (''!='').
+     1>Done building target "ExpandSDKReferences" in project "controlProtocol_lib.vcxproj".
+       Target "ResolveNuGetPackageAssets" skipped, due to false condition; ('$(ResolveNuGetPackages)' == 'true' and exists('$(ProjectLockFile)')) was evaluated as ('true' == 'true' and exists('obj\project.assets.json')).
+     1>Target "ResolveAssemblyReferences" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveReferences" depends on it):
+       Task "ResolveAssemblyReference" skipped, due to false condition; ('@(Reference)'!='' or '@(_ResolvedProjectReferencePaths)'!='' or '@(_ExplicitReference)' != '') was evaluated as (''!='' or ''!='' or '' != '').
+     1>Done building target "ResolveAssemblyReferences" in project "controlProtocol_lib.vcxproj".
+       Target "GenerateBindingRedirects" skipped, due to false condition; ('$(AutoGenerateBindingRedirects)' == 'true' and '$(GenerateBindingRedirectsOutputType)' == 'true') was evaluated as ('' == 'true' and '' == 'true').
+       Target "GenerateBindingRedirectsUpdateAppConfig" skipped, due to false condition; ('$(AutoGenerateBindingRedirects)' == 'true' and '$(GenerateBindingRedirectsOutputType)' == 'true' and Exists('$(_GenerateBindingRedirectsIntermediateAppConfig)')) was evaluated as ('' == 'true' and '' == 'true' and Exists('x64\Debug\controlProtocol_lib.dll.config')).
+       Target "ResolveComReferences" skipped, due to false condition; ('@(COMReference)'!='' or '@(COMFileReference)'!='') was evaluated as (''!='' or ''!='').
+     1>Target "AfterResolveReferences" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ResolveReferences" depends on it):
+     1>Done building target "AfterResolveReferences" in project "controlProtocol_lib.vcxproj".
+       Target "ResolveTestReferences" skipped, due to false condition; ('@(Shadow)'!='') was evaluated as (''!='').
+     1>Target "ResolveReferences" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "Build" depends on it):
+     1>Done building target "ResolveReferences" in project "controlProtocol_lib.vcxproj".
+       Target "PrepareForBuild" skipped. Previously built successfully.
+       Target "PrepareForBuild" skipped. Previously built successfully.
+     1>Target "InitializeBuildStatus" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "Build" depends on it):
+       Using "ReadLinesFromFile" task from assembly "Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a".
+       Task "ReadLinesFromFile"
+       Done executing task "ReadLinesFromFile".
+       Using "WriteLinesToFile" task from assembly "Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a".
+       Task "WriteLinesToFile"
+       Done executing task "WriteLinesToFile".
+       Using "Touch" task from assembly "Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a".
+       Task "Touch"
+         Touching "x64\Debug\controlP.11f5bec0.tlog\unsuccessfulbuild".
+       Done executing task "Touch".
+     1>Done building target "InitializeBuildStatus" in project "controlProtocol_lib.vcxproj".
+       Target "PrepareProjectReferences" skipped. Previously built successfully.
+     1>Target "BuildGenerateSourcesTraverse" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "BuildGenerateSources" depends on it):
+       Task "MSBuild" skipped, due to false condition; ('$(BuildPassReferences)' == 'true' and '@(ProjectReferenceWithConfiguration)' != '' and '@(_MSBuildProjectReferenceExistent)' != '' and '%(_MSBuildProjectReferenceExistent.BuildReference)' == 'true') was evaluated as ('' == 'true' and '' != '' and '' != '' and '' == 'true').
+     1>Done building target "BuildGenerateSourcesTraverse" in project "controlProtocol_lib.vcxproj".
+       Target "PrepareForBuild" skipped. Previously built successfully.
+       Target "ResolveReferences" skipped. Previously built successfully.
+     1>Target "BeforeBuildGenerateSources" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_BuildGenerateSourcesAction" depends on it):
+     1>Done building target "BeforeBuildGenerateSources" in project "controlProtocol_lib.vcxproj".
+     1>Target "PreBuildEvent" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_BuildGenerateSourcesAction" depends on it):
+       Task "Message" skipped, due to false condition; ('%(PreBuildEvent.Message)' != '' and '%(PreBuildEvent.Command)' != '') was evaluated as ('' != '' and '' != '').
+       Task "Exec" skipped, due to false condition; ('%(PreBuildEvent.Command)' != '') was evaluated as ('' != '').
+     1>Done building target "PreBuildEvent" in project "controlProtocol_lib.vcxproj".
+       Target "PrepareForBuild" skipped. Previously built successfully.
+       Target "InitializeBuildStatus" skipped. Previously built successfully.
+       Target "SetBuildDefaultEnvironmentVariables" skipped. Previously built successfully.
+       Target "SetUserMacroEnvironmentVariables" skipped, due to false condition; ('@(BuildMacro)' != '' and '$(DesignTimeBuild)' != 'true') was evaluated as ('' != '' and '' != 'true').
+     1>Target "_SelectedFiles" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "SelectCustomBuild" depends on it):
+     1>Done building target "_SelectedFiles" in project "controlProtocol_lib.vcxproj".
+     1>Target "SelectCustomBuild" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "CustomBuild" depends on it):
+     1>Done building target "SelectCustomBuild" in project "controlProtocol_lib.vcxproj".
+     1>Target "ComputeCustomBuildOutput" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "CustomBuild" depends on it):
+       Task "CreateItem" skipped, due to false condition; ('%(CustomBuildOutputs.OutputItemType)'!='') was evaluated as (''!='').
+       Task "MakeDir"
+       Done executing task "MakeDir".
+     1>Done building target "ComputeCustomBuildOutput" in project "controlProtocol_lib.vcxproj".
+     1>Target "CustomBuild" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_BuildGenerateSourcesAction" depends on it):
+       Using "GetOutOfDateItems" task from assembly "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Build.CppTasks.Common.dll".
+       Task "GetOutOfDateItems"
+       Done executing task "GetOutOfDateItems".
+       Task "GetOutOfDateItems"
+       Done executing task "GetOutOfDateItems".
+       Task "ParallelCustomBuild" skipped, due to false condition; ('@(_ParallelCustomBuild)' != '') was evaluated as ('' != '').
+       Task "CustomBuild" skipped, due to false condition; ('@(_CustomBuild)' != '') was evaluated as ('' != '').
+     1>Done building target "CustomBuild" in project "controlProtocol_lib.vcxproj".
+       Target "FxExport" skipped, due to false condition; ('@(FxCompile)' != '') was evaluated as ('' != '').
+       Target "FxCompile" skipped, due to false condition; ('@(FxCompile)' != '') was evaluated as ('' != '').
+       Target "_CreateCopyFileItems" skipped, due to false condition; ('@(CopyFileToFolders)' != '') was evaluated as ('' != '').
+       Target "_SelectedFiles" skipped. Previously built successfully.
+     1>Target "CopyFileToFolders" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_BuildGenerateSourcesAction" depends on it):
+       Task "GetOutOfDateItems"
+       Done executing task "GetOutOfDateItems".
+       Task "Copy" skipped, due to false condition; ('@(_OutOfDateCopyFile)' != '') was evaluated as ('' != '').
+     1>Done building target "CopyFileToFolders" in project "controlProtocol_lib.vcxproj".
+       Target "Xsd" skipped, due to false condition; ('@(Xsd)' != '') was evaluated as ('' != '').
+     1>Target "_Xsd" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_BuildGenerateSourcesAction" depends on it):
+     1>Done building target "_Xsd" in project "controlProtocol_lib.vcxproj".
+     1>Target "MakeDirsForMidl" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_Midl" depends on it):
+       Task "Makedir"
+       Done executing task "Makedir".
+     1>Done building target "MakeDirsForMidl" in project "controlProtocol_lib.vcxproj".
+       Target "Midl" skipped, due to false condition; ('@(Midl)' != '') was evaluated as ('' != '').
+       Target "FxExport" skipped, due to false condition; ('@(FxCompile)' != '') was evaluated as ('' != '').
+       Target "FxCompile" skipped, due to false condition; ('@(FxCompile)' != '') was evaluated as ('' != '').
+     1>Target "ComputeMIDLGeneratedCompileInputs" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_Midl" depends on it):
+     1>Done building target "ComputeMIDLGeneratedCompileInputs" in project "controlProtocol_lib.vcxproj".
+     1>Target "AfterMidl" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_Midl" depends on it):
+     1>Done building target "AfterMidl" in project "controlProtocol_lib.vcxproj".
+     1>Target "_Midl" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_BuildGenerateSourcesAction" depends on it):
+     1>Done building target "_Midl" in project "controlProtocol_lib.vcxproj".
+     1>Target "AfterBuildGenerateSources" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.BuildSteps.Targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_BuildGenerateSourcesAction" depends on it):
+     1>Done building target "AfterBuildGenerateSources" in project "controlProtocol_lib.vcxproj".
+     1>Target "AfterBuildGenerateSourcesEvent" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_BuildGenerateSourcesAction" depends on it):
+     1>Done building target "AfterBuildGenerateSourcesEvent" in project "controlProtocol_lib.vcxproj".
+     1>Target "_BuildGenerateSourcesAction" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "BuildGenerateSources" depends on it):
+     1>Done building target "_BuildGenerateSourcesAction" in project "controlProtocol_lib.vcxproj".
+     1>Target "BuildGenerateSources" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "Build" depends on it):
+     1>Done building target "BuildGenerateSources" in project "controlProtocol_lib.vcxproj".
+       Target "PrepareProjectReferences" skipped. Previously built successfully.
+     1>Target "BuildCompileTraverse" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "BuildCompile" depends on it):
+       Task "MSBuild" skipped, due to false condition; ('$(BuildPassReferences)' == 'true' and '@(ProjectReferenceWithConfiguration)' != '' and '@(_MSBuildProjectReferenceExistent)' != ''  and '%(_MSBuildProjectReferenceExistent.BuildReference)' == 'true') was evaluated as ('' == 'true' and '' != '' and '' != ''  and '' == 'true').
+     1>Done building target "BuildCompileTraverse" in project "controlProtocol_lib.vcxproj".
+       Target "PrepareForBuild" skipped. Previously built successfully.
+       Target "ResolveReferences" skipped. Previously built successfully.
+     1>Target "BeforeClCompile" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_ClCompile" depends on it):
+     1>Done building target "BeforeClCompile" in project "controlProtocol_lib.vcxproj".
+       Target "GenerateTargetFrameworkMonikerAttribute" skipped, due to false condition; ('$(GenerateTargetFrameworkAttribute)' == 'true') was evaluated as ('false' == 'true').
+       Target "ComputeMIDLGeneratedCompileInputs" skipped. Previously built successfully.
+     1>Target "ComputeCLInputPDBName" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_ClCompile" depends on it):
+     1>Done building target "ComputeCLInputPDBName" in project "controlProtocol_lib.vcxproj".
+       Target "ResolveReferences" skipped. Previously built successfully.
+     1>Target "FindReferenceAssembliesForReferences" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ComputeReferenceCLInput" depends on it):
+     1>Done building target "FindReferenceAssembliesForReferences" in project "controlProtocol_lib.vcxproj".
+       Target "PrepareForBuild" skipped. Previously built successfully.
+       Target "ResolveReferences" skipped. Previously built successfully.
+     1>Target "GetReferencedVCProjectsInfo" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ComputeReferenceCLInput" depends on it):
+       Task "MSBuild" skipped, due to false condition; ('%(_MSBuildProjectReferenceExistent.Extension)' == '.vcxproj' and '@(ProjectReferenceWithConfiguration)' != '' and '@(_MSBuildProjectReferenceExistent)' != '') was evaluated as ('' == '.vcxproj' and '' != '' and '' != '').
+     1>Done building target "GetReferencedVCProjectsInfo" in project "controlProtocol_lib.vcxproj".
+     1>Target "ComputeReferenceCLInput" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_ClCompile" depends on it):
+       Task "WriteLinesToFile" skipped, due to false condition; ('@(_ReferenceOutputsToCopyLocally)'!='' and '$(DesignTimeBuild)' != 'true' and '$(TrackFileAccess)' == 'true') was evaluated as (''!='' and '' != 'true' and 'true' == 'true').
+       Task "WriteLinesToFile" skipped, due to false condition; ('@(_ReferenceOutputsToCopyLocally)'!='' and '$(DesignTimeBuild)' != 'true' and '$(TrackFileAccess)' == 'true') was evaluated as (''!='' and '' != 'true' and 'true' == 'true').
+       Task "Message" skipped, due to false condition; ('$(_REFERENCE_DEBUG)'=='true') was evaluated as (''=='true').
+     1>Done building target "ComputeReferenceCLInput" in project "controlProtocol_lib.vcxproj".
+     1>Target "WarnCompileDuplicatedFilename" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_ClCompile" depends on it):
+       Task "VCMessage" skipped, due to false condition; ('%(ClCompile.ExcludedFromBuild)' != 'true' and '%(Filename)%(Extension)' != '@(ClCompile->'%(Filename)%(Extension)')' and '%(ObjectFileName)' == '@(ClCompile->Metadata(ObjectFileName)->Distinct())') was evaluated as ('' != 'true' and 'controlProtocol_lib.cpp' != 'controlProtocol_lib.cpp' and 'x64\Debug\' == 'x64\Debug\').
+       Task "VCMessage" skipped, due to false condition; ('%(ClCompile.ExcludedFromBuild)' != 'true' and '%(Filename)%(Extension)' != '@(ClCompile->'%(Filename)%(Extension)')' and '%(ObjectFileName)' == '@(ClCompile->Metadata(ObjectFileName)->Distinct())') was evaluated as ('' != 'true' and 'dllmain.cpp' != 'dllmain.cpp' and 'x64\Debug\' == 'x64\Debug\').
+       Task "VCMessage" skipped, due to false condition; ('%(ClCompile.ExcludedFromBuild)' != 'true' and '%(Filename)%(Extension)' != '@(ClCompile->'%(Filename)%(Extension)')' and '%(ObjectFileName)' == '@(ClCompile->Metadata(ObjectFileName)->Distinct())') was evaluated as ('' != 'true' and 'pch.cpp' != 'pch.cpp' and 'x64\Debug\' == 'x64\Debug\').
+     1>Done building target "WarnCompileDuplicatedFilename" in project "controlProtocol_lib.vcxproj".
+     1>Target "FixupCLCompileOptions" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_ClCompile" depends on it):
+     1>Done building target "FixupCLCompileOptions" in project "controlProtocol_lib.vcxproj".
+     1>Target "MakeDirsForCl" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_ClCompile" depends on it):
+       Task "MakeDir"
+       Done executing task "MakeDir".
+     1>Done building target "MakeDirsForCl" in project "controlProtocol_lib.vcxproj".
+       Target "_SelectedFiles" skipped. Previously built successfully.
+       Target "GenerateTargetFrameworkMonikerAttribute" skipped, due to false condition; ('$(GenerateTargetFrameworkAttribute)' == 'true') was evaluated as ('false' == 'true').
+       Target "ComputeMIDLGeneratedCompileInputs" skipped. Previously built successfully.
+       Target "ComputeCLInputPDBName" skipped. Previously built successfully.
+       Target "ComputeReferenceCLInput" skipped. Previously built successfully.
+       Target "WarnCompileDuplicatedFilename" skipped. Previously built successfully.
+       Target "FixupCLCompileOptions" skipped. Previously built successfully.
+       Target "SelectCustomBuild" skipped. Previously built successfully.
+       Target "SetModuleDependencies" skipped, due to false condition; ('$(DesignTimeBuild)' != 'true' and '$(EnableCppModules)' == 'true') was evaluated as ('' != 'true' and '' == 'true').
+     1>Target "SelectClCompile" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "ClCompile" depends on it):
+     1>Done building target "SelectClCompile" in project "controlProtocol_lib.vcxproj".
+       Target "SelectAnalysisManifest" skipped, due to false condition; ('$(RunMsvcAnalysis)'=='true' and '$(SelectedFiles)'!='') was evaluated as ('false'=='true' and ''!='').
+       Target "ManagedIncrementalBuildPreProcessDependencyGraph" skipped, due to false condition; ('@(ClCompile)' != '' and '$(EnableManagedIncrementalBuild)' == 'True') was evaluated as ('..\controlProtocol_lib.cpp;dllmain.cpp;pch.cpp' != '' and 'false' == 'True').
+     1>Target "ClCompile" in file "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets" from project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (target "_ClCompile" depends on it):
+       Task "Delete" skipped, due to false condition; ('%(ClCompile.DebugInformationFormat)' != '' and '%(ClCompile.DebugInformationFormat)' != 'None' and '%(ClCompile.DebugInformationFormat)' != 'OldStyle' and '%(ClCompile.ProgramDataBaseFileName)' != '' and !Exists(%(ClCompile.ProgramDataBaseFileName))) was evaluated as ('EditAndContinue' != '' and 'EditAndContinue' != 'None' and 'EditAndContinue' != 'OldStyle' and 'x64\Debug\vc143.pdb' != '' and !Exists(x64\Debug\vc143.pdb)).
+       Task "MultiToolTask" skipped, due to false condition; ('%(ClCompile.CompilerIteration)' == 'Modules') was evaluated as ('' == 'Modules').
+       Task "MultiToolTask" skipped, due to false condition; ('%(ClCompile.CompilerIteration)' == '' and '$(MultiProcCL)' == 'true') was evaluated as ('' == '' and 'false' == 'true').
+       Task "CL" skipped, due to false condition; ('%(ClCompile.PrecompiledHeader)' == 'Create' and '%(ClCompile.CompilerIteration)' == '' and '$(MultiProcCL)' != 'true') was evaluated as ('Use' == 'Create' and '' == '' and 'false' != 'true').
+       Task "CL" skipped, due to false condition; ('%(ClCompile.PrecompiledHeader)' == 'Create' and '%(ClCompile.CompilerIteration)' == '' and '$(MultiProcCL)' != 'true') was evaluated as ('Use' == 'Create' and '' == '' and 'false' != 'true').
+       Using "CL" task from assembly "D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Build.CppTasks.Common.dll".
+       Task "CL"
+         Read Tracking Logs:
+         	x64\Debug\controlP.11f5bec0.tlog\CL.read.1.tlog
+         Outputs for D:\GIT\REPOS\CARMEL_SIRYN\CARMEL_SIRYN\CONTROLPROTOCOL\CONTROLPROTOCOL_LIB\PCH.CPP:
+         	D:\GIT\REPOS\CARMEL_SIRYN\CARMEL_SIRYN\CONTROLPROTOCOL\CONTROLPROTOCOL_LIB\X64\DEBUG\PCH.OBJ
+         	D:\GIT\REPOS\CARMEL_SIRYN\CARMEL_SIRYN\CONTROLPROTOCOL\CONTROLPROTOCOL_LIB\X64\DEBUG\CONTROLPROTOCOL_LIB.PCH
+         All outputs are up-to-date.
+       Done executing task "CL".
+       Task "CL"
+         Using cached input dependency table built from:
+         	D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\controlP.11f5bec0.tlog\CL.read.1.tlog
+         Outputs for D:\GIT\REPOS\CARMEL_SIRYN\CARMEL_SIRYN\CONTROLPROTOCOL\CONTROLPROTOCOL_LIB.CPP:
+         	D:\GIT\REPOS\CARMEL_SIRYN\CARMEL_SIRYN\CONTROLPROTOCOL\CONTROLPROTOCOL_LIB\X64\DEBUG\CONTROLPROTOCOL_LIB.OBJ
+         ..\controlProtocol_lib.cpp will be compiled because it was not found in the tracking log.
+         Outputs for D:\GIT\REPOS\CARMEL_SIRYN\CARMEL_SIRYN\CONTROLPROTOCOL\CONTROLPROTOCOL_LIB.CPP:
+         	D:\GIT\REPOS\CARMEL_SIRYN\CARMEL_SIRYN\CONTROLPROTOCOL\CONTROLPROTOCOL_LIB\X64\DEBUG\CONTROLPROTOCOL_LIB.OBJ
+         Write Tracking Logs:
+         	x64\Debug\controlP.11f5bec0.tlog\CL.write.1.tlog
+         Environment Variables passed to tool:
+           VS_UNICODE_OUTPUT=2012
+         D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\CL.exe /c /ZI /JMC /nologo /W3 /WX- /diagnostics:column /sdl /Od /D _DEBUG /D CONTROLPROTOCOLLIB_EXPORTS /D _WINDOWS /D _USRDLL /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /permissive- /Yu"pch.h" /Fp"x64\Debug\controlProtocol_lib.pch" /Fo"x64\Debug\\" /Fd"x64\Debug\vc143.pdb" /external:W3 /Gd /TP /FC /errorReport:prompt ..\controlProtocol_lib.cpp
+         Tracking command:
+         D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Tracker.exe /d "C:\Program Files (x86)\MSBuild\15.0\FileTracker\FileTracker32.dll" /i D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\x64\Debug\controlP.11f5bec0.tlog /r D:\GIT\REPOS\CARMEL_SIRYN\CARMEL_SIRYN\CONTROLPROTOCOL\CONTROLPROTOCOL_LIB.CPP /b MSBuildConsole_CancelEvent098049745f8b49dca4bdc69e6f2deff1  /c "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.32.31326\bin\HostX64\x64\CL.exe"  /c /ZI /JMC /nologo /W3 /WX- /diagnostics:column /sdl /Od /D _DEBUG /D CONTROLPROTOCOLLIB_EXPORTS /D _WINDOWS /D _USRDLL /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /permissive- /Yu"pch.h" /Fp"x64\Debug\controlProtocol_lib.pch" /Fo"x64\Debug\\" /Fd"x64\Debug\vc143.pdb" /external:W3 /Gd /TP /FC /errorReport:prompt ..\controlProtocol_lib.cpp
+         controlProtocol_lib.cpp
+     1>D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib.h(10,10): fatal error C1083: Cannot open include file: 'eventlog.h': No such file or directory
+         The command exited with code 2.
+       Done executing task "CL" -- FAILED.
+     1>Done building target "ClCompile" in project "controlProtocol_lib.vcxproj" -- FAILED.
+     1>Done Building Project "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (Build target(s)) -- FAILED.
+
+Build FAILED.
+
+       "D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib\controlProtocol_lib.vcxproj" (Build target) (1) ->
+       (ClCompile target) -> 
+         D:\git\repos\carmel_siryn\carmel_siryn\controlProtocol\controlProtocol_lib.h(10,10): fatal error C1083: Cannot open include file: 'eventlog.h': No such file or directory
+
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:00.54
