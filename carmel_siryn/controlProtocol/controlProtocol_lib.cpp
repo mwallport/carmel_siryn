@@ -1,4 +1,8 @@
+
+#ifdef __USING_WINDOWS_USB__
 #include "pch.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>

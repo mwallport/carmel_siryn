@@ -1,5 +1,9 @@
 // file controlProtocol.cpp
+
+#ifdef __USING_WINDOWS_USB__
 #include "pch.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

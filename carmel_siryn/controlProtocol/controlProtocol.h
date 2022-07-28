@@ -3,14 +3,14 @@
 extern "C"
 {
 
-    // debug - the Serial port must be started, else these will hange the Due
-    //#define __DEBUG_CTRL_PROTO__
-    //#define __DEBUG_CONTROL_PKT_TX__
-    //#define __DEBUG_CONTROL_PKT_RX__
+// debug - the Serial port must be started, else these will hange the Due
+//#define __DEBUG_CTRL_PROTO__
+//#define __DEBUG_CONTROL_PKT_TX__
+//#define __DEBUG_CONTROL_PKT_RX__
 
-    // platform
-    //#define __USING_LINUX_USB__
-#define __USING_WINDOWS_USB__
+// platform
+#define __USING_LINUX_USB__
+//#define __USING_WINDOWS_USB__
 //#define __RUNNING_ON_CONTROLLINO__
 
 //chiller
