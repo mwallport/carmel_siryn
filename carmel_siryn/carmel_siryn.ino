@@ -105,6 +105,12 @@ bool humidityHigh(void)
 //
 void initSystem(void)
 {
+  //
+  // configure RS485_WRITE_ENABLE for output
+  //
+  pinMode(RS485_WRITE_ENABLE, OUTPUT);
+  digitalWrite(RS485_WRITE_ENABLE, LOW);
+
 
   //
   // initialize the fault/no-fault LED(s)

@@ -2,6 +2,13 @@
 #ifndef __COMMON_HEADER__
 #define __COMMON_HEADER__
 
+
+//
+// pin to enable the RS485 Tx
+//
+#define RS485_WRITE_ENABLE    21
+
+
 //
 // process defines
 //
