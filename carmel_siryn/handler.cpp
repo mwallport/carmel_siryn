@@ -127,18 +127,26 @@ cmdResp handler::writeProcess(HardwareSerial& so, uint8_t id, uint16_t param_add
 int handler::sndCmd(HardwareSerial& so, uint8_t* tx_buff, int8_t bufflen)
 {
   int retVal;
+  volatile int writeDelay  = 0;   // 
 
   
   // write the bytes, handle the return code in the caller
-  //Controllino_RS485TxEnable();
-  retVal = so.write(tx_buff, bufflen);
-  //so.flush();  dont' do this, flush() waits for data to be sent, if ACUs un-reachable, this API returns very late
-  //Controllino_RS485RxEnable();
-  
   #ifdef __DEBUG_MODBUS_TXRX__
-  Serial.print("sent "); Serial.print(retVal); Serial.println(" bytes...");
+  Serial.println("setting pin RS485_WRITE_ENABLE HIGH and sending bytes...");
   #endif
-  //so.flush();  same here
+  
+  digitalWrite(RS485_WRITE_ENABLE, HIGH);
+  
+  retVal = so.write(tx_buff, bufflen);
+  so.flush();
+
+  while( (writeDelay-- > 0) );  // delay to let the board complete Tx
+
+  digitalWrite(RS485_WRITE_ENABLE, LOW);
+
+  #ifdef __DEBUG_MODBUS_TXRX__
+  Serial.print("set RS485_WRITE_ENABLE LOW and sent "); Serial.print(retVal); Serial.println(" bytes...");
+  #endif
   
   return(retVal);
 }

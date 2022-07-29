@@ -3,6 +3,12 @@
 #define __COMMON_HEADER__
 
 //
+// pin to enable the RS485 Tx
+//
+#define RS485_WRITE_ENABLE    21
+
+
+//
 // process defines
 //
 #define _READ_TIME_OUT_  3000

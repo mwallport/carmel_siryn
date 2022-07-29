@@ -107,6 +107,13 @@ void initSystem(void)
 {
 
   //
+  // configure RS485_WRITE_ENABLE for output
+  //
+  pinMode(RS485_WRITE_ENABLE, OUTPUT);
+  digitalWrite(RS485_WRITE_ENABLE, LOW);
+
+
+  //
   // initialize the fault/no-fault LED(s)
   //
   configureFaultNoFault();
@@ -3966,7 +3973,7 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state, bool getAl
     #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("GETTING ALL DATA");
     #endif
-//    state.rtd         = afmaxRTD.readRTD(); // this one has the 75ms hard coded delay AND IS CALLED by temperature, don't call this everytime
+    state.rtd         = afmaxRTD.readRTD(); // this one has the 75ms hard coded delay AND IS CALLED by temperature, don't call this everytime
     state.fault       = afmaxRTD.readFault(); // reads a register
   }
 
@@ -3988,8 +3995,11 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state, bool getAl
 
   #ifdef __DEBUG2_VIA_SERIAL__
   Serial.print("fault: "); Serial.print(state.fault); Serial.print(" rtd: "); Serial.print(state.rtd);
-  Serial.print(" temperature: "); Serial.println(state.temperature, 1);
+  Serial.print(" keeping priot temperature: "); Serial.println(state.temperature, 1);
   #endif
+
+  // then clear it ..
+  state.fault = 0;
 }
 
 
@@ -4902,7 +4912,22 @@ bool GetACUTempPV(uint8_t id, float* pv)
 //    pvpvof = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
 
     val1  = htons(*(reinterpret_cast<uint16_t*>(&readPVPVOF.buff()[0])));
-    f1    = float((val1+512)&1023) - 512.0 ;
+
+    if( (0x8000 & val1) )
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling negative number conversion pv");
+      #endif
+
+      f1    = (float)((val1+512)&1023) - 512.0 ;
+    } else
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling positive number conversion rhs");
+      #endif
+      pvpvof = val1;
+    }
+
   }
 
 
@@ -4922,12 +4947,29 @@ bool GetACUTempPV(uint8_t id, float* pv)
 //    pvof = htons(*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])));
 
     val2  = htons(*(reinterpret_cast<uint16_t*>(&readPVOF.buff()[0])));
-    f2    = float((val2+512)&1023) - 512.0 ;
+
+    if( (0x8000 & val2) )
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling negative number conversion pv rhs");
+      #endif
+
+      f2    = (float)((val2+512)&1023) - 512.0 ;
+      *pv = f1 - f2;
+      *pv = (float)*pv / (float)10;
+
+    } else
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling positive number conversion pv rhs");
+      #endif
+      pvof = val2;
+
+      *pv = pvpvof - pvof;
+      *pv = (float)*pv / (float)10;
+    }
   }
 
-//  *pv = pvpvof - pvof;
-  *pv = f1 - f2;
-  *pv = (float)*pv / (float)10;
 
   return(true);
 }
@@ -4955,9 +4997,22 @@ bool GetACUTempSV(uint8_t id, float* sv)
   {
     val = htons(*(reinterpret_cast<uint16_t*>(&readSVSVOF.buff()[0])));
 
-    float f = float((val+512)&1023) - 512.0 ;
+    if( (0x8000 & val) )
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling negative number conversion rhs SV");
+      #endif
 
-    *sv = f / (float)10;
+      float f = (float)((val+512)&1023) - 512.0 ;
+
+      *sv = f / (float)10;
+    } else
+    {
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("handling negative number conversion rhs SV");
+      #endif
+       *sv = (float)val / (float)10;
+    }
 
     #ifdef __DEBUG2_VIA_SERIAL__
     Serial.println("readSV success");
@@ -5268,7 +5323,7 @@ void enableRTD_DDR1_ISR(void)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
-  pinMode(RTD_DDR1_ISR_PIN, INPUT_PULLUP);
+  pinMode(RTD_DDR1_ISR_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(RTD_DDR1_ISR_PIN), RTD_DDR1_ISR, FALLING);
 }
 
@@ -5281,7 +5336,7 @@ void disableRTD_DDR1_ISR(void)
   #endif
 
   detachInterrupt(digitalPinToInterrupt(RTD_DDR1_ISR_PIN));
-  pinMode(RTD_DDR1_ISR_PIN, OUTPUT);
+//  pinMode(RTD_DDR1_ISR_PIN, OUTPUT); //do not set as ouput - will cause contention with RDRY pin
 }
 
 
