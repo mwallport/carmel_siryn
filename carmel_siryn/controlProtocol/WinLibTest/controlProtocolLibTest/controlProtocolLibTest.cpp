@@ -89,7 +89,7 @@ int main(int argc, char** argv)
     //
     // set/get the SV for the ASIC thermal control
     //
-    temp = (float)27.8;
+    temp = (float)27.80;
     printf("calling set SV for the ASIC thermal control to [%f]\n", temp);
     if ((!set_SVASIC(temp)))
         fprintf(stderr, "set_SVACIS() failed\n");
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
     //
     // set/get the SV for the DDR thermal control
     //
-    temp = (float)25.3;
+    temp = (float)27.30;
     printf("calling set SV for the DDR thermal control to [%f]\n", temp);
     if ((!set_SVDDR(temp)))
         fprintf(stderr, "set_SVDDR() failed\n");
@@ -119,6 +119,14 @@ int main(int argc, char** argv)
 
 
     //
+    // clear the event log
+    //
+    printf("calling clr_EventLog()\n");
+    if ((!clr_EventLog()))
+        fprintf(stderr, "clr_EventLog() failed\n");
+    
+    
+    //
     // start thermal control
     // 
     // startUPAT() is also an option here
@@ -128,22 +136,14 @@ int main(int argc, char** argv)
     if ((!startUp()))
         fprintf(stderr, "startUP() failed\n");
 
-
-    //
-    // clear the event log
-    //
-    printf("calling clr_EventLog()\n");
-    if ((!clr_EventLog()))
-        fprintf(stderr, "clr_EventLog() failed\n");
-
-
+ 
     //
     // execute the remaining commands in a loop
     // 
     //  - generally for some period of time
     //  - or until some failure is reported back by the get_Status() command
     //
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 3000; i++)
     {
         //
         // get the the real time clock from the unit
@@ -232,16 +232,16 @@ int main(int argc, char** argv)
         if ((!get_PVASIC(&temp)))
             fprintf(stderr, "get_PVASIC() failed\n");
         else
-            printf("got back ASIC SV [%f]\n", temp);
+            printf("got back ASIC PV [%f]\n", temp);
 
         //
         // get and print the PV for the DDR thermal controls
         //
         temp = 0;
-        if ((!get_PVASIC(&temp)))
-            fprintf(stderr, "get_PVASIC() failed\n");
+        if ((!get_PVDDR(&temp)))
+            fprintf(stderr, "get_PVDDR() failed\n");
         else
-            printf("got back ASIC SV [%f]\n", temp);
+            printf("got back DDR SV [%f]\n", temp);
 
 
         //

@@ -1,7 +1,9 @@
 #pragma once
 
+//#define __USING_LINUX_USB__
+#define __USING_WINDOWS_USB__
 
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 #ifdef CONTROLPROTOCOL_LIB_EXPORTS
 #define CONTROLPROTOCOL_LIB_API __declspec(dllexport)
 #else
@@ -64,7 +66,7 @@ const uint16_t    HumiditySensorFail = 0x0041; // humiditiy sensor failed
 /*
 * set the host address - keep always 0 for now
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API void set_MyAddress(uint16_t);
 #else
 extern "C" void set_MyAddress(uint16_t);
@@ -76,7 +78,7 @@ extern "C" void set_MyAddress(uint16_t);
 * always 1 for now
 * the slave is currently hard coded as Id 1 and exptects the master to be Id 0
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API void set_PeerAddress(uint16_t);
 #else
 extern "C" void set_PeerAddress(uint16_t);
@@ -92,7 +94,7 @@ extern "C" void set_PeerAddress(uint16_t);
 * NOTE : on Linux typically this will be something like /dev/tty/USB0 or /dev/tty/USB1
 * 
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API void set_UsbPort(const char*);
 #else
 extern "C" void set_UsbPort(const char*);
@@ -104,7 +106,7 @@ extern "C" void set_UsbPort(const char*);
 * the slave is programmed for 19200 BUAD N81
 * 
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API void set_Speed(uint32_t);
 #else
 extern "C" void set_Speed(uint32_t);
@@ -113,7 +115,7 @@ extern "C" void set_Speed(uint32_t);
 /*
 * write the connection parameters to stdout
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API void showConnParams(void);
 #else
 extern "C" void showConnParams(void);
@@ -132,7 +134,7 @@ extern "C" void showConnParams(void);
 * - DDR offline or online, running or not running
 * 
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool get_Status(uint16_t*, uint16_t*, uint16_t*);
 #else
 extern "C" bool get_Status(uint16_t*, uint16_t*, uint16_t*);
@@ -141,7 +143,7 @@ extern "C" bool get_Status(uint16_t*, uint16_t*, uint16_t*);
 /*
 *  start both thermal controllers, not auto tune mode
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool startUp(void);
 #else
 extern "C" bool startUp(void);
@@ -150,7 +152,7 @@ extern "C" bool startUp(void);
 /*
 *  start both thermal controller, auto tune mode
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool startUpAT(void);
 #else
 extern "C" bool startUpAT(void);
@@ -159,7 +161,7 @@ extern "C" bool startUpAT(void);
 /*
 *  stop the thermal controllers
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool shutDown(void);
 #else
 extern "C" bool shutDown(void);
@@ -168,7 +170,7 @@ extern "C" bool shutDown(void);
 /*
 *  set the set value for the ASIC thermal control, celcius
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool set_SVASIC(float temp);
 #else
 extern "C" bool set_SVASIC(float temp);
@@ -177,7 +179,7 @@ extern "C" bool set_SVASIC(float temp);
 /*
 *  get the set value for the ASIC thermal control, celcius
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool get_SVASIC(float* temp);
 #else
 extern "C" bool get_SVASIC(float* temp);
@@ -186,7 +188,7 @@ extern "C" bool get_SVASIC(float* temp);
 /*
 *  set the set value for the DDR thermal control, celcius
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool set_SVDDR(float temp);
 #else
 extern "C" bool set_SVDDR(float temp);
@@ -195,7 +197,7 @@ extern "C" bool set_SVDDR(float temp);
 /*
 *  get the set value for the DDR thermal control, celcius
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool get_SVDDR(float* temp);
 #else
 extern "C" bool get_SVDDR(float* temp);
@@ -204,7 +206,7 @@ extern "C" bool get_SVDDR(float* temp);
 /*
 *  get the process value, actual current temperatur of the ASIC thermal control, celcius
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool get_PVASIC(float* temp);
 #else
 extern "C" bool get_PVASIC(float* temp);
@@ -213,7 +215,7 @@ extern "C" bool get_PVASIC(float* temp);
 /*
 *  get the process value, actual current temperature of the DDR thermal control, celcius
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool get_PVDDR(float* temp);
 #else
 extern "C" bool get_PVDDR(float* temp);
@@ -224,7 +226,7 @@ extern "C" bool get_PVDDR(float* temp);
 * 
 *  recommend using the startUp() or startUpAT() commands instead
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool do_enableACUs(void);
 #else
 extern "C" bool do_enableACUs(void);
@@ -235,7 +237,7 @@ extern "C" bool do_enableACUs(void);
 * 
 *  recommend using the shutDown() command instead
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool do_disableACUs(void);
 #else
 extern "C" bool do_disableACUs(void);
@@ -244,7 +246,7 @@ extern "C" bool do_disableACUs(void);
 /*
 *  set the real time clock in the slave to the time on 'this' computer
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool set_RTC(void);
 #else
 extern "C" bool set_RTC(void);
@@ -253,7 +255,7 @@ extern "C" bool set_RTC(void);
 /*
 *  get the real time clock on the slave
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool get_RTC(struct tm* ltime);
 #else
 extern "C" bool get_RTC(struct tm* ltime);
@@ -262,7 +264,7 @@ extern "C" bool get_RTC(struct tm* ltime);
 /*
 *  clear the event log
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool clr_EventLog(void);
 #else
 extern "C" bool clr_EventLog(void);
@@ -271,7 +273,7 @@ extern "C" bool clr_EventLog(void);
 /*
 *  get the event log
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool get_EventLog(char** eventlog);
 #else
 extern "C" bool get_EventLog(char** eventlog);
@@ -283,7 +285,7 @@ extern "C" bool get_EventLog(char** eventlog);
 *  if the actual temperature gets to this value, the system will go to SHUTDOWN
 *  state and an event will be logged
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool set_H20AlarmASIC(float temp);
 #else
 extern "C" bool set_H20AlarmASIC(float temp);
@@ -293,7 +295,7 @@ extern "C" bool set_H20AlarmASIC(float temp);
 *  get the alarm temperature for the ASIC thermal control
 *
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool get_H20AlarmASIC(float* temp);
 #else
 extern "C" bool get_H20AlarmASIC(float* temp);
@@ -305,7 +307,7 @@ extern "C" bool get_H20AlarmASIC(float* temp);
 *  if the actual temperature gets to this value, the system will go to SHUTDOWN
 *  state and an event will be logged
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool set_H20AlarmDDR(float temp);
 #else
 extern "C" bool set_H20AlarmDDR(float temp);
@@ -315,7 +317,7 @@ extern "C" bool set_H20AlarmDDR(float temp);
 *  get the alarm temperature for the DDR thermal control
 *
 */
-#ifdef __USING_WINDOWS_USB__
+#if defined __USING_WINDOWS_USB__
 extern "C" CONTROLPROTOCOL_LIB_API bool get_H20AlarmDDR(float* temp);
 #else
 extern "C" bool get_H20AlarmDDR(float* temp);

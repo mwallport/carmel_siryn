@@ -81,7 +81,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);controlProtocol_lib.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);controlProtocol_lib.lib;</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\controlProtocol_lib\Debug</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

@@ -1,7 +1,7 @@
 
-#ifdef __USING_WINDOWS_USB__
+//#ifdef __USING_WINDOWS_USB__
 #include "pch.h"
-#endif
+//#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -572,7 +572,6 @@ extern "C"
         struct tm ltime;
         elogentry eventlogs[MAX_ELOG_ENTRY];
         char* eventlog;
-        timeind* pTimeStamp;
         uint16_t  id;       // chiller, TCU, humidity sensor
         uint16_t  inst;     // in case of ACU is the ACU number
         char      time_buff[30];
