@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     if( (!set_RTC()) )
         fprintf(stderr, "set_RTC() failed\n");
 
-
+/*
     //
     // set/get the H2O high temp alarm for the ASIC
     //
@@ -136,7 +136,16 @@ int main(int argc, char** argv)
     if ((!startUp()))
         fprintf(stderr, "startUP() failed\n");
 
- 
+ */
+
+ //
+// clear the event log
+//
+    printf("calling clr_EventLog()\n");
+    if ((!clr_EventLog()))
+        fprintf(stderr, "clr_EventLog() failed\n");
+
+
     //
     // execute the remaining commands in a loop
     // 
@@ -145,6 +154,7 @@ int main(int argc, char** argv)
     //
     for (int i = 0; i < 3000; i++)
     {
+  /*
         //
         // get the the real time clock from the unit
         //
@@ -158,7 +168,7 @@ int main(int argc, char** argv)
             printf("time on unit [%s]\n", asctime(&ltime));
         }
 
-
+*/
         //
         // use the get_Status() command to get the health the slave's components
         // 
