@@ -396,6 +396,6 @@ volatile int bp_count = -2;  // button press 1
 // splash screen conents - shown during boot while the system is coming on-line
 //
 const char deftDevise[16] = "Thermic Rule ";
-const char buildInfo[16]  = "220605       ";
+const char buildInfo[16]  = "220802       ";   // Aug 2, 2022
 
 #endif
