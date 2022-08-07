@@ -106,9 +106,12 @@ bool humidityHigh(void)
 void initSystem(void)
 {
 
-  pinMode(__RS485_DEBUG_PIN__, OUTPUT);
-  digitalWrite(__RS485_DEBUG_PIN__, LOW);
-  
+  //
+  // configure RS485_WRITE_ENABLE for output
+  //
+  pinMode(RS485_WRITE_ENABLE, OUTPUT);
+  digitalWrite(RS485_WRITE_ENABLE, LOW);
+
 
   //
   // initialize the fault/no-fault LED(s)
@@ -3625,7 +3628,7 @@ void handleACURunningStatus(uint8_t id)
     {
       acu_running_fail_count = 0;
 
-      #ifdef __DEBUG_VIA_SERIAL__
+      #ifdef __DEBUG_VIA_SERIAL3__
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
       Serial.print(id, DEC); Serial.println(" unable to get running");
       Serial.flush();
@@ -3638,7 +3641,7 @@ void handleACURunningStatus(uint8_t id)
       sysStates.ACU[idx].state  = stopped;
     } else
     {
-      #ifdef __DEBUG_VIA_SERIAL__
+      #ifdef __DEBUG_VIA_SERIAL3__
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING:ACU ");
       Serial.print(id, DEC); Serial.print(" unable to get running, fail count: ");
       Serial.println(acu_running_fail_count);
@@ -3751,7 +3754,7 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
     {
       acu_temp_fail_count = 0;
 
-      #ifdef __DEBUG_VIA_SERIAL__
+      #ifdef __DEBUG_VIA_SERIAL3__
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
       Serial.print(id, DEC); Serial.println(" unable to get temps");
       Serial.flush();
@@ -3765,7 +3768,7 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
 
     } else
     {
-      #ifdef __DEBUG_VIA_SERIAL__
+      #ifdef __DEBUG_VIA_SERIAL3__
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING:ACU ");
       Serial.print(id, DEC); Serial.print(" unable to get temp, fail count: ");
       Serial.println(acu_temp_fail_count);
@@ -4095,7 +4098,7 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state, bool getAl
   // only get these on a period - i.e. not ALL the time
   if( (true == getAllData) )
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG_VIA_SERIAL3__
     Serial.println("GETTING ALL DATA");
     #endif
     state.rtd         = afmaxRTD.readRTD(); // this one has the 75ms hard coded delay AND IS CALLED by temperature, don't call this everytime
@@ -4107,21 +4110,21 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state, bool getAl
   {
     if( (RUNNING == sysStates.sysStatus) )
     {
-      #ifdef __DEBUG2_VIA_SERIAL__
+      #ifdef __DEBUG2_VIA_SERIAL3__
       Serial.println("IN ACTIVE STATE calling temperature_dd");
       #endif
       state.temperature = afmaxRTD.temperature_dd(RNOMINAL, RREF);  // this call is optimized for deftDevise
       
     } else
     {
-      #ifdef __DEBUG2_VIA_SERIAL__
+      #ifdef __DEBUG2_VIA_SERIAL3__
       Serial.println("NOT IN ACTIVE STATE calling temperature");
       #endif
       state.temperature = afmaxRTD.temperature(RNOMINAL, RREF);     // this call is standard Adafruite, delays and all
     }
   } else
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
+    #ifdef __DEBUG2_VIA_SERIAL3__
     Serial.print("fault: "); Serial.print(state.fault); Serial.print(" rtd: "); Serial.print(state.rtd);
     Serial.print(" keeping prior temperature: "); Serial.println(state.temperature, 1);
     #endif
@@ -4130,7 +4133,7 @@ void getAdafruitRTDData(Adafruit_MAX31865& afmaxRTD, RTDState& state, bool getAl
     state.fault = 0;
   }
 
-  #ifdef __DEBUG2_VIA_SERIAL__
+  #ifdef __DEBUG2_VIA_SERIAL3__
   Serial.print("fault: "); Serial.print(state.fault); Serial.print(" rtd: "); Serial.print(state.rtd);
   Serial.print(" temperature: "); Serial.println(state.temperature, 1);
   #endif
@@ -4170,7 +4173,7 @@ bool getRTDDataDRDY(bool getFaults, bool getDDROnly)
     // get the other if getDDROnly is false
     if( (false == getDDROnly) )
     {
-      #ifdef __DEBUG2_VIA_SERIAL__
+      #ifdef __DEBUG_VIA_SERIAL3__
       Serial.println("getDDROnly is false, getting ASCI or DDR H2O temperatures too"); 
       #endif
       resetRTDState(sysStates.DDR_Chiller_RTD);
@@ -5090,7 +5093,11 @@ bool GetACUTempPV(uint8_t id, float* pv)
       #endif
 
       f2    = (float)((val2+512)&1023) - 512.0 ;
-      *pv = f1 - f2;
+      if( (f1 < 0) )
+        *pv = f1 + f2;
+      else
+        *pv = f1 - f2;
+
       *pv = (float)*pv / (float)10;
 
     } else
@@ -5104,9 +5111,13 @@ bool GetACUTempPV(uint8_t id, float* pv)
       //*pv = (float)*pv / (float)10;
       
       f2  = (float)val2;
-      *pv = f1 - f2;
-      *pv = (float)*pv / (float)10;
 
+      if( (f1 < 0) )
+        *pv = f1 + f2;
+      else
+        *pv = f1 - f2;
+ 
+      *pv = (float)*pv / (float)10;
     }
   }
 

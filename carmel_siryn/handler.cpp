@@ -127,20 +127,26 @@ cmdResp handler::writeProcess(HardwareSerial& so, uint8_t id, uint16_t param_add
 int handler::sndCmd(HardwareSerial& so, uint8_t* tx_buff, int8_t bufflen)
 {
   int retVal;
+  volatile int writeDelay  = 3000;   // 
 
   
   // write the bytes, handle the return code in the caller
-  //Controllino_RS485TxEnable();
-  digitalWrite(__RS485_DEBUG_PIN__, LOW);
+  #ifdef __DEBUG_MODBUS_TXRX__
+  Serial.println("setting pin RS485_WRITE_ENABLE HIGH and sending bytes...");
+  #endif
+  
+  digitalWrite(RS485_WRITE_ENABLE, HIGH);
   
   retVal = so.write(tx_buff, bufflen);
-  //so.flush();  dont' do this, flush() waits for data to be sent, if ACUs un-reachable, this API returns very late
-  //Controllino_RS485RxEnable();
-  
+  so.flush();
+
+  while( (writeDelay-- > 0) );  // delay to let the board complete Tx
+
+  digitalWrite(RS485_WRITE_ENABLE, LOW);
+
   #ifdef __DEBUG_MODBUS_TXRX__
-  Serial.print("sent "); Serial.print(retVal); Serial.println(" bytes...");
+  Serial.print("set RS485_WRITE_ENABLE LOW and sent "); Serial.print(retVal); Serial.println(" bytes...");
   #endif
-  //so.flush();  same here
   
   return(retVal);
 }
@@ -200,17 +206,6 @@ int handler::rcvWriteResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_b
   }
 
   //Controllino_RS485TxEnable();
-
-
-  if( (0 == bytes_read) )
-  {
-    digitalWrite(__RS485_DEBUG_PIN__, HIGH);
-    #ifdef __DEBUG_MODBUS_TXRX__
-    Serial.println(">>>>>>>>>>>>>>>>>>> set the oscope pin high <<<<<<<<<<<<<<<<<<<<<<");
-    #endif
-  }
-    
-    
   return(bytes_read);
 }
 
@@ -295,14 +290,6 @@ int handler::rcvReadResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_bu
   }
 
   //Controllino_RS485TxEnable();
-  if( (0 == bytes_read) )
-  {
-    digitalWrite(__RS485_DEBUG_PIN__, HIGH);
-    #ifdef __DEBUG_MODBUS_TXRX__
-    Serial.println(">>>>>>>>>>>>>>>>>>> set the oscope pin high <<<<<<<<<<<<<<<<<<<<<<");
-    #endif
-  }
-  
   return(bytes_read);
 }
 
