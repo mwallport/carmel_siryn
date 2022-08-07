@@ -106,6 +106,10 @@ bool humidityHigh(void)
 void initSystem(void)
 {
 
+  pinMode(__RS485_DEBUG_PIN__, OUTPUT);
+  digitalWrite(__RS485_DEBUG_PIN__, LOW);
+  
+
   //
   // initialize the fault/no-fault LED(s)
   //
@@ -3712,7 +3716,10 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
   bool  Running     = false;
   bool  RetVal      = false;
   uint8_t idx       = id - 1; // don't f this up, no bounds checking
+  bool got_a_read   = false;
 
+  static int acu_temp_fail_count = 0;
+  
   //
   // check all ACUs running - get Device Status, possible status are
   //
@@ -3738,20 +3745,40 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
     
   if((false == RetVal) )
   {
-    #ifdef __DEBUG_VIA_SERIAL__
-    Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
-    Serial.print(id, DEC); Serial.println(" unable to get temps");
-    Serial.flush();
-    #endif
+    ++acu_temp_fail_count;
 
-    ACUsRunning = false;
-    ACUsOnline  = false;
+    if( (4 < acu_temp_fail_count) )
+    {
+      acu_temp_fail_count = 0;
 
-    sysStates.ACU[idx].online = offline;
-    sysStates.ACU[idx].state  = stopped;
-    #ifdef __DEBUG2_VIA_SERIAL__
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
+      Serial.print(id, DEC); Serial.println(" unable to get temps");
+      Serial.flush();
+      #endif
+
+      ACUsRunning = false;
+      ACUsOnline  = false;
+
+      sysStates.ACU[idx].online = offline;
+      sysStates.ACU[idx].state  = stopped;
+
+    } else
+    {
+      #ifdef __DEBUG_VIA_SERIAL__
+      Serial.print(__PRETTY_FUNCTION__); Serial.print(" WARNING:ACU ");
+      Serial.print(id, DEC); Serial.print(" unable to get temp, fail count: ");
+      Serial.println(acu_temp_fail_count);
+      Serial.flush();
+      #endif
+    }
+      
   } else
   {
+    acu_temp_fail_count = 0;
+    got_a_read = true;
+    
+    #ifdef __DEBUG2_VIA_SERIAL__
     Serial.print(__PRETTY_FUNCTION__); Serial.print(" found ");
     Serial.print(sysStates.ACU[idx].setpoint, 2);
     Serial.print(" : "); Serial.println(sysStates.ACU[idx].temperature, 2);
@@ -3765,44 +3792,47 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
   //
   // translate the retrieved data and temp from the Accuthermos to these RTDs
   //
-  if( (ASIC_RS485_ID == id) )
+  if( (true == got_a_read) )
   {
-    #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.println("Translating ASIC ACU data to ASIC_RTD");
-    #endif      
-    resetRTDState(sysStates.ASIC_RTD);
-    
-    // pick up the temperature and faul, the online and state are updated in handleRTDStatus
-    sysStates.ASIC_RTD.temperature  = sysStates.ACU[idx].temperature;
-
-    #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.print("ASIC_RTD.temperature: "); Serial.println(sysStates.ASIC_RTD.temperature, 2);
-    Serial.print("souce temperature: "); Serial.println(sysStates.ACU[idx].temperature, 2);
-    #endif      
-
-    if( (offline == sysStates.ACU[idx].online) )
+    if( (ASIC_RS485_ID == id) )
     {
-      sysStates.ASIC_RTD.online = offline;
-      sysStates.ASIC_RTD.state  = stopped;    
-      sysStates.ASIC_RTD.fault  = 0xFF;
-    }
-
-  } else if( (DDR_RS485_ID == id) )
-  {
-    #ifdef __DEBUG2_VIA_SERIAL__
-    Serial.println("Translating DDR ACU data to DDR_RTD");
-    #endif      
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("Translating ASIC ACU data to ASIC_RTD");
+      #endif      
+      resetRTDState(sysStates.ASIC_RTD);
       
-    resetRTDState(sysStates.DDR_RTD);
-
-    // pick up the temperature and faul, the online and state are updated in handleRTDStatus
-    sysStates.DDR_RTD.temperature  = sysStates.ACU[idx].temperature;
-
-    if( (offline == sysStates.ACU[idx].online) )
+      // pick up the temperature and faul, the online and state are updated in handleRTDStatus
+      sysStates.ASIC_RTD.temperature  = sysStates.ACU[idx].temperature;
+  
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.print("ASIC_RTD.temperature: "); Serial.println(sysStates.ASIC_RTD.temperature, 2);
+      Serial.print("souce temperature: "); Serial.println(sysStates.ACU[idx].temperature, 2);
+      #endif      
+  
+      if( (offline == sysStates.ACU[idx].online) )
+      {
+        sysStates.ASIC_RTD.online = offline;
+        sysStates.ASIC_RTD.state  = stopped;    
+        sysStates.ASIC_RTD.fault  = 0xFF;
+      }
+  
+    } else if( (DDR_RS485_ID == id) )
     {
-      sysStates.DDR_RTD.online  = offline;
-      sysStates.DDR_RTD.state   = stopped;    
-      sysStates.DDR_RTD.fault   = 0xFF;
+      #ifdef __DEBUG2_VIA_SERIAL__
+      Serial.println("Translating DDR ACU data to DDR_RTD");
+      #endif      
+        
+      resetRTDState(sysStates.DDR_RTD);
+  
+      // pick up the temperature and faul, the online and state are updated in handleRTDStatus
+      sysStates.DDR_RTD.temperature  = sysStates.ACU[idx].temperature;
+  
+      if( (offline == sysStates.ACU[idx].online) )
+      {
+        sysStates.DDR_RTD.online  = offline;
+        sysStates.DDR_RTD.state   = stopped;    
+        sysStates.DDR_RTD.fault   = 0xFF;
+      }
     }
   }
 
@@ -4994,10 +5024,10 @@ bool GetACUTempPV(uint8_t id, float* pv)
 {
   uint16_t  pvpvof  = 0;
   uint32_t  pvof    = 0;
-  uint16_t val1;
-  float     f1;
-  uint16_t val2;
-  float     f2;
+  uint16_t  val1    = 0;
+  float     f1      = 0;
+  uint16_t  val2    = 0;
+  float     f2      = 0;
 
 
   // get the pv+pvof - this returns 2 bytes of PVPVOF
@@ -5029,7 +5059,8 @@ bool GetACUTempPV(uint8_t id, float* pv)
       #ifdef __DEBUG2_VIA_SERIAL__
       Serial.println("handling positive number conversion rhs");
       #endif
-      pvpvof = val1;
+      //pvpvof = val1;
+      f1 = (float)val1;
     }
 
   }
@@ -5067,10 +5098,15 @@ bool GetACUTempPV(uint8_t id, float* pv)
       #ifdef __DEBUG2_VIA_SERIAL__
       Serial.println("handling positive number conversion pv rhs");
       #endif
-      pvof = val2;
+      //pvof = val2;
 
-      *pv = pvpvof - pvof;
+      //*pv = pvpvof - pvof;
+      //*pv = (float)*pv / (float)10;
+      
+      f2  = (float)val2;
+      *pv = f1 - f2;
       *pv = (float)*pv / (float)10;
+
     }
   }
 
@@ -5468,7 +5504,7 @@ void enableRTD_DDR1_ISR(void)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
-  pinMode(RTD_DDR1_ISR_PIN, INPUT_PULLUP);
+  pinMode(RTD_DDR1_ISR_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(RTD_DDR1_ISR_PIN), RTD_DDR1_ISR, FALLING);
 }
 
@@ -5481,7 +5517,7 @@ void disableRTD_DDR1_ISR(void)
   #endif
 
   detachInterrupt(digitalPinToInterrupt(RTD_DDR1_ISR_PIN));
-  pinMode(RTD_DDR1_ISR_PIN, OUTPUT);
+  //pinMode(RTD_DDR1_ISR_PIN, OUTPUT);
 }
 
 

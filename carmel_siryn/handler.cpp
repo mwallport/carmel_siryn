@@ -131,6 +131,8 @@ int handler::sndCmd(HardwareSerial& so, uint8_t* tx_buff, int8_t bufflen)
   
   // write the bytes, handle the return code in the caller
   //Controllino_RS485TxEnable();
+  digitalWrite(__RS485_DEBUG_PIN__, LOW);
+  
   retVal = so.write(tx_buff, bufflen);
   //so.flush();  dont' do this, flush() waits for data to be sent, if ACUs un-reachable, this API returns very late
   //Controllino_RS485RxEnable();
@@ -199,6 +201,16 @@ int handler::rcvWriteResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_b
 
   //Controllino_RS485TxEnable();
 
+
+  if( (0 == bytes_read) )
+  {
+    digitalWrite(__RS485_DEBUG_PIN__, HIGH);
+    #ifdef __DEBUG_MODBUS_TXRX__
+    Serial.println(">>>>>>>>>>>>>>>>>>> set the oscope pin high <<<<<<<<<<<<<<<<<<<<<<");
+    #endif
+  }
+    
+    
   return(bytes_read);
 }
 
@@ -283,7 +295,14 @@ int handler::rcvReadResp(HardwareSerial& so, int8_t min_pkt_size, uint8_t* rx_bu
   }
 
   //Controllino_RS485TxEnable();
-
+  if( (0 == bytes_read) )
+  {
+    digitalWrite(__RS485_DEBUG_PIN__, HIGH);
+    #ifdef __DEBUG_MODBUS_TXRX__
+    Serial.println(">>>>>>>>>>>>>>>>>>> set the oscope pin high <<<<<<<<<<<<<<<<<<<<<<");
+    #endif
+  }
+  
   return(bytes_read);
 }
 

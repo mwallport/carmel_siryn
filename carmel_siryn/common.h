@@ -2,6 +2,11 @@
 #ifndef __COMMON_HEADER__
 #define __COMMON_HEADER__
 
+
+
+#define __RS485_DEBUG_PIN__   21
+
+
 //
 // process defines
 //
@@ -32,8 +37,8 @@
 // debug defines - if the debug is disabled in the carmel_syring.h - thus must be disabled as well
 // else the Due board hangs...
 //
-//#define __DEBUG_MODBUS_CMDS__
-//#define __DEBUG_MODBUS_TXRX__
+#define __DEBUG_MODBUS_CMDS__
+#define __DEBUG_MODBUS_TXRX__
 
 
 #endif
