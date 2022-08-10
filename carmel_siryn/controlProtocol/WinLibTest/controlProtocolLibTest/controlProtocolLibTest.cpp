@@ -176,63 +176,21 @@ int main(int argc, char** argv)
         // ensure it issafe to proceed
         //
         printf("calling getStatus()\n");
-        if ((!get_Status(&rtd, &acu, &chiller)))
+        char* status = 0;
+        if ((!get_Status(&status)))
             fprintf(stderr, "get_Status() failed\n");
         else
         {
-            // print the values of the return parameters ..
-            printf("rtd [0x%X] acu [0x%X] chiller [0x%x]\n", rtd, acu, chiller);
-
-            //
-            // the return parameters are bit flags
-            // 
-            // dissect, print out, act upon the status reported by the bit flags
-            // 
-            // ACUs output first 
-            if( (acu & ASIC_THERMAL_CTRL_OFFLINE) )
-                printf("ASIC ACU is OFFLINE");
+            if ((0 != status))
+            {
+                printf("get_Status() sucess\n");
+                printf("\n%s\n", status);
+                free(status);
+            }
             else
-                printf("ASIC ACU is ONLINE");
-
-            if( (acu & ASIC_THERMAL_CTRL_NOT_RUNNING) )
-                printf(" and NOT RUNNING\n");
-            else
-                printf(" and RUNNING\n");
-
-            if( (acu & DDR_THERMAL_CTRL_OFFLINE) )
-                printf("DDR ACU is OFFLINE");
-            else
-                printf("DDR ACU is ONLINE");
-
-            if( (acu & DDR_THERMAL_CTRL_NOT_RUNNING) )
-                printf(" and NOT RUNNING\n");
-            else
-                printf(" and RUNNING\n");
-
-            // RTD ouput next
-            printf("ASIC Chiller RTD");
-            if( (rtd & ASIC_CHILLER_RTD_HAS_FAULTS) )
-                printf(" has faults\n");
-            else
-                printf(" has no faults\n");
-
-            printf("DDR1 RTD");
-            if( (rtd & DDR1_RTD_HAS_FAULTS) )
-                printf(" has faults\n");
-            else
-                printf(" has no faults\n");
-
-            printf("DDR2 RTD");
-            if( (rtd & DDR2_RTD_HAS_FAULTS) )
-                printf(" has faults\n");
-            else
-                printf(" has no faults\n");
-
-            printf("DDR Chiller RTD");
-            if( (rtd & DDR_CHILLER_RTD_HAS_FAULTS) )
-                printf(" has faults\n");
-            else
-                printf(" has no faults\n");
+            {
+                fprintf(stderr, "status pointer is null\n");
+            }
         }
 
         //

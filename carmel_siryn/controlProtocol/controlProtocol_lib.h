@@ -135,9 +135,9 @@ extern "C" void showConnParams(void);
 * 
 */
 #if defined __USING_WINDOWS_USB__
-extern "C" CONTROLPROTOCOL_LIB_API bool get_Status(uint16_t*, uint16_t*, uint16_t*);
+extern "C" CONTROLPROTOCOL_LIB_API bool get_Status(char**);
 #else
-extern "C" bool get_Status(uint16_t*, uint16_t*, uint16_t*);
+extern "C" bool get_Status(char**);
 #endif
 
 /*

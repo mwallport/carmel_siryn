@@ -69,20 +69,85 @@ extern "C"
     //-----------------------------------------------------------------------------
     // execute the GetStatus command
     //
-    bool get_Status(uint16_t* RTDsRunning, uint16_t* ACUsRunning, uint16_t* chillerOnLine)
+    bool get_Status(char** status)
     {
         bool retVal = true;
+        uint16_t rtd;
+        uint16_t acu;
+        uint16_t chillerOnLine;
+        char* buff = 0;
+        int idx = 0;
         controlProtocol cp(myAddress, peerAddress, usbPort, usbSpeed);
 
 
         if ((true == cp.serialConnected()))
         {
-            retVal = cp.GetStatus(peerAddress, RTDsRunning, ACUsRunning, chillerOnLine);
+            retVal = cp.GetStatus(peerAddress, &rtd, &acu, &chillerOnLine);
 
             if ((false == retVal))
                 fprintf(stdout, "fail\n");
             else
-                fprintf(stdout, "success\n");
+            {
+                buff = (char*)calloc(1, 1024);
+
+                if ((0 != buff))
+                {
+                    // ACUs output first 
+                    if ((acu & ASIC_THERMAL_CTRL_OFFLINE))
+                        idx += sprintf(&buff[idx], "ASIC ACU is OFFLINE");
+                    else
+                        idx += sprintf(&buff[idx], "ASIC ACU is ONLINE");
+
+                    if ((acu & ASIC_THERMAL_CTRL_NOT_RUNNING))
+                        idx += sprintf(&buff[idx], " and NOT RUNNING\n");
+                    else
+                        idx += sprintf(&buff[idx], " and RUNNING\n");
+
+                    if ((acu & DDR_THERMAL_CTRL_OFFLINE))
+                        idx += sprintf(&buff[idx], "DDR ACU is OFFLINE");
+                    else
+                        idx += sprintf(&buff[idx], "DDR ACU is ONLINE");
+
+                    if ((acu & DDR_THERMAL_CTRL_NOT_RUNNING))
+                        idx += sprintf(&buff[idx], " and NOT RUNNING\n");
+                    else
+                        idx += sprintf(&buff[idx], " and RUNNING\n");
+
+                    // RTD ouput next
+                    idx += sprintf(&buff[idx], "ASIC Chiller RTD");
+                    if ((rtd & ASIC_CHILLER_RTD_HAS_FAULTS))
+                        idx += sprintf(&buff[idx], " has faults\n");
+                    else
+                        idx += sprintf(&buff[idx], " has no faults\n");
+
+                    idx += sprintf(&buff[idx], "DDR1 RTD");
+                    if ((rtd & DDR1_RTD_HAS_FAULTS))
+                        idx += sprintf(&buff[idx], " has faults\n");
+                    else
+                        idx += sprintf(&buff[idx], " has no faults\n");
+
+                    idx += sprintf(&buff[idx], "DDR2 RTD");
+                    if ((rtd & DDR2_RTD_HAS_FAULTS))
+                        idx += sprintf(&buff[idx], " has faults\n");
+                    else
+                        idx += sprintf(&buff[idx], " has no faults\n");
+
+                    idx += sprintf(&buff[idx], "DDR Chiller RTD");
+                    if ((rtd & DDR_CHILLER_RTD_HAS_FAULTS))
+                        idx += sprintf(&buff[idx], " has faults\n");
+                    else
+                        idx += sprintf(&buff[idx], " has no faults\n");
+
+                    *status = buff;
+                    retVal = true;
+                    fprintf(stdout, "success\n");
+                }
+                else
+                {
+                    retVal = false;
+                    fprintf(stdout, "fail\n");
+                }
+            }
         }
         else
         {
