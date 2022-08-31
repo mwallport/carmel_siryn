@@ -582,6 +582,18 @@ bool startUp(bool startAT)
   Serial.println(__PRETTY_FUNCTION__);
   #endif
 
+  #ifdef __DEBUG_VIA_SERIAL__
+  Serial.print("system is in state: "); Serial.println(sysStates.sysStatus);
+  #endif
+
+  if( (SHUTDOWN == sysStates.sysStatus) )
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.println("not starting - system is in SHUTDOWN state");
+    #endif
+
+    return(false);
+  }
 
   #ifdef __USING_HUMIDITY__
   //
@@ -643,11 +655,11 @@ void getStatus(void)
   if((status_interval < (currentGetStatusTime - lastGetStatusTime)) )
   {
     lastGetStatusTime = currentGetStatusTime;
-
+/*
     #ifdef __DEBUG_VIA_SERIAL__
     Serial.println("---------- CHECK all ACUs and all RTDs -----------");
     #endif
-    
+*/  
     #ifdef __USING_CHILLER__
     handleChillerStatus();
     #endif
@@ -676,43 +688,6 @@ void getStatus(void)
       #endif
     }
   }
-
-/*
-  if( (RUNNING == sysStates.sysStatus) &&
-            (GET_STATUS_INTERVAL_RUNNING < (currentGetStatusTime - lastGetStatusTimeRunning)) )
-  {
-    lastGetStatusTimeRunning = currentGetStatusTime;
-    
-    #ifdef __DEBUG_VIA_SERIAL_
-    Serial.println("----------- NOT check all ACUs and all RTDs ----------");
-    #endif
-    
-    //
-    // get only the RTD temperatures and the DDR Accuthermo PV
-    // as these are needed for the HotRTD calculation
-    //
-    if( (true == handleRTDStatus(false, true)) ) // false means just get the temp, don't read faults, true get only DDR RTD temps
-    {
-      // return of true from handleRTDStatus means the RTDs were read
-      // go read the DDR Accuthermo's PV
-      // as that PV value is needed for the HotRTD calculation
-      handleACUTempStatus(DDR_RS485_ID, true); // true is read Pv only
-
-      //
-      // determine the hot RTD temperature
-      //
-      setHotRTD();
-
-      //
-      // determine the hot RTD, update DDR Accuthermo PVOF
-      // calculateAndWritePVOF is using stored data fetched by
-      // getStatus() and setHotRTD() . . so those funcitons must
-      // be called prior to calling calculateAndWritePVOF
-      //
-      calculateAndWritePVOF();
-    }
-  }
-*/
 
 #ifdef __USING_HUMIDITY__
   //   
@@ -767,6 +742,10 @@ void getStatus(void)
   }
 #endif
 
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  Serial.println("---------- calling setSystemStatus() -----------");
+  #endif
   //
   // set the LCD state for the overall system based on the
   // gathered information and attach/detach knob interrupts as
@@ -3624,7 +3603,7 @@ void handleACURunningStatus(uint8_t id)
   {
     ++acu_running_fail_count;
 
-    if( (4 < acu_running_fail_count) )
+    if( (6 < acu_running_fail_count) )
     {
       //acu_running_fail_count = 0;
 
@@ -3750,7 +3729,7 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
   {
     ++acu_temp_fail_count;
 
-    if( (4 < acu_temp_fail_count) )
+    if( (6 < acu_temp_fail_count) )
     {
       //acu_temp_fail_count = 0;
 
@@ -3946,7 +3925,7 @@ bool handleRTDStatus(bool getFaults, bool getDDROnly)
 
     delay(250);
 
-    if( ( 5 < asic_chiller_rtd_fail_count) )
+    if( ( 4 < asic_chiller_rtd_fail_count) )
     {
       //asic_chiller_rtd_fail_count = 0;
 
@@ -3991,7 +3970,7 @@ bool handleRTDStatus(bool getFaults, bool getDDROnly)
 
     delay(250);
 
-    if( ( 5 < ddr_chiller_rtd_fail_count) )
+    if( ( 4 < ddr_chiller_rtd_fail_count) )
     {
       //ddr_chiller_rtd_fail_count = 0;
 
@@ -4232,6 +4211,12 @@ systemStatus setSystemStatus(void)
   bool      ACUMismatch     = false;  // becomes false
   bool      RTDsRunning     = true;  
   
+
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  Serial.print(">>> entered setSystemStatus <<<");
+  #endif
+
 
   //
   // ACUs
@@ -4617,6 +4602,10 @@ systemStatus setSystemStatus(void)
 
   // set the system status
   sysStates.sysStatus = retVal;
+
+  #ifdef __DEBUG_VIA_SERIAL__
+  Serial.print(">>> system state is now : "); Serial.print(sysStates.sysStatus); Serial.println(" <<<");
+  #endif
 
   return(retVal);
 }
@@ -5288,7 +5277,7 @@ bool checkRTDStatus(void)
 
     delay(250);
 
-    if( ( 5 < rtd_fail_count) )
+    if( ( 4 < rtd_fail_count) )
     {
       //rtd_fail_count = 0;
       retVal = false;
@@ -5315,7 +5304,7 @@ bool checkRTDStatus(void)
 
     delay(250);
 
-    if( ( 5 < chill_fail_count) )
+    if( ( 2 < chill_fail_count) )
     {
       //chill_fail_count = 0;
       retVal = false;
