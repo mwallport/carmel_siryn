@@ -3626,7 +3626,7 @@ void handleACURunningStatus(uint8_t id)
 
     if( (4 < acu_running_fail_count) )
     {
-      acu_running_fail_count = 0;
+      //acu_running_fail_count = 0;
 
       #ifdef __DEBUG_VIA_SERIAL3__
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
@@ -3752,7 +3752,7 @@ void handleACUTempStatus(uint8_t id, bool GetPVOnly)
 
     if( (4 < acu_temp_fail_count) )
     {
-      acu_temp_fail_count = 0;
+      //acu_temp_fail_count = 0;
 
       #ifdef __DEBUG_VIA_SERIAL3__
       Serial.print(__PRETTY_FUNCTION__); Serial.print(" ERROR:ACU ");
@@ -3946,9 +3946,9 @@ bool handleRTDStatus(bool getFaults, bool getDDROnly)
 
     delay(250);
 
-    if( ( 20 < asic_chiller_rtd_fail_count) )
+    if( ( 5 < asic_chiller_rtd_fail_count) )
     {
-      asic_chiller_rtd_fail_count = 0;
+      //asic_chiller_rtd_fail_count = 0;
 
       #ifdef __DEBUG_VIA_SERIAL__
       Serial.println("asic_chiller_rtd_fail_count high returning bad status");
@@ -3991,9 +3991,9 @@ bool handleRTDStatus(bool getFaults, bool getDDROnly)
 
     delay(250);
 
-    if( ( 20 < ddr_chiller_rtd_fail_count) )
+    if( ( 5 < ddr_chiller_rtd_fail_count) )
     {
-      ddr_chiller_rtd_fail_count = 0;
+      //ddr_chiller_rtd_fail_count = 0;
 
       #ifdef __DEBUG_VIA_SERIAL__
       Serial.println("ddr_chiller_rtd_fail_count high returning bad status");
@@ -5288,9 +5288,9 @@ bool checkRTDStatus(void)
 
     delay(250);
 
-    if( ( 20 < rtd_fail_count) )
+    if( ( 5 < rtd_fail_count) )
     {
-      rtd_fail_count = 0;
+      //rtd_fail_count = 0;
       retVal = false;
 
       #ifdef __DEBUG_VIA_SERIAL__
@@ -5315,9 +5315,9 @@ bool checkRTDStatus(void)
 
     delay(250);
 
-    if( ( 20 < chill_fail_count) )
+    if( ( 5 < chill_fail_count) )
     {
-      chill_fail_count = 0;
+      //chill_fail_count = 0;
       retVal = false;
 
       #ifdef __DEBUG_VIA_SERIAL__
