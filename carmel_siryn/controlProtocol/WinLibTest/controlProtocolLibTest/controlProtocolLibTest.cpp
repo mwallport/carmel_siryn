@@ -47,7 +47,21 @@ int main(int argc, char** argv)
     //
     // show the USB serial connection parameters
     //
-    showConnParams();
+    char* connParams = 0;
+    if ((true == showConnParams(&connParams)))
+    {
+        fprintf(stdout, "conn params:\n%s\n\n", connParams);
+
+        //
+        // free the memory allocated to connParams
+        //
+        free(connParams);
+    }
+    else
+    {
+        fprintf(stdout, "showConnParams failed\n");
+    }
+
 
     //
     // set the clock on the unit, the time is used to tag event log entries

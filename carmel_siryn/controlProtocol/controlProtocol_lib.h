@@ -116,9 +116,9 @@ extern "C" void set_Speed(uint32_t);
 * write the connection parameters to stdout
 */
 #if defined __USING_WINDOWS_USB__
-extern "C" CONTROLPROTOCOL_LIB_API void showConnParams(void);
+extern "C" CONTROLPROTOCOL_LIB_API bool showConnParams(char**);
 #else
-extern "C" void showConnParams(void);
+extern "C" bool showConnParams(char**);
 #endif
 
 /*

@@ -57,12 +57,33 @@ extern "C"
 
 
     // USB connectivity
-    void showConnParams()
+    bool showConnParams(char** connParams)
     {
-        fprintf(stdout, "%14s: %u\n", "myAddress", myAddress);
-        fprintf(stdout, "%14s: %u\n", "peerAddress", peerAddress);
-        fprintf(stdout, "%14s: %s\n", "usbPort", usbPort);
-        fprintf(stdout, "%14s: %u\n", "speed", usbSpeed);
+        bool retVal = false;
+        char* buff = 0;
+        int index = 0;
+
+
+        buff = (char*)calloc(1, 1024);
+
+        if ((0 != buff))
+        {
+            index += sprintf(&buff[index], "%14s: %u\n", "myAddress", myAddress);
+            index += sprintf(&buff[index], "%14s: %u\n", "peerAddress", peerAddress);
+            index += sprintf(&buff[index], "%14s: %s\n", "usbPort", usbPort);
+            index += sprintf(&buff[index], "%14s: %u\n", "speed", usbSpeed);
+
+            *connParams = buff;
+            retVal = true;
+            fprintf(stdout, "success\n");
+        }
+        else
+        {
+            retVal = false;
+            fprintf(stdout, "fail\n");
+        }
+
+        return(retVal);
     }
 
 
