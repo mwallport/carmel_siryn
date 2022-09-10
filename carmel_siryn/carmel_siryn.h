@@ -6,6 +6,7 @@
 #include <DS3231.h>
 #include <Wire.h>
 #include <SHTSensor.h>
+#include <DueFlashStorage.h>
 #include "controlProtocol.h"
 #include "polySci.h"
 #include "common.h"
@@ -185,6 +186,18 @@ unsigned long  status_interval;
 // and don't start if RTD chiller temperature is this
 float ASIC_HIGH   = 28.0;
 float DDR_HIGH    = 28.0;
+
+typedef struct save_data_s
+{
+  uint8_t   sentinel;
+  float     asic_high;
+  float     ddr_high;
+} save_data_t;
+
+save_data_t saved_data;
+DueFlashStorage dueFlashStorage;
+#define SENTINEL_VALUE    0x3C
+
 
 
 //
@@ -398,6 +411,6 @@ volatile int bp_count = -2;  // button press 1
 // splash screen conents - shown during boot while the system is coming on-line
 //
 const char deftDevise[16] = "Thermic Rule ";
-const char buildInfo[16]  = "220830 v2.1  ";
+const char buildInfo[16]  = "220830 v2.1i  ";
 
 #endif

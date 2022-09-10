@@ -303,6 +303,30 @@ void initSystem(void)
   // set the status_interval
   //
   status_interval = GET_STATUS_INTERVAL;
+
+  //
+  // fetch stored ASIC_HIGH
+  //
+  memset(&saved_data, '\0', sizeof(saved_data));
+  byte* p_saved_data  = dueFlashStorage.readAddress(0);
+  memcpy(&saved_data, p_saved_data, sizeof(saved_data));
+
+  if( (SENTINEL_VALUE == saved_data.sentinel) )
+  {
+    ASIC_HIGH   = saved_data.asic_high;
+    DDR_HIGH    = saved_data.ddr_high;
+
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("Restoring ASIC_HIGH value: "); Serial.println(ASIC_HIGH, 2);
+    Serial.print("Restoring DDR_HIGH value: "); Serial.println(DDR_HIGH, 2);
+    #endif
+  } else
+  {
+    #ifdef __DEBUG_VIA_SERIAL__
+    Serial.print("Did not restore ASIC_HIGH and DDR_HIGH, using default values: ");
+    Serial.print(ASIC_HIGH, 2); Serial.print(" : "); Serial.println(DDR_HIGH);
+    #endif
+  }
 }
 
 
@@ -1593,27 +1617,31 @@ void lcd_ASIC_RTDs_Running(void)
   lcd.home();
   lcd.setCursor(0,0);
   lcd.print("ASIC RTDs     ");
-  lcd.setCursor(0,2);
+  lcd.setCursor(0,1);
   lcd.print("1. ");
-  lcd.setCursor(3,2);
+  lcd.setCursor(3,1);
   lcd.print(sysStates.ASIC_RTD.temperature, 1);
-  lcd.setCursor(11, 2);
+  lcd.setCursor(11, 1);
   lcd.print("H2O");
-  lcd.setCursor(15, 2);
+  lcd.setCursor(15, 1);
   lcd.print(sysStates.ASIC_Chiller_RTD.temperature,1);
+  lcd.setCursor(0,3);
+  lcd.print("H2O alarm: ");
+  lcd.setCursor(11,3);
+  lcd.print(ASIC_HIGH);
 
   //
   // put an exclamation point if there is a fault w/ a DDR
   //
   if( (sysStates.ASIC_RTD.fault) )
   {
-    lcd.setCursor(7,2);
+    lcd.setCursor(7,1);
     lcd.print("!");
   }
 
   if( (sysStates.ASIC_Chiller_RTD.fault) )
   {
-    lcd.setCursor(19,2);
+    lcd.setCursor(19,1);
     lcd.print("!");
   }
 
@@ -1667,14 +1695,18 @@ void lcd_DDR_RTDs_Running(void)
   lcd.print("2. ");
   lcd.setCursor(14, 1);
   lcd.print(sysStates.DDR1_RTD.temperature, 1);
-  lcd.setCursor(0,3);
+  lcd.setCursor(0,2);
   lcd.print("3. ");
-  lcd.setCursor(3,3);
+  lcd.setCursor(3,2);
   lcd.print(sysStates.DDR2_RTD.temperature,1);
-  lcd.setCursor(10, 3);
+  lcd.setCursor(10,2);
   lcd.print("H2O");
-  lcd.setCursor(14, 3);
-  lcd.print(sysStates.DDR_Chiller_RTD.temperature, 1);  
+  lcd.setCursor(14,2);
+  lcd.print(sysStates.DDR_Chiller_RTD.temperature, 1);
+  lcd.setCursor(0,3);
+  lcd.print("H2O alarm: ");
+  lcd.setCursor(11,3);
+  lcd.print(DDR_HIGH);
 
   //
   // put an asterisk after the temperature being used for the PVOF calculation
@@ -1687,7 +1719,7 @@ void lcd_DDR_RTDs_Running(void)
   else if( (sysStates.highRTDTemp == sysStates.DDR1_RTD.temperature) )
     lcd.setCursor(18,1);
   else // gotta be DDR2 ..
-    lcd.setCursor(7,3);
+    lcd.setCursor(7,2);
 
   lcd.print("*");
 
@@ -1708,7 +1740,7 @@ void lcd_DDR_RTDs_Running(void)
 
   if( (sysStates.DDR2_RTD.fault) )
   {
-    lcd.setCursor(8,3);
+    lcd.setCursor(8,2);
     lcd.print("!");
   }
 
@@ -2209,6 +2241,7 @@ void handleGetStatusCmd(void)
         getRTDErrors(),            // return bit map of RTDErrors 
         getACUErrorsAndRunState(), // ACUs running
         chiller_humidity,          // values are set if using them
+        sysStates.sysStatus,
         pgetStatus->header.seqNum
       );
 
@@ -5624,6 +5657,24 @@ void handleSetH20AlarmASIC(void)
       {
         result = 1; // convert good
         ASIC_HIGH = temp;
+
+        //
+        // store ASIC_HIGH in due flash
+        //
+        byte store_saved_data[sizeof(saved_data)];
+        memset(&saved_data, '\0', sizeof(saved_data));
+        memset(&store_saved_data, '\0', sizeof(store_saved_data));
+        saved_data.sentinel   = SENTINEL_VALUE;
+        saved_data.asic_high  = ASIC_HIGH;
+        saved_data.ddr_high   = DDR_HIGH;
+        memcpy(&store_saved_data, &saved_data, sizeof(store_saved_data));
+
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.print("Storing ASIC_HIGH value: "); Serial.println(saved_data.asic_high, 2);
+        #endif
+
+        dueFlashStorage.write(0, store_saved_data, sizeof(store_saved_data));
+
       }
       
       //Serial.print("ASIC_HIGH: "); Serial.println(ASIC_HIGH, 2);
@@ -5766,6 +5817,24 @@ void handleSetH20AlarmDDR(void)
       {
         result = 1; // convert good
         DDR_HIGH = temp;
+
+        //
+        // store ASIC_HIGH in due flash
+        //
+        byte store_saved_data[sizeof(saved_data)];
+        memset(&saved_data, '\0', sizeof(saved_data));
+        memset(&store_saved_data, '\0', sizeof(store_saved_data));
+        saved_data.sentinel   = SENTINEL_VALUE;
+        saved_data.asic_high  = ASIC_HIGH;
+        saved_data.ddr_high   = DDR_HIGH;
+        memcpy(&store_saved_data, &saved_data, sizeof(store_saved_data));
+
+        #ifdef __DEBUG_VIA_SERIAL__
+        Serial.print("Storing DDR_HIGH value: "); Serial.println(saved_data.ddr_high, 2);
+        #endif
+
+        dueFlashStorage.write(0, store_saved_data, sizeof(store_saved_data));
+
       }
       
       //Serial.print("DDR_HIGH: "); Serial.println(DDR_HIGH, 2);

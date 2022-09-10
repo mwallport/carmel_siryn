@@ -119,8 +119,20 @@ bool controlProtocol::openUSBPort(const char* usbPort, uint32_t Speed)
     // Initializing DCB structure
     DCB dcbSerialParams = { 0 };
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+
+    //
+    // convert to wide string
+    //
+    wchar_t* wString = new wchar_t[512];
+    MultiByteToWideChar(CP_ACP, 0, usbPort, -1, wString, 512);
     
-    m_fd = CreateFile(usbPort,                //port name
+    /*
+    Also please note that for COM port 10 and above, you need to open them with the command \\.\\COMn,
+    which corresponds to the C string \\\\.\\COMn
+    (where n is the 1 or 2 digits specifying the COM port number). See http://support2.microsoft.com/kb/115831.
+    */
+
+    m_fd = CreateFile(wString,                //port name
                       GENERIC_READ | GENERIC_WRITE, //Read/Write
                       0,                            // No Sharing
                       NULL,                         // No Security
@@ -567,7 +579,8 @@ bool controlProtocol::TxResponseSerial(uint16_t length)
 
 
 bool controlProtocol::GetStatus(uint16_t destAddress, uint16_t* RTDsRunning,
-                            uint16_t* ACUsRunning,  uint16_t* chillerOnLine)
+                                uint16_t* ACUsRunning,  uint16_t* chillerOnLine,
+                                uint16_t* systemStatus)
 {
     bool                retVal  = false;
     uint16_t            seqNum;
@@ -642,7 +655,7 @@ bool controlProtocol::GetStatus(uint16_t destAddress, uint16_t* RTDsRunning,
             //
             // report the health
             //
-            Parse_getStatusResp(m_buff, RTDsRunning, ACUsRunning, chillerOnLine, &seqNum);
+            Parse_getStatusResp(m_buff, RTDsRunning, ACUsRunning, chillerOnLine, systemStatus, &seqNum);
 
             #ifdef __DEBUG_CTRL_PROTO__
             printf("found in packet RTDsRunning %u ACUsRunning %u, chillerOnLine %u, seqNumer 0x%02x\n",
@@ -3492,7 +3505,7 @@ uint16_t controlProtocol::Make_getStatus(uint16_t Address, uint8_t* pBuff)
 
 
 uint16_t controlProtocol::Make_getStatusResp(uint16_t Address, uint8_t* pBuff, uint16_t RTDsRunning,
-                    uint16_t ACUsRunning, uint16_t chillerOnLine, uint16_t SeqNum)
+                    uint16_t ACUsRunning, uint16_t chillerOnLine, uint16_t systemStatus, uint16_t SeqNum)
 {
     getStatusResp_t*    msg  = reinterpret_cast<getStatusResp_t*>(pBuff);
     uint16_t            CRC  = 0;
@@ -3507,6 +3520,7 @@ uint16_t controlProtocol::Make_getStatusResp(uint16_t Address, uint8_t* pBuff, u
     msg->status.RTDsRunning     = htons(RTDsRunning);
     msg->status.ACUsRunning     = htons(ACUsRunning);
     msg->status.chillerOnLine   = htons(chillerOnLine);
+    msg->status.systemStatus    = htons(systemStatus);
 
     // calculate the CRC
     CRC = calcCRC16(pBuff, len_getStatusResp_t);
@@ -3522,7 +3536,7 @@ uint16_t controlProtocol::Make_getStatusResp(uint16_t Address, uint8_t* pBuff, u
 
 
 void controlProtocol::Parse_getStatusResp(uint8_t* m_buff, uint16_t* RTDsRunning,
-        uint16_t* ACUsRunning, uint16_t* chillerOnLine, uint16_t* pSeqNum)
+        uint16_t* ACUsRunning, uint16_t* chillerOnLine, uint16_t* systemStatus, uint16_t* pSeqNum)
 {
     getStatusResp_t* pResponse = reinterpret_cast<getStatusResp_t*>(m_buff);
 
@@ -3532,6 +3546,7 @@ void controlProtocol::Parse_getStatusResp(uint8_t* m_buff, uint16_t* RTDsRunning
     *RTDsRunning    = ntohs(pResponse->status.RTDsRunning);
     *ACUsRunning    = ntohs(pResponse->status.ACUsRunning);
     *chillerOnLine  = ntohs(pResponse->status.chillerOnLine);
+    *systemStatus   = ntohs(pResponse->status.systemStatus);
     *pSeqNum        = pResponse->header.seqNum;
 }
 
