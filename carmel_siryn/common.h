@@ -6,7 +6,8 @@
 //
 // pin to enable the RS485 Tx
 //
-#define RS485_WRITE_ENABLE    21
+//#define RS485_WRITE_ENABLE    21
+#define RS485_WRITE_ENABLE    51
 
 
 //
