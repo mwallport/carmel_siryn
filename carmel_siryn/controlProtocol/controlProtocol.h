@@ -231,6 +231,7 @@ NACK                        // command not supported
         uint16_t    RTDsRunning;    // 0 - no enough are toast the system is shutdown ; 1 - yes
         uint16_t    ACUsRunning;    // 0 - no ; 1 - yes
         uint16_t    chillerOnLine;  // 0 - no ; 1 - yes
+        uint16_t    systemStatus;   //
     } statusReport_t;
 
     typedef struct _getStatusResp
@@ -814,7 +815,7 @@ NACK                        // command not supported
         bool    StartUpCmd(uint16_t);
         bool    StartUpATCmd(uint16_t);
         bool    ShutDownCmd(uint16_t);
-        bool    GetStatus(uint16_t, uint16_t*, uint16_t*, uint16_t*);
+        bool    GetStatus(uint16_t, uint16_t*, uint16_t*, uint16_t*, uint16_t*);
         bool    GetHumidity(uint16_t, float*);
         bool    SetHumidityThreshold(uint16_t, uint16_t);
         bool    GetHumidityThreshold(uint16_t, uint16_t*);
@@ -894,8 +895,8 @@ NACK                        // command not supported
         void        Parse_shutDownCmdResp(uint8_t*, uint16_t*, uint16_t*);
 
         uint16_t    Make_getStatus(uint16_t, uint8_t*);
-        uint16_t    Make_getStatusResp(uint16_t, uint8_t*, uint16_t, uint16_t, uint16_t, uint16_t);
-        void        Parse_getStatusResp(uint8_t*, uint16_t*, uint16_t*, uint16_t*, uint16_t*);
+        uint16_t    Make_getStatusResp(uint16_t, uint8_t*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
+        void        Parse_getStatusResp(uint8_t*, uint16_t*, uint16_t*, uint16_t*, uint16_t*, uint16_t*);
 
         uint16_t    Make_setHumidityThreshold(uint16_t, uint8_t*, uint16_t);
         uint16_t    Make_setHumidityThresholdResp(uint16_t, uint8_t*, uint16_t, uint16_t);

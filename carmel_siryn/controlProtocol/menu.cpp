@@ -174,7 +174,6 @@ void executeMenuItem(void)
 {
     int selection;
     map<int, menuItemBase*>::iterator item;
-    char c;
     
     
     cin >> selection;
