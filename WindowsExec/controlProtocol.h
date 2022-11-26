@@ -45,6 +45,8 @@
 #ifdef __USING_WINDOWS_USB__
     #include <winsock2.h>
     #include <windows.h>
+    #define  __PRETTY_FUNCTION__  ""
+    #define  _CRT_SECURE_NO_WARNINGS 1
 #endif
 
 #ifndef GET_LOW_NIBBLE

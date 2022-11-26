@@ -120,7 +120,13 @@ bool controlProtocol::openUSBPort(const char* usbPort, uint32_t Speed)
     DCB dcbSerialParams = { 0 };
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
     
-    m_fd = CreateFile(usbPort,                //port name
+    //
+    // convert to wide string
+    //
+    wchar_t* wString = new wchar_t[512];
+    MultiByteToWideChar(CP_ACP, 0, usbPort, -1, wString, 512);
+    
+    m_fd = CreateFile(wString,                //port name
                       GENERIC_READ | GENERIC_WRITE, //Read/Write
                       0,                            // No Sharing
                       NULL,                         // No Security
