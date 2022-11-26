@@ -12,6 +12,8 @@
 #include "controlProtocol.h"
 #include "eventlog.h"
 
+typedef enum { SHUTDOWN, READY, RUNNING, UNKNOWN };
+
 extern "C"
 {
 
@@ -96,6 +98,7 @@ extern "C"
         uint16_t rtd;
         uint16_t acu;
         uint16_t chillerOnLine;
+        uint16_t systemStatus;
         char* buff = 0;
         int idx = 0;
         controlProtocol cp(myAddress, peerAddress, usbPort, usbSpeed);
@@ -103,7 +106,7 @@ extern "C"
 
         if ((true == cp.serialConnected()))
         {
-            retVal = cp.GetStatus(peerAddress, &rtd, &acu, &chillerOnLine);
+            retVal = cp.GetStatus(peerAddress, &rtd, &acu, &chillerOnLine, &systemStatus);
 
             if ((false == retVal))
                 fprintf(stdout, "fail\n");
@@ -113,6 +116,34 @@ extern "C"
 
                 if ((0 != buff))
                 {
+                    switch (systemStatus)
+                    {
+                        case SHUTDOWN:
+                        {
+                            idx += sprintf(&buff[idx], "System state: SHUTDOWN\n");
+                            break;
+                        }
+
+                        case READY:
+                        {
+                            idx += sprintf(&buff[idx], "System state: READY\n");
+                            break;
+                        }
+
+                        case RUNNING:
+                        {
+                            idx += sprintf(&buff[idx], "System state: RUNNING\n");
+                            break;
+                        }
+
+                        default:
+                        case UNKNOWN:
+                        {
+                            idx += sprintf(&buff[idx], "System state: UNKNOWN\n");
+                            break;
+                        }
+                    }
+
                     // ACUs output first 
                     if ((acu & ASIC_THERMAL_CTRL_OFFLINE))
                         idx += sprintf(&buff[idx], "ASIC ACU is OFFLINE");
@@ -691,7 +722,7 @@ extern "C"
                     //
                     for (int i = 0; i < MAX_ELOG_ENTRY; i++)
                     {
-                        if ((0 != eventlogs[i].ts.year))
+                        if ((0 != eventlogs[i].ts.year))    // or is it  if ((0 < eventlog[i].ts.mday))
                         {
                             // get the time stamp
                             memset(&ltime, '\0', sizeof(ltime));
