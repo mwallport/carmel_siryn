@@ -1,6 +1,6 @@
 #ifndef __MENU__
 #define __MENU__
-#include <unistd.h>
+//#include <unistd.h>
 #include <iostream>
 #include <string>
 #include <cstdint>
@@ -743,33 +743,46 @@ class menuGetEventLogCmd : public menuItemBase
 
     void execute(controlProtocol* pCP)
     {
+      char* p_time = 0;
       memset(&eventlog, '\0', sizeof(eventlog));
 
       if( (pCP->*m_pGetEventLogCmd)(m_destId, &eventlog[0]) )
       {
         for(int i = 0; i < MAX_ELOG_ENTRY; i++)
         {
-          // get the time stamp
-          memset(&ltime, '\0', sizeof(ltime));
-          ltime.tm_sec  = eventlog[i].ts.sec;
-          ltime.tm_min  = eventlog[i].ts.min;
-          ltime.tm_hour = eventlog[i].ts.hour + 1;
-          ltime.tm_mon  = eventlog[i].ts.mon - 1;
-          ltime.tm_year = eventlog[i].ts.year + 101;
-          ltime.tm_wday = eventlog[i].ts.wday;
-          ltime.tm_mday = eventlog[i].ts.mday;
+            // get the time stamp
+            if ((0 < eventlog[i].ts.mday))
+            {
+                memset(&ltime, '\0', sizeof(ltime));
+                ltime.tm_sec = eventlog[i].ts.sec;
+                ltime.tm_min = eventlog[i].ts.min;
+                ltime.tm_hour = eventlog[i].ts.hour + 1;
+                ltime.tm_mon = eventlog[i].ts.mon - 1;
+                ltime.tm_year = eventlog[i].ts.year + 101;
+                ltime.tm_wday = eventlog[i].ts.wday;
+                ltime.tm_mday = eventlog[i].ts.mday;
 
-          // get the id and the instance
-          id  = eventlog[i].id & 0x0000ffff;
-          inst  = (eventlog[i].id  >> 16) & 0x0000ffff;
-          memset(time_buff, '\0', sizeof(time_buff));
-          if( (0 == asctime_r(&ltime, time_buff)) )
-          {
-            snprintf(time_buff, 30, "no event time");
-          } else
-          {
-            time_buff[strlen(time_buff) - 1] = 0; // rid of the \n at the end
-          }
+                memset(time_buff, '\0', sizeof(time_buff));
+
+                if ((0 == (p_time = asctime(&ltime))))
+                {
+                    snprintf(time_buff, 30, "no event time");
+                }
+                else
+                {
+                    sprintf(time_buff, "%s", p_time);
+                    time_buff[strlen(time_buff) - 1] = 0; // rid of the \n at the end
+                }
+            }
+            else
+            {
+                snprintf(time_buff, 30, "no event time");
+            }
+
+            // get the id and the instance
+            id = eventlog[i].id & 0x0000ffff;
+            inst = (eventlog[i].id >> 16) & 0x0000ffff;
+
           switch(id)
           {
             case ACUNotOnLine:

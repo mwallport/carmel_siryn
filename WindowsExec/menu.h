@@ -10,8 +10,8 @@
 
 //#define __USING_CHILLER__
 //#define __USING_HUMIDITY__
-#define __USING_WINDOWS_USB__
 
+#define __USING_WINDOWS_USB__    
 
 using namespace std;
 
@@ -188,13 +188,13 @@ class menuGetStatus : public menuItemBase
             cout << " has no faults" << endl;
 
           cout << "DDR1 RTD";
-          if( (RTDErrors & (1 << 12)) )
+          if( (RTDErrors & (1 << 8)) )
             cout << " has faults" << endl;
           else
             cout << " has no faults" << endl;
 
           cout << "DDR2 RTD";
-          if( (RTDErrors & (1 << 8)) )
+          if( (RTDErrors & (1 << 4)) )
             cout << " has faults" << endl;
           else
             cout << " has no faults" << endl;
@@ -692,6 +692,7 @@ class menuGetRTCCmd : public menuItemBase
         if( (pCP->*m_pGetRTCCmd)(m_destId, &ltime) )
         {
             ltime.tm_mon   -=1;
+            //ltime.tm_year  -= 1;
             // output the time 
             cout << "time : " << asctime(&ltime) << endl;
         }
@@ -817,7 +818,7 @@ class menuGetEventLogCmd : public menuItemBase
             }
             case ASIC_Chiller_RTDFault:
             {
-              printf("%-26s : %-18s ASCIC chiller RTD fault\n",
+              printf("%-26s : %-18s ASIC chiller RTD fault\n",
                 time_buff, "ASIC_Chiller_RTDFault");
                 //asctime(&ltime), "ChillerOffline");
 
