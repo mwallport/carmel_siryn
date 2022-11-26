@@ -1,6 +1,5 @@
 #ifndef __MENU__
 #define __MENU__
-#include <unistd.h>
 #include <iostream>
 #include <string>
 #include <cstdint>
@@ -10,15 +9,14 @@
 
 //#define __USING_CHILLER__
 //#define __USING_HUMIDITY__
-#define __USING_WINDOWS_USB__
-
+    
 
 using namespace std;
 
 typedef bool (controlProtocol::*pStartUpCmd_t)(uint16_t);
 typedef bool (controlProtocol::*pStartUpATCmd_t)(uint16_t);
 typedef bool (controlProtocol::*pShutDownCmd_t)(uint16_t);
-typedef bool (controlProtocol::*pGetStatus_t)(uint16_t, uint16_t*, uint16_t*, uint16_t*);
+typedef bool (controlProtocol::*pGetStatus_t)(uint16_t, uint16_t*, uint16_t*, uint16_t*, uint16_t*);
 typedef bool (controlProtocol::*pGetHumidity_t)(uint16_t, float*);
 typedef bool (controlProtocol::*pSetHumidityThreshold_t)(uint16_t, uint16_t);
 typedef bool (controlProtocol::*pGetHumidityThreshold_t)(uint16_t, uint16_t*);
@@ -44,6 +42,7 @@ typedef bool (controlProtocol::*pSetH20AlarmDDR_t)(uint16_t, float);
 typedef bool (controlProtocol::*pGetH20AlarmDDR_t)(uint16_t, float*);
 typedef bool (controlProtocol::*pGetTempCmd_t)(uint16_t, uint16_t*);
 
+typedef enum { SHUTDOWN, READY, RUNNING, UNKNOWN };
 
 class menuItemBase
 {
@@ -155,9 +154,37 @@ class menuGetStatus : public menuItemBase
 
     void execute(controlProtocol* pCP)
     {
-        if( (pCP->*m_pGetStatus)(m_destId, &RTDErrors, &ACUsRunning, &chiller_humidity) )
+        if( (pCP->*m_pGetStatus)(m_destId, &RTDErrors, &ACUsRunning, &chiller_humidity, &systemStatus) )
         {
           cout << endl;
+
+          switch (systemStatus)
+          {
+            case SHUTDOWN:
+            {
+                cout << "System state: SHUTDOWN" << endl;
+                break;
+            }
+
+            case READY:
+            {
+                cout << "System state: READY" << endl;
+                break;
+            }
+
+            case RUNNING:
+            {
+                cout << "System state: RUNNING" << endl;
+                break;
+            }
+
+            default:
+            case UNKNOWN:
+            {
+                cout << "System state: UNKNOWN" << endl;
+                break;
+            }
+          }
 
           // ACUs output first 
           if( (ACUsRunning & (1 << 12)) )  // lame, but works
@@ -188,13 +215,13 @@ class menuGetStatus : public menuItemBase
             cout << " has no faults" << endl;
 
           cout << "DDR1 RTD";
-          if( (RTDErrors & (1 << 12)) )
+          if( (RTDErrors & (1 << 8)) )
             cout << " has faults" << endl;
           else
             cout << " has no faults" << endl;
 
           cout << "DDR2 RTD";
-          if( (RTDErrors & (1 << 8)) )
+          if( (RTDErrors & (1 << 4)) )
             cout << " has faults" << endl;
           else
             cout << " has no faults" << endl;
@@ -238,6 +265,7 @@ class menuGetStatus : public menuItemBase
     uint16_t RTDErrors;
     uint16_t ACUsRunning;
     uint16_t chiller_humidity;
+    uint16_t systemStatus;
     
     private:
     menuGetStatus(const menuItemBase&);
@@ -692,6 +720,7 @@ class menuGetRTCCmd : public menuItemBase
         if( (pCP->*m_pGetRTCCmd)(m_destId, &ltime) )
         {
             ltime.tm_mon   -=1;
+            //ltime.tm_year  -= 1;
             // output the time 
             cout << "time : " << asctime(&ltime) << endl;
         }
@@ -743,33 +772,45 @@ class menuGetEventLogCmd : public menuItemBase
 
     void execute(controlProtocol* pCP)
     {
+      char* p_time = 0;
       memset(&eventlog, '\0', sizeof(eventlog));
 
       if( (pCP->*m_pGetEventLogCmd)(m_destId, &eventlog[0]) )
       {
         for(int i = 0; i < MAX_ELOG_ENTRY; i++)
         {
-          // get the time stamp
-          memset(&ltime, '\0', sizeof(ltime));
-          ltime.tm_sec  = eventlog[i].ts.sec;
-          ltime.tm_min  = eventlog[i].ts.min;
-          ltime.tm_hour = eventlog[i].ts.hour + 1;
-          ltime.tm_mon  = eventlog[i].ts.mon - 1;
-          ltime.tm_year = eventlog[i].ts.year + 101;
-          ltime.tm_wday = eventlog[i].ts.wday;
-          ltime.tm_mday = eventlog[i].ts.mday;
+            if ((0 < eventlog[i].ts.mday))
+            {
+                memset(&ltime, '\0', sizeof(ltime));
+                ltime.tm_sec = eventlog[i].ts.sec;
+                ltime.tm_min = eventlog[i].ts.min;
+                ltime.tm_hour = eventlog[i].ts.hour + 1;
+                ltime.tm_mon = eventlog[i].ts.mon - 1;
+                ltime.tm_year = eventlog[i].ts.year + 101;
+                ltime.tm_wday = eventlog[i].ts.wday;
+                ltime.tm_mday = eventlog[i].ts.mday;
+
+                memset(time_buff, '\0', sizeof(time_buff));
+
+                if ((0 == (p_time = asctime(&ltime))))
+                {
+                    snprintf(time_buff, 30, "no event time");
+                }
+                else
+                {
+                    sprintf(time_buff, "%s", p_time);
+                    time_buff[strlen(time_buff) - 1] = 0; // rid of the \n at the end
+                }
+            }
+            else
+            {
+                snprintf(time_buff, 30, "no event time");
+            }
 
           // get the id and the instance
           id  = eventlog[i].id & 0x0000ffff;
           inst  = (eventlog[i].id  >> 16) & 0x0000ffff;
-          memset(time_buff, '\0', sizeof(time_buff));
-          if( (0 == asctime_r(&ltime, time_buff)) )
-          {
-            snprintf(time_buff, 30, "no event time");
-          } else
-          {
-            time_buff[strlen(time_buff) - 1] = 0; // rid of the \n at the end
-          }
+ 
           switch(id)
           {
             case ACUNotOnLine:
@@ -804,7 +845,7 @@ class menuGetEventLogCmd : public menuItemBase
             }
             case ASIC_Chiller_RTDFault:
             {
-              printf("%-26s : %-18s ASCIC chiller RTD fault\n",
+              printf("%-26s : %-18s ASIC chiller RTD fault\n",
                 time_buff, "ASIC_Chiller_RTDFault");
                 //asctime(&ltime), "ChillerOffline");
 
